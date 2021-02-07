@@ -15,11 +15,14 @@
         "@typescript-eslint"
     ],
     "rules": {
+        "camelcase": "off",
+        "no-unused-vars": "off",
         "indent": ["error", 4],
         "require-jsdoc" : 0,
         "max-len": ["error", {
             "ignoreComments": true,
             "ignoreTrailingComments": true
-        }]
+        }],
+        "linebreak-style": ["error", "windows"]
     }
 }
