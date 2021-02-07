@@ -16,6 +16,10 @@
     ],
     "rules": {
         "indent": ["error", 4],
-        "require-jsdoc" : 0
+        "require-jsdoc" : 0,
+        "max-len": ["error", {
+            "ignoreComments": true,
+            "ignoreTrailingComments": true
+        }]
     }
 }
