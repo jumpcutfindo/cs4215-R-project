@@ -27,9 +27,14 @@ function apply_arithmetic_operation(
         }
     }
 
-    // 2. Check if the types are of number type (throw error if not)
-    if (operands.first_operand.tag !== operands.second_operand.tag) {
-        // Throw error: incompatible types
+    const arithmetic_result_type = operands.first_operand.tag;
+
+    // 2. If both are logical types, convert to integer types
+    if (arithmetic_result_type == 'logical') {
+        operands.first_operand =
+            coerce_operand_to_type(first_operand, 'integer');
+        operands.second_operand =
+            coerce_operand_to_type(second_operand, 'integer');
     }
 
     // 3. Check vector lengths and do recycling
@@ -47,7 +52,9 @@ function apply_arithmetic_operation(
         operands.first_operand.data,
         operands.second_operand.data,
     );
-    return arithmetic_result;
+
+    // 5. Return result as a newly created vector
+    return create_vector_of_type(arithmetic_result, arithmetic_result_type);
 }
 
 function recycle(first_operand: any, second_operand: any) {
@@ -63,7 +70,7 @@ function recycle(first_operand: any, second_operand: any) {
     }
 
     if (longer_operand.data.length % shorter_operand.data.length != 0) {
-        // Throw error: Length of vector of shorter vector not multiple of longer vector
+        // Throw error: Length of shorter vector not a multiple of longer vector
     } else {
         const recycled_data = [];
         const factor = shorter_operand.data.length;
@@ -133,10 +140,20 @@ function coerce_types(first_operand: any, second_operand: any) {
         }
     }
 
-    return {
-        first_operand: first_operand_modified,
-        second_operand: second_operand_modified,
-    };
+    if (first_operand_modified && second_operand_modified &&
+        (first_operand_modified.tag === second_operand_modified.tag)) {
+        return {
+            first_operand: first_operand_modified,
+            second_operand: second_operand_modified,
+        };
+    } else {
+        return {
+            first_operand: undefined,
+            second_operand: undefined,
+        };
+
+        // Throw error: Types not equal even after coercion
+    }
 }
 
 function coerce_operand_to_type(operand: any, type: any) {
@@ -181,7 +198,33 @@ function coerce_operand_to_type(operand: any, type: any) {
     }
 }
 
-// Arithmetic operators will include +, -, *, /, ^, %% (modulus), %/% (integer division)
+function create_vector_of_type(data: any, type: any) {
+    switch (type) {
+    case 'logical':
+        return {
+            attributes: RNull,
+            refcount: 0,
+            tag: 'logical',
+            data: data,
+        } as Logical;
+    case 'integer':
+        return {
+            attributes: RNull,
+            refcount: 0,
+            tag: 'integer',
+            data: data,
+        } as Int;
+    case 'numeric':
+        return {
+            attributes: RNull,
+            refcount: 0,
+            tag: 'numeric',
+            data: data,
+        } as Real
+    }
+}
+
+// Arithmetic functions include +, -, *, /, ^, %% (modulus), %/% (integer division)
 function add(
     first_operand_data: [number | null],
     second_operand_data: [number | null],
@@ -245,22 +288,11 @@ function modulus(
 function integer_division(
     first_operand_data: [number | null],
     second_operand_data: [number | null],
-) {}
+) {
+    return first_operand_data.map((num, index) => {
+        const other_num = second_operand_data[index];
+        return (num !== null && other_num !== null) ? Math.floor(num / other_num) : null;
+    });
+}
 
-const x = {
-    attributes: RNull,
-    refcount: 0,
-    tag: 'numeric',
-    data: [10, 20, 30, 10, 20, 30],
-} as Real;
 
-const y = {
-    attributes: RNull,
-    refcount: 0,
-    tag: 'numeric',
-    data: [40, 30, 20],
-} as Real;
-
-console.log('x', x, 'y', y);
-
-console.log(apply_arithmetic_operation('+', x, y));
