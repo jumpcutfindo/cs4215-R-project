@@ -1,8 +1,13 @@
-import {Logical, Int, Real, RNull, RValue, Character} from './types';
+import {Logical, Int, Real, RNull, RValue} from './types';
 
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
-const arithmetic_functions: any = {
+const unary_arithmetic_functions: any = {
+    '+': positive,
+    '-': negative,
+};
+
+const binary_arithmetic_functions: any = {
     '+': add,
     '-': subtract,
     '*': multiply,
@@ -12,16 +17,43 @@ const arithmetic_functions: any = {
     '%/%': integer_division,
 };
 
-function apply_arithmetic_operation(
+function apply_unary_arithmetic_operation(
+    operator: any,
+    operand: RValue,
+) {
+    if (
+        type_hierarchy.indexOf(operand.tag) === -1
+    ) {
+        console.error(`Error: non-numeric argument to binary operator`);
+        return;
+    }
+
+    const operands = {
+        operand: operand as Logical | Int | Real,
+    };
+
+    let arithmetic_result_type = operands.operand.tag;
+    // 1. If type logical, coerce to integer
+    if (operands.operand.tag === 'logical') {
+        operands.operand = coerce_operand_to_type(operands.operand, 'integer');
+        arithmetic_result_type = 'integer';
+    }
+
+    // 2. Carry out operation
+    const arithmetic_result = unary_arithmetic_functions[operator](operands.operand.data);
+
+    return create_vector_of_type(arithmetic_result, arithmetic_result_type);
+}
+
+function apply_binary_arithmetic_operation(
     operator: any,
     first_operand: RValue,
     second_operand: RValue,
 ) {
     if (
-        type_hierarchy.indexOf(first_operand.tag) == -1 ||
-        type_hierarchy.indexOf(second_operand.tag) == -1
+        type_hierarchy.indexOf(first_operand.tag) === -1 ||
+        type_hierarchy.indexOf(second_operand.tag) === -1
     ) {
-        // Error: type doesn't exist in our hierarchy
         console.error(`Error: non-numeric argument to binary operator`);
         return;
     }
@@ -43,10 +75,12 @@ function apply_arithmetic_operation(
     // 2. Check for the expected type depending on the arithmetic operator
     if (operator === '%/%') {
         arithmetic_result_type = 'integer';
+    } else if (operator === '/' || operator ==='%%') {
+        arithmetic_result_type = 'numeric';
     }
 
     // 3. If both are logical types, convert to integer types
-    if (arithmetic_result_type == 'logical') {
+    if (arithmetic_result_type === 'logical') {
         operands.first_operand =
             coerce_operand_to_type(
                 first_operand as Logical | Int | Real,
@@ -56,6 +90,8 @@ function apply_arithmetic_operation(
             coerce_operand_to_type(second_operand as Logical | Int | Real,
                 'integer',
             );
+
+        arithmetic_result_type = 'integer';
     }
 
     // 4. Check vector lengths and do recycling
@@ -65,7 +101,7 @@ function apply_arithmetic_operation(
     }
 
     // 5. Carry out operation
-    const arithmetic_result = arithmetic_functions[operator](
+    const arithmetic_result = binary_arithmetic_functions[operator](
         operands.first_operand.data,
         operands.second_operand.data,
     );
@@ -170,7 +206,7 @@ function coerce_operand_to_type(operand: Logical | Int | Real, type: string) {
             attributes: operand.attributes,
             refcount: operand.refcount,
             tag: 'logical',
-            data: (operand.data as any).map((x: any) => x == 0 ? false : true),
+            data: (operand.data as any).map((x: any) => x === 0 ? false : true),
         } as Logical;
     case 'integer':
         return {
@@ -178,7 +214,7 @@ function coerce_operand_to_type(operand: Logical | Int | Real, type: string) {
             refcount: operand.refcount,
             tag: 'integer',
             data: (operand.data as any).map((x: any) => {
-                if (operand.tag == 'logical') {
+                if (operand.tag === 'logical') {
                     return x ? 1 : 0;
                 } else {
                     return x;
@@ -191,7 +227,7 @@ function coerce_operand_to_type(operand: Logical | Int | Real, type: string) {
             refcount: operand.refcount,
             tag: 'numeric',
             data: (operand.data as any).map((x: any) => {
-                if (operand.tag == 'logical') {
+                if (operand.tag === 'logical') {
                     return x ? 1 : 0;
                 } else {
                     return x;
@@ -227,7 +263,20 @@ function create_vector_of_type(data: [boolean | number], type: string) {
     }
 }
 
-// Arithmetic functions include +, -, *, /, ^, %% (modulus), %/% (integer division)
+// Unary arithmetic functions include +, -
+function positive(
+    operand: [number | null],
+) {
+    return operand.map((num) => num !== null ? +num : null);
+}
+
+function negative(
+    operand: [number | null],
+) {
+    return operand.map((num) => num !== null ? -num : null);
+}
+
+// Binary arithmetic functions include +, -, *, /, ^, %% (modulus), %/% (integer division)
 function add(
     first_operand_data: [number | null],
     second_operand_data: [number | null],
@@ -275,7 +324,8 @@ function power(
     return first_operand_data.map((num, index) => {
         const other_num = second_operand_data[index];
         return (num !== null && other_num !== null) ?
-            Math.pow(num, other_num) : null;
+            num === 1 && (other_num === Infinity || other_num === -Infinity) ? 1 :
+                Math.pow(num, other_num) : null;
     });
 }
 
@@ -285,7 +335,16 @@ function modulus(
 ) {
     return first_operand_data.map((num, index) => {
         const other_num = second_operand_data[index];
-        return (num !== null && other_num !== null) ? num % other_num : null;
+
+        if (num !== null && other_num !== null) {
+            const q = num / other_num;
+            if (q !== Infinity && (Math.abs(q) * Number.EPSILON )> 1) {
+                console.warn('Warning: probable complete loss of accuracy in modulus');
+            }
+            return num % other_num;
+        } else {
+            return null;
+        }
     });
 }
 
