@@ -127,7 +127,6 @@ function recycle(
 
     if (longer_operand.data.length % shorter_operand.data.length != 0) {
         console.warn(
-            // eslint-disable-next-line max-len
             'Warning: longer object length is not a multiple of shorter object length',
         );
     }
@@ -265,15 +264,15 @@ function create_vector_of_type(data: [boolean | number], type: string) {
 
 // Unary arithmetic functions include +, -
 function positive(
-    operand: [number | null],
+    operand_data: [number | null],
 ) {
-    return operand.map((num) => num !== null ? +num : null);
+    return operand_data.map((num) => num !== null ? +num : null);
 }
 
 function negative(
-    operand: [number | null],
+    operand_data: [number | null],
 ) {
-    return operand.map((num) => num !== null ? -num : null);
+    return operand_data.map((num) => num !== null ? -num : null);
 }
 
 // Binary arithmetic functions include +, -, *, /, ^, %% (modulus), %/% (integer division)
