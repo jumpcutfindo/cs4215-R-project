@@ -1,4 +1,5 @@
-import {RNull} from './types';
+import {RNull} from './values';
+import {main} from './parser';
 
 const world = 'world';
 
@@ -7,3 +8,5 @@ export function hello(word: string = world): string {
 }
 
 export {RNull};
+
+main();

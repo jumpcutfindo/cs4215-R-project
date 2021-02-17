@@ -1,4 +1,5 @@
-import {Logical, Int, Real, RNull} from './types';
+import {Logical, Int, Real} from './types';
+import {RNull} from './values';
 
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
@@ -220,7 +221,7 @@ function create_vector_of_type(data: any, type: any) {
             refcount: 0,
             tag: 'numeric',
             data: data,
-        } as Real
+        } as Real;
     }
 }
 
@@ -271,7 +272,9 @@ function power(
 ) {
     return first_operand_data.map((num, index) => {
         const other_num = second_operand_data[index];
-        return (num !== null && other_num !== null) ? Math.pow(num, other_num) : null;
+        return (num !== null && other_num !== null) ?
+            Math.pow(num, other_num) :
+            null;
     });
 }
 
@@ -291,7 +294,9 @@ function integer_division(
 ) {
     return first_operand_data.map((num, index) => {
         const other_num = second_operand_data[index];
-        return (num !== null && other_num !== null) ? Math.floor(num / other_num) : null;
+        return (num !== null && other_num !== null) ?
+            Math.floor(num / other_num) :
+            null;
     });
 }
 

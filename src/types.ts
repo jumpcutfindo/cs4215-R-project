@@ -9,11 +9,14 @@ export interface List {
     data: RValue[];
 }
 
+
 // Represents Symbols in the language. No attributes.
 // (attributes(name) returns NULL, attributes<- gives error)
 export interface Name {
     readonly tag: 'name';
-    value: string;
+    pname: string;
+    // Difference from R: no field for primitive value; simply place Special/Builtin in environment
+    internal: RValue; // internal field still needed as INTERNAL field must be accessible from the symbol
 }
 
 // Linked list type used internally for attributes, language objects
@@ -22,9 +25,23 @@ export interface PairList {
     refcount: number;
     readonly tag: 'pairlist';
     key: string; // if all keys in linked list are "", names() returns NULL. Else missing names are ""
-    value: RValue | null;
+    value: RValue; // Change: value cannot be null. Missing Args are implemented as R_MissingArg, which is a SYMSXP symbol marker
     next: PairList | Nil;
 }
+
+// getAtindex(rval, ix)
+//   case pairlist:
+//       for i 1:ix
+//          pairlist = pairlist.next
+//       return pairlist.val
+
+// getByName(rval, ix)
+//     case pairlist:
+//         for i in 1:ix:
+//             if pairlist.key = ix
+//             return
+//             else
+//             pairlist = pairlist.next
 
 export interface Raw {
     attributes: PairList | Nil;
@@ -65,7 +82,7 @@ export interface Env {
     attributes: PairList | Nil;
     readonly tag: 'environment';
     parent: Env | Nil;
-    frame: Map<Name, RValue | null>; // It is possible to extract missing value from a pairlist and assign a variable to it
+    frame: Map<Name, RValue>; // Changed: Missing Arg, Unbound Val are all RValues implemented as symbols
 }
 
 export interface Closure {
@@ -79,17 +96,19 @@ export interface Closure {
 
 export interface Builtin {
     readonly tag: 'builtin';
+    name: string; // We shall use a map for primitive functions, thus a string index instead of an offset
 }
 
 export interface Special {
     readonly tag: 'special';
+    name: string; // We shall use a map for primitive functions, thus a string index instead of an offset
 }
 
 export interface Prom {
     attributes: PairList | Nil;
     refcount: number;
     readonly tag: 'promise';
-    cached: undefined | RValue
+    cached: RValue // changed - UnboundValue is implemented as a sentinel RValue, not undefined
     expression: RValue
     environment: Env;
 }
@@ -109,8 +128,6 @@ export interface Expression {
     readonly tag: 'expression';
     data: List; // Mainly language objects, but could include literals of the atomic types as well
 }
-
-export const RNull : Nil = {tag: 'NULL'};
 
 
 export type RValue =
