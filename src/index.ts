@@ -1,4 +1,4 @@
-import {RNull} from './values';
+import {RNull} from './main/values';
 import {main} from './parser';
 
 const world = 'world';
