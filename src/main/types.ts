@@ -126,7 +126,7 @@ export interface Expression {
     attributes: PairList | Nil
     refcount: number;
     readonly tag: 'expression';
-    data: List; // Mainly language objects, but could include literals of the atomic types as well
+    data: RValue[]; // Mainly language objects, but could include literals of the atomic types as well
 }
 
 

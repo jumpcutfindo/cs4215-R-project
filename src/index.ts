@@ -1,12 +1,19 @@
 import {RNull} from './main/values';
-import {main} from './parser';
+import {parse} from './parser';
 
-const world = 'world';
-
-export function hello(word: string = world): string {
-    return `Hello ${RNull}! `;
+const sampleProg1 : string = `
+x <- c(1,2,3)
+if (length(x) > 2) {
+    print("length is more than 2")
+} else {
+    x <- rep(x, 2)
 }
+x
+`;
 
-export {RNull};
+const sampleProg2 : string = `
+x <- y <<- 10
+`;
 
-main();
+
+parse(sampleProg1);

@@ -14,37 +14,37 @@ public lineTerminatorAhead() : boolean {
 
 prog:   (   expr eoe
         )*
-        EOF
+        EOF?
     ;
 
 expr :  literal # Lit
      |  ID # Symbol
-     |  '(' expr ')' # Parens
-     |  expr '(' arglist ')' # Call
+     |  op='(' expr ')' # Call
+     |  expr '(' arglist ')' # FunCall
      |  'function' '(' formallist ')' expr # Function
-     |  '{' exprlist '}' # Brace
-     |  (ID|STRING) '::' (ID|STRING) # Namespace
-     |  expr '$' (ID|STRING) # ComponentExtraction
+     |  op='{' exprlist '}' # Call
+     |  name '::' name # Namespace
+     |  expr '$' name # ComponentExtraction
      |  expr '[' arglist ']' # Subset
      |  expr '[[' arglist ']]' # Indexing
-     |  <assoc=right> expr '^' expr # Call
-     |  ('-'|'+') expr # Call
-     |  expr ':' expr # Seq
-     |  expr USER_OP expr # Call
-     |  expr ('*'|'/') expr # Call
-     |  expr ('+'|'-') expr # Call
-     |  expr ('>'|'>='|'<'|'<='|'=='|'!=') expr # Call
-     |  '!' expr # Call
-     |  expr ('&'|'&&') expr # Call
-     |  expr ('|'|'||') expr # Call
-     |  val=expr ('->'|'->>') sym=(ID|STRING) # Assign
-     |  sym=(ID|STRING) ('<-'|'<<-') val=expr # Assign
-     |  'if' '(' cond=expr ')' conseq=expr ('else' alt=expr)? # If
+     |  <assoc=right> expr op='^' expr # Call
+     |  op=('-'|'+') expr # Call
+     |  expr op=':' expr # Call
+     |  expr op=USER_OP expr # Call
+     |  expr op=('*'|'/') expr # Call
+     |  expr op=('+'|'-') expr # Call
+     |  expr op=('>'|'>='|'<'|'<='|'=='|'!=') expr # Call
+     |  op='!' expr # Call
+     |  expr op=('&'|'&&') expr # Call
+     |  expr op=('|'|'||') expr # Call
+     |  val=expr arrow=('->'|'->>') sym=(ID|STRING) # Assign
+     |  sym=(ID|STRING) arrow=('<-'|'<<-') val=expr # Assign
+     |  op='if' '(' expr ')' expr ('else' expr)? # Call
      |  'for' '(' ID 'in' seq=expr ')' body=expr # For
-     |  'while' '(' cond=expr ')' body=expr # While
-     |  'repeat' body=expr # Repeat
-     |  'break' # Break
-     |  'next'  # Next
+     |  op='while' '(' expr ')' expr # Call
+     |  op='repeat' expr # Call
+     |  op='break' # Call
+     |  op='next'  # Call
      ;
 
 exprlist
@@ -59,13 +59,20 @@ eoe :    ';'
 
 literal :  INT 
         |  FLOAT
+        |  HEX
         |  STRING
         |  NULL
         |  NA
+        |  NAN
+        |  INF
         |  BOOL
         ;
 
-formallist : formal (',' formal)* ;
+name : ID | STRING ;
+
+formallist : formal (',' formal)* 
+           |
+           ;
 
 formal:   ID
       |   ID '=' expr
@@ -73,7 +80,8 @@ formal:   ID
       ;
 
 
-arglist : arg (',' arg)* ;
+arglist : arg (',' arg)*
+        ;
 
 arg :   expr
     |   ID '='
@@ -93,6 +101,10 @@ NULL : 'NULL' ;
 
 NA : 'NA' ;
 
+NAN : 'NaN' ;
+
+INF : 'Inf' ;
+
 BOOL : 'TRUE'
      | 'FALSE'
      | 'T'
@@ -104,25 +116,25 @@ DOTS : '...'
      | '..' DIGIT+
      ;
 
-HEX :   '0' ('x'|'X') HEXDIGIT+ [Ll]? ;
+HEX :   '0' ('x'|'X') HEXDIGIT+ ;
 
-INT :   DIGIT+ [Ll]? ;
+INT :   FLOAT 'L' 
+    |   HEX 'L'
+    ;
 
 fragment
 HEXDIGIT : ('0'..'9'|'a'..'f'|'A'..'F') ;
 
-FLOAT:  DIGIT+ '.' DIGIT* EXP? [Ll]?
-    |   DIGIT+ EXP? [Ll]?
-    |   '.' DIGIT+ EXP? [Ll]?
-    |   'NaN'
-    |   'Inf'
+FLOAT:  DIGIT+ '.' DIGIT* EXP?
+    |   DIGIT+ EXP?
+    |   '.' DIGIT+ EXP?
     ;
 
 
 fragment
 DIGIT:  '0'..'9' ; 
 fragment
-EXP :   ('E' | 'e') ('+' | '-')? INT ;
+EXP :   ('E' | 'e') ('+' | '-')? DIGIT+ ;
 
 STRING
     :   '"' ( ESC | ~[\\"] )*? '"'

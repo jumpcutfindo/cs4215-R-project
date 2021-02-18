@@ -5,27 +5,21 @@ import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
 import { LitContext } from "./RParser";
 import { SymbolContext } from "./RParser";
-import { ParensContext } from "./RParser";
 import { CallContext } from "./RParser";
+import { FunCallContext } from "./RParser";
 import { FunctionContext } from "./RParser";
-import { BraceContext } from "./RParser";
 import { NamespaceContext } from "./RParser";
 import { ComponentExtractionContext } from "./RParser";
 import { SubsetContext } from "./RParser";
 import { IndexingContext } from "./RParser";
-import { SeqContext } from "./RParser";
 import { AssignContext } from "./RParser";
-import { IfContext } from "./RParser";
 import { ForContext } from "./RParser";
-import { WhileContext } from "./RParser";
-import { RepeatContext } from "./RParser";
-import { BreakContext } from "./RParser";
-import { NextContext } from "./RParser";
 import { ProgContext } from "./RParser";
 import { ExprContext } from "./RParser";
 import { ExprlistContext } from "./RParser";
 import { EoeContext } from "./RParser";
 import { LiteralContext } from "./RParser";
+import { NameContext } from "./RParser";
 import { FormallistContext } from "./RParser";
 import { FormalContext } from "./RParser";
 import { ArglistContext } from "./RParser";
@@ -64,19 +58,6 @@ export interface RListener extends ParseTreeListener {
 	exitSymbol?: (ctx: SymbolContext) => void;
 
 	/**
-	 * Enter a parse tree produced by the `Parens`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterParens?: (ctx: ParensContext) => void;
-	/**
-	 * Exit a parse tree produced by the `Parens`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitParens?: (ctx: ParensContext) => void;
-
-	/**
 	 * Enter a parse tree produced by the `Call`
 	 * labeled alternative in `RParser.expr`.
 	 * @param ctx the parse tree
@@ -90,6 +71,19 @@ export interface RListener extends ParseTreeListener {
 	exitCall?: (ctx: CallContext) => void;
 
 	/**
+	 * Enter a parse tree produced by the `FunCall`
+	 * labeled alternative in `RParser.expr`.
+	 * @param ctx the parse tree
+	 */
+	enterFunCall?: (ctx: FunCallContext) => void;
+	/**
+	 * Exit a parse tree produced by the `FunCall`
+	 * labeled alternative in `RParser.expr`.
+	 * @param ctx the parse tree
+	 */
+	exitFunCall?: (ctx: FunCallContext) => void;
+
+	/**
 	 * Enter a parse tree produced by the `Function`
 	 * labeled alternative in `RParser.expr`.
 	 * @param ctx the parse tree
@@ -101,19 +95,6 @@ export interface RListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitFunction?: (ctx: FunctionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `Brace`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterBrace?: (ctx: BraceContext) => void;
-	/**
-	 * Exit a parse tree produced by the `Brace`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitBrace?: (ctx: BraceContext) => void;
 
 	/**
 	 * Enter a parse tree produced by the `Namespace`
@@ -168,19 +149,6 @@ export interface RListener extends ParseTreeListener {
 	exitIndexing?: (ctx: IndexingContext) => void;
 
 	/**
-	 * Enter a parse tree produced by the `Seq`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterSeq?: (ctx: SeqContext) => void;
-	/**
-	 * Exit a parse tree produced by the `Seq`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitSeq?: (ctx: SeqContext) => void;
-
-	/**
 	 * Enter a parse tree produced by the `Assign`
 	 * labeled alternative in `RParser.expr`.
 	 * @param ctx the parse tree
@@ -194,19 +162,6 @@ export interface RListener extends ParseTreeListener {
 	exitAssign?: (ctx: AssignContext) => void;
 
 	/**
-	 * Enter a parse tree produced by the `If`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterIf?: (ctx: IfContext) => void;
-	/**
-	 * Exit a parse tree produced by the `If`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitIf?: (ctx: IfContext) => void;
-
-	/**
 	 * Enter a parse tree produced by the `For`
 	 * labeled alternative in `RParser.expr`.
 	 * @param ctx the parse tree
@@ -218,58 +173,6 @@ export interface RListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitFor?: (ctx: ForContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `While`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterWhile?: (ctx: WhileContext) => void;
-	/**
-	 * Exit a parse tree produced by the `While`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitWhile?: (ctx: WhileContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `Repeat`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterRepeat?: (ctx: RepeatContext) => void;
-	/**
-	 * Exit a parse tree produced by the `Repeat`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitRepeat?: (ctx: RepeatContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `Break`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterBreak?: (ctx: BreakContext) => void;
-	/**
-	 * Exit a parse tree produced by the `Break`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitBreak?: (ctx: BreakContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `Next`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterNext?: (ctx: NextContext) => void;
-	/**
-	 * Exit a parse tree produced by the `Next`
-	 * labeled alternative in `RParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitNext?: (ctx: NextContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `RParser.prog`.
@@ -325,6 +228,17 @@ export interface RListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitLiteral?: (ctx: LiteralContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `RParser.name`.
+	 * @param ctx the parse tree
+	 */
+	enterName?: (ctx: NameContext) => void;
+	/**
+	 * Exit a parse tree produced by `RParser.name`.
+	 * @param ctx the parse tree
+	 */
+	exitName?: (ctx: NameContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `RParser.formallist`.

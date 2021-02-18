@@ -1,23 +1,16 @@
 import {ANTLRInputStream, CommonTokenStream} from 'antlr4ts';
 import {RLexer} from './grammar/RLexer';
 import {RParser} from './grammar/RParser';
+import {ASTVisitor} from './grammar/ASTVisitor';
+import {RValue} from './main/types';
 
-const sampleProg : string = `
-x <- c(1,2,3)
-if (length(x) > 2) {
-    print("length is more than 2")
-} else {
-    x <- rep(x, 2)
-}
-x
-`;
 
-export function main() {
-    const input = new ANTLRInputStream(sampleProg);
+export function parse(prog: string) : RValue {
+    const input = new ANTLRInputStream(prog);
     const lexer = new RLexer(input);
     const tokens = new CommonTokenStream(lexer);
     const parser = new RParser(tokens);
-    parser.buildParseTree = true;
     const tree = parser.prog();
-    console.log(tree.toStringTree(parser));
+    const visitor = new ASTVisitor();
+    return visitor.visit(tree);
 }
