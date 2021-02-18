@@ -144,6 +144,32 @@ function remove_attribute(vec: RValue, key: string) {
     }
 }
 
+function attributes_to_list(vec: RValue) : List {
+    const keys = [];
+    const values = [];
+    let attribute = (vec as Raw).attributes;
+
+    while (attribute.tag !== RNull.tag) {
+        keys.push(attribute.key);
+        values.push(attribute.value);
+        attribute = attribute.next;
+    }
+
+    const names = {
+        attributes: RNull,
+        refcount: 0,
+        tag: 'character',
+        data: keys,
+    } as Character;
+
+    return {
+        attributes: mkPairlist([names, 'names']),
+        refcount: 0,
+        tag: 'list',
+        data: values,
+    } as List;
+}
+
 function has_attributes(vec: RValue): boolean {
     return types_with_attributes.indexOf(vec.tag) !== -1;
 }
