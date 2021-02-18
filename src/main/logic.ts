@@ -1,4 +1,5 @@
-import {Int, Logical, Real, RNull, RValue} from './types';
+import {Int, Logical, Real, RValue} from './types';
+import { RNull } from './values';
 
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
