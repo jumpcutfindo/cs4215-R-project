@@ -43,13 +43,6 @@ export interface PairList {
 //             else
 //             pairlist = pairlist.next
 
-export interface Raw {
-    attributes: PairList | Nil;
-    refcount: number;
-    readonly tag: 'raw';
-    data: ArrayBuffer;
-}
-
 export interface Logical {
     attributes: PairList | Nil;
     refcount: number;
@@ -135,7 +128,6 @@ export type RValue =
             | Name
             | PairList
             | List
-            | Raw
             | Logical
             | Int
             | Real

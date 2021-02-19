@@ -1,8 +1,8 @@
-import {Character, List, Logical, Nil, PairList, Raw, RValue} from './types';
+import {Character, List, Logical, Nil, PairList, RValue} from './types';
 import {mkChar, mkLogical, mkPairlist, RNull} from './values';
 
 const types_with_attributes = [
-    'list', 'pairlist', 'raw', 'logical',
+    'list', 'pairlist', 'PairList', 'logical',
     'integer', 'numeric', 'character', 'environment',
     'closure', 'promise', 'language', 'expression',
 ];
@@ -31,7 +31,7 @@ function set_attribute(vec: RValue, key: string, val: RValue) {
         return;
     }
 
-    const vector = vec as Raw;
+    const vector = vec as PairList;
 
     let prev_attribute: PairList | Nil = RNull;
     let attribute: PairList | Nil = vector.attributes;
@@ -64,7 +64,7 @@ function set_attributes(vec: RValue, list: RValue) {
         return RNull;
     }
 
-    const vector = vec as Raw;
+    const vector = vec as PairList;
     vector.attributes = list as PairList;
 }
 
@@ -78,7 +78,7 @@ function get_attribute(vec: RValue, which: string, match: boolean = false) {
         return RNull;
     }
 
-    const vector = vec as Raw;
+    const vector = vec as PairList;
 
     if (match) {
         let attribute: PairList | Nil = vector.attributes;
@@ -122,11 +122,11 @@ function get_attributes(vec: RValue) {
         return RNull;
     }
 
-    return (vec as Raw).attributes;
+    return (vec as PairList).attributes;
 }
 
 function remove_attribute(vec: RValue, key: string) {
-    const vector = vec as Raw;
+    const vector = vec as PairList;
 
     let prev_attribute: PairList | Nil = RNull;
     let attribute: PairList | Nil = vector.attributes;
@@ -147,7 +147,7 @@ function remove_attribute(vec: RValue, key: string) {
 function attributes_to_list(vec: RValue) : List {
     const keys = [];
     const values = [];
-    let attribute = (vec as Raw).attributes;
+    let attribute = (vec as PairList).attributes;
 
     while (attribute.tag !== RNull.tag) {
         keys.push(attribute.key);
