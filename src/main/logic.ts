@@ -1,4 +1,6 @@
-import {Int, Logical, Real, RNull, RValue} from './types';
+import { warn } from './error';
+import {Int, Logical, Real, RValue} from './types';
+import { RNull } from './values';
 
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
@@ -102,7 +104,7 @@ function recycle(
     }
 
     if (longer_operand.data.length % shorter_operand.data.length != 0) {
-        console.warn(
+        warn(
             'Warning: longer object length is not a multiple of shorter object length',
         );
     }

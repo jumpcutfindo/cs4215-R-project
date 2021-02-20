@@ -15,8 +15,8 @@ export interface List {
 export interface Name {
     readonly tag: 'name';
     pname: string;
-    // Difference from R: no field for primitive value; simply place Special/Builtin in environment
-    internal: RValue; // internal field still needed as INTERNAL field must be accessible from the symbol
+    value: Builtin | Special | Name; // Name is only used to mark unbound/missing sentinels
+    internal: Builtin | Special | Name; 
 }
 
 // Linked list type used internally for attributes, language objects
@@ -29,19 +29,6 @@ export interface PairList {
     next: PairList | Nil;
 }
 
-// getAtindex(rval, ix)
-//   case pairlist:
-//       for i 1:ix
-//          pairlist = pairlist.next
-//       return pairlist.val
-
-// getByName(rval, ix)
-//     case pairlist:
-//         for i in 1:ix:
-//             if pairlist.key = ix
-//             return
-//             else
-//             pairlist = pairlist.next
 
 export interface Raw {
     attributes: PairList | Nil;
@@ -96,12 +83,16 @@ export interface Closure {
 
 export interface Builtin {
     readonly tag: 'builtin';
-    name: string; // We shall use a map for primitive functions, thus a string index instead of an offset
+    jsFunc: PrimOp;
+    visibility: 'on' | 'off' | 'on-but-mutable';
+    variant: number; // May change to something more understandable
 }
 
 export interface Special {
     readonly tag: 'special';
-    name: string; // We shall use a map for primitive functions, thus a string index instead of an offset
+    jsFunc: PrimOp;
+    visibility: 'on' | 'off' | 'on-but-mutable';
+    variant: number;
 }
 
 export interface Prom {
@@ -147,3 +138,11 @@ export type RValue =
             | Prom
             | Language
             | Expression
+
+
+export type PrimOp = (
+    call: Language, 
+    op: Builtin | Special, 
+    args: PairList | Nil, 
+    env: Env
+) => RValue

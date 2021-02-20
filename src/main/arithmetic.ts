@@ -1,3 +1,4 @@
+import { warn } from './error';
 import {Logical, Int, Real, RValue} from './types';
 import {RNull} from './values';
 
@@ -127,7 +128,7 @@ function recycle(
     }
 
     if (longer_operand.data.length % shorter_operand.data.length != 0) {
-        console.warn(
+        warn(
             'Warning: longer object length is not a multiple of shorter object length',
         );
     }
@@ -339,7 +340,7 @@ function modulus(
         if (num !== null && other_num !== null) {
             const q = num / other_num;
             if (q !== Infinity && (Math.abs(q) * Number.EPSILON )> 1) {
-                console.warn('Warning: probable complete loss of accuracy in modulus');
+                warn('Warning: probable complete loss of accuracy in modulus');
             }
             return num % other_num;
         } else {
