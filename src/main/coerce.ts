@@ -1,4 +1,3 @@
-import { RValue } from "./types";
 import { stringFalse, stringTrue } from "./util";
 
 export function logicalFromString(x: string|null) : boolean|null {

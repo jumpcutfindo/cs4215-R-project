@@ -1,3 +1,9 @@
+export interface LinkedList {
+    key: string; // if all keys in linked list are "", names() returns NULL. Else missing names are ""
+    value: RValue; 
+    next: PairList | Nil;
+}
+
 export interface Nil {
     readonly tag: 'NULL';
 }
@@ -20,13 +26,10 @@ export interface Name {
 }
 
 // Linked list type used internally for attributes, language objects
-export interface PairList {
+export interface PairList extends LinkedList {
     attributes: PairList | Nil;
     refcount: number;
     readonly tag: 'pairlist';
-    key: string; // if all keys in linked list are "", names() returns NULL. Else missing names are ""
-    value: RValue; // Change: value cannot be null. Missing Args are implemented as R_MissingArg, which is a SYMSXP symbol marker
-    next: PairList | Nil;
 }
 
 
@@ -104,13 +107,16 @@ export interface Prom {
     environment: Env;
 }
 
-export interface Language {
+export interface DotDotDot extends LinkedList {
+    attributes: PairList | Nil;
+    refcount: number;
+    readonly tag: 'dotdotdot';
+}
+
+export interface Language extends LinkedList {
     attributes: PairList | Nil
     refcount: number;
     readonly tag: 'language';
-    // Must be of length at least 1. 1st item is the function
-    // (symbol or language object evaluating to function). Rest are arguments
-    call: PairList;
 }
 
 export interface Expression {
@@ -138,6 +144,7 @@ export type RValue =
             | Prom
             | Language
             | Expression
+            | DotDotDot
 
 
 export type PrimOp = (

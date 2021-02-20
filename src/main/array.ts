@@ -1,4 +1,4 @@
-import {RNull} from '..';
+import {RNull} from './values';
 import {Character, Int, List, Logical, Raw, Real, RValue} from './types';
 
 const valid_objects = ['list', 'logical', 'integer', 'numeric', 'character'];

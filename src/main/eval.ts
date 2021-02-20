@@ -26,9 +26,14 @@ export function Reval(e: RValue, env: RValue) : RValue {
     case 'promise':
         // force
     case 'language':
-
+    case 'dotdotdot':
     }
     return RNull;
+}
+
+// 
+export function RevalList() {
+    
 }
 
 export const do_if : PrimOp = (call, op, args, env) => {

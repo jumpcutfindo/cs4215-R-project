@@ -98,15 +98,16 @@ export function mkPairlist(
 }
 
 export function mkLang(
-    pair: [R.RValue, string?],
+    [val, key]: [R.RValue, string?],
     ...pairs: [R.RValue, string?][]
 ) : R.Language {
+    const tail = mkPairlist(...pairs);
     return {
         tag: 'language',
         refcount: 0,
         attributes: RNull,
-        call: mkPairlist(pair, ...pairs) as R.PairList,
+        key: key ?? '',
+        value: val,
+        next: tail
     };
 }
-
-// TODO: Global Symbol Table, install function

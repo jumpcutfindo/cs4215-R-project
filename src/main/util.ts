@@ -1,5 +1,5 @@
 import { error } from "./error";
-import { Nil, PairList, RValue } from "./types";
+import { LinkedList, Nil, PairList, RValue } from "./types";
 import { RNull } from "./values";
 
 /********************************************************
@@ -23,14 +23,14 @@ import { RNull } from "./values";
  * }
  ********************************************************/
 
-export function head(pl : PairList|Nil) : RValue {
+export function head(pl : LinkedList|Nil) : RValue {
     if (pl === RNull) {
         error('Empty list');
     } 
     return (<PairList>pl).value;
 }
 
-export function tail(pl : PairList|Nil) : PairList|Nil {
+export function tail(pl : LinkedList|Nil) : PairList|Nil {
     if (pl === RNull) {
         error('Empty list');
     } 
