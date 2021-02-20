@@ -2,8 +2,14 @@ import { warn } from './error';
 import {Logical, Int, Real, RValue} from './types';
 import {RNull} from './values';
 
+/**
+ * The types supported by the arithmetic operators.
+ */
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
+/**
+ * We define the supported unary and binary operators here.
+ */
 const unary_arithmetic_functions: any = {
     '+': positive,
     '-': negative,
@@ -20,9 +26,9 @@ const binary_arithmetic_functions: any = {
 };
 
 function apply_unary_arithmetic_operation(
-    operator: any,
+    operator: string,
     operand: RValue,
-) {
+) : Logical | Real | Int | undefined {
     if (
         type_hierarchy.indexOf(operand.tag) === -1
     ) {
@@ -48,10 +54,10 @@ function apply_unary_arithmetic_operation(
 }
 
 function apply_binary_arithmetic_operation(
-    operator: any,
+    operator: string,
     first_operand: RValue,
     second_operand: RValue,
-) {
+) : Logical | Real | Int | undefined {
     if (
         type_hierarchy.indexOf(first_operand.tag) === -1 ||
         type_hierarchy.indexOf(second_operand.tag) === -1
@@ -111,6 +117,7 @@ function apply_binary_arithmetic_operation(
     // 6. Return result as a newly created vector
     return create_vector_of_type(arithmetic_result, arithmetic_result_type);
 }
+
 
 function recycle(
     first_operand: Logical | Int | Real,

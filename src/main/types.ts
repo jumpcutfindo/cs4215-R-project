@@ -33,13 +33,6 @@ export interface PairList extends LinkedList {
 }
 
 
-export interface Raw {
-    attributes: PairList | Nil;
-    refcount: number;
-    readonly tag: 'raw';
-    data: ArrayBuffer;
-}
-
 export interface Logical {
     attributes: PairList | Nil;
     refcount: number;
@@ -132,7 +125,6 @@ export type RValue =
             | Name
             | PairList
             | List
-            | Raw
             | Logical
             | Int
             | Real
