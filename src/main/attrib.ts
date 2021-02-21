@@ -1,3 +1,4 @@
+import { copy } from './copy';
 import {error} from './error';
 import * as R from './types';
 import {mkChar, mkLogical, mkPairlist, RNull} from './values';
@@ -35,8 +36,13 @@ function setAttribute(vec: R.RValue, key: string, val: R.RValue) {
     while (attribute.tag !== RNull.tag) {
         if (attribute.key === key) {
             // Exists in the pairlist
-            attribute.value = val;
-            return;
+            const new_attribute = copy(attribute) as R.PairList;
+            new_attribute.value = val;
+
+            if (prev_attribute.tag !== RNull.tag) {
+                prev_attribute.next = new_attribute;
+            }
+            new_attribute.next = attribute.next;
         }
         prev_attribute = attribute;
         attribute = attribute.next;
