@@ -1,6 +1,7 @@
-import { warn } from './error';
+import {error, warn} from './error';
 import {Int, Logical, Real, RValue} from './types';
-import { RNull } from './values';
+import {RNull} from './values';
+import * as Coerce from './coerce';
 
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
@@ -16,12 +17,12 @@ const binary_logical_functions: any = {
     'xor': xor,
 };
 
-function apply_unary_logical_operation(
+function applyUnaryLogicalOperation(
     operator: any,
     operand: RValue,
 ) {
     if (type_hierarchy.indexOf(operand.tag) == -1) {
-        console.error(`Error: logical operations are possible only for logical, integer or numeric types`);
+        error(`Error: logical operations are possible only for logical, integer or numeric types`);
     }
 
     const operands = {
@@ -39,16 +40,16 @@ function apply_unary_logical_operation(
         console.log(`Developer: '${operator}' operator is not yet implemented!`);
     } else {
         // 1. Coerce types to logical
-        operands.operand = coerce_operand_to_logical(operands.operand);
+        operands.operand = coerceOperandToLogical(operands.operand);
 
         // 2. Carry out operation
         logical_result = unary_logical_functions[operator](operands.operand.data);
     }
 
-    return create_vector_of_type(logical_result, logical_result_type);
+    return createVectorOfType(logical_result, logical_result_type);
 }
 
-function apply_binary_logical_operation(
+function applyBinaryLogicalOperation(
     operator: any,
     first_operand: RValue,
     second_operand: RValue,
@@ -57,7 +58,7 @@ function apply_binary_logical_operation(
         type_hierarchy.indexOf(first_operand.tag) === -1 ||
         type_hierarchy.indexOf(second_operand.tag) === -1
     ) {
-        console.error(`Error: logical operations are possible only for logical, integer or numeric types`);
+        error(`Error: logical operations are possible only for logical, integer or numeric types`);
         return;
     }
 
@@ -67,8 +68,8 @@ function apply_binary_logical_operation(
     };
 
     // 1. Coerce both operands to logical type
-    operands.first_operand = coerce_operand_to_logical(operands.first_operand);
-    operands.second_operand = coerce_operand_to_logical(operands.second_operand);
+    operands.first_operand = coerceOperandToLogical(operands.first_operand);
+    operands.second_operand = coerceOperandToLogical(operands.second_operand);
 
     // 2. Check vector lengths and do recycling if operation is elementwise
     if (
@@ -85,7 +86,7 @@ function apply_binary_logical_operation(
         operands.second_operand.data,
     );
 
-    return create_vector_of_type(logical_result, logical_result_type);
+    return createVectorOfType(logical_result, logical_result_type);
 }
 
 function recycle(
@@ -123,24 +124,7 @@ function recycle(
     };
 }
 
-function coerce_operand_to_logical(operand: Logical | Int | Real) {
-    return {
-        attributes: operand.attributes,
-        refcount: operand.refcount,
-        tag: 'logical',
-        data: (operand.data as any).map((x: any) => {
-            if (x === null) {
-                return null;
-            } else if (x === 0 || x === false) {
-                return false;
-            } else {
-                return true;
-            }
-        }),
-    } as Logical;
-}
-
-function create_vector_of_type(data: [boolean | number], type: string) {
+function createVectorOfType(data: [boolean | number], type: string) {
     switch (type) {
     case 'logical':
         return {
@@ -164,6 +148,23 @@ function create_vector_of_type(data: [boolean | number], type: string) {
             data: data,
         } as Real;
     }
+}
+
+function coerceOperandToLogical(operand: Logical | Int | Real) {
+    return {
+        attributes: operand.attributes,
+        refcount: operand.refcount,
+        tag: 'logical',
+        data: (operand.data as any).map((x: any) => {
+            if (x === null) {
+                return null;
+            } else if (x === 0 || x === false) {
+                return false;
+            } else {
+                return true;
+            }
+        }),
+    } as Logical;
 }
 
 function not(

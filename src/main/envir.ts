@@ -1,6 +1,6 @@
-import { Reval } from './eval';
+import {Reval} from './eval';
 import * as R from './types';
-import { RNull, R_BaseEnv, R_EmptyEnv, R_UnboundValue } from './values';
+import {RNull, R_BaseEnv, R_EmptyEnv, R_UnboundValue} from './values';
 
 export function findVarInFrame(symbol: R.Name, env: R.Env): R.RValue {
     if (env === R_BaseEnv) {
@@ -21,7 +21,7 @@ export function findVar(symbol: R.Name, env: R.Env): R.RValue {
 
 // Finds variables with types satisfying provided predicate
 export function findVarType(
-    symbol: R.Name, env: R.Env, inherits: boolean, typepred: (tname: string) => boolean
+    symbol: R.Name, env: R.Env, inherits: boolean, typepred: (tname: string) => boolean,
 ): R.RValue {
     let result: R.RValue = R_UnboundValue;
     while (env !== R_EmptyEnv) {
@@ -45,11 +45,11 @@ export function findVarType(
 
 const functionTypes = ['special', 'builtin', 'closure'];
 
-export function findFun(symbol: R.Name, env: R.Env): R.Closure|R.Builtin|R.Special { 
+export function findFun(symbol: R.Name, env: R.Env): R.Closure|R.Builtin|R.Special {
     return findVarType(
         symbol,
         env,
-        true, 
-        s => functionTypes.indexOf(s) !== -1
+        true,
+        (s) => functionTypes.indexOf(s) !== -1,
     ) as R.Closure|R.Builtin|R.Special;
 }

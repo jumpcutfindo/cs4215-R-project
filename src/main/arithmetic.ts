@@ -1,11 +1,7 @@
-import { warn } from './error';
-import {Logical, Int, Real, RValue} from './types';
+import {error, warn} from './error';
+import * as R from './types';
 import {RNull} from './values';
-
-/**
- * The types supported by the arithmetic operators.
- */
-const type_hierarchy = ['logical', 'integer', 'numeric'];
+import * as Coerce from './coerce';
 
 /**
  * We define the supported unary and binary operators here.
@@ -22,60 +18,60 @@ const binary_arithmetic_functions: any = {
     '/': divide,
     '^': power,
     '%%': modulus,
-    '%/%': integer_division,
+    '%/%': integerDivision,
 };
 
-function apply_unary_arithmetic_operation(
+function applyUnaryArithmeticOperation(
     operator: string,
-    operand: RValue,
-) : Logical | Real | Int | undefined {
+    operand: R.RValue,
+) : R.Logical | R.Real | R.Int | undefined {
     if (
-        type_hierarchy.indexOf(operand.tag) === -1
+        isAllowedOperand(operand)
     ) {
-        console.error(`Error: non-numeric argument to binary operator`);
+        error(`Error: non-numeric argument to binary operator`);
         return;
     }
 
     const operands = {
-        operand: operand as Logical | Int | Real,
+        operand: operand as R.Logical | R.Int | R.Real,
     };
 
     let arithmetic_result_type = operands.operand.tag;
     // 1. If type logical, coerce to integer
     if (operands.operand.tag === 'logical') {
-        operands.operand = coerce_operand_to_type(operands.operand, 'integer');
+        operands.operand = coerceOperandToType(operands.operand, 'integer');
         arithmetic_result_type = 'integer';
     }
 
     // 2. Carry out operation
     const arithmetic_result = unary_arithmetic_functions[operator](operands.operand.data);
 
-    return create_vector_of_type(arithmetic_result, arithmetic_result_type);
+    return createVectorOfType(arithmetic_result, arithmetic_result_type);
 }
 
-function apply_binary_arithmetic_operation(
+function applyBinaryArithmeticOperation(
     operator: string,
-    first_operand: RValue,
-    second_operand: RValue,
-) : Logical | Real | Int | undefined {
+    first_operand: R.RValue,
+    second_operand: R.RValue,
+) : R.Logical | R.Real | R.Int | undefined {
     if (
-        type_hierarchy.indexOf(first_operand.tag) === -1 ||
-        type_hierarchy.indexOf(second_operand.tag) === -1
+        !isAllowedOperand(first_operand) ||
+        !isAllowedOperand(second_operand)
     ) {
-        console.error(`Error: non-numeric argument to binary operator`);
+        error(`Error: non-numeric argument to binary operator`);
         return;
     }
 
     let operands = {
-        first_operand: first_operand as Logical | Int | Real,
-        second_operand: second_operand as Logical | Int | Real,
+        first_operand: first_operand as R.Logical | R.Int | R.Real,
+        second_operand: second_operand as R.Logical | R.Int | R.Real,
     };
 
     // 1. Coercion to the same type
     if (operands.first_operand.tag !== operands.second_operand.tag) {
-        operands = coerce_types(
-            first_operand as Logical | Int | Real,
-            second_operand as Logical | Int | Real,
+        operands = coerceTypes(
+            first_operand as R.Logical | R.Int | R.Real,
+            second_operand as R.Logical | R.Int | R.Real,
         );
     }
 
@@ -90,12 +86,12 @@ function apply_binary_arithmetic_operation(
     // 3. If both are logical types, convert to integer types
     if (arithmetic_result_type === 'logical') {
         operands.first_operand =
-            coerce_operand_to_type(
-                first_operand as Logical | Int | Real,
+            coerceOperandToType(
+                first_operand as R.Logical | R.Int | R.Real,
                 'integer',
             );
         operands.second_operand =
-            coerce_operand_to_type(second_operand as Logical | Int | Real,
+            coerceOperandToType(second_operand as R.Logical | R.Int | R.Real,
                 'integer',
             );
 
@@ -115,16 +111,26 @@ function apply_binary_arithmetic_operation(
     );
 
     // 6. Return result as a newly created vector
-    return create_vector_of_type(arithmetic_result, arithmetic_result_type);
+    return createVectorOfType(arithmetic_result, arithmetic_result_type);
 }
 
+function isAllowedOperand(operand: R.RValue) {
+    switch (operand.tag) {
+    case ('logical'):
+    case ('integer'):
+    case ('numeric'):
+        return true;
+    default:
+        return false;
+    }
+}
 
 function recycle(
-    first_operand: Logical | Int | Real,
-    second_operand: Logical | Int | Real,
+    first_operand: R.Logical | R.Int | R.Real,
+    second_operand: R.Logical | R.Int | R.Real,
 ) {
-    let shorter_operand: Logical | Int | Real;
-    let longer_operand: Logical | Int | Real;
+    let shorter_operand: R.Logical | R.Int | R.Real;
+    let longer_operand: R.Logical | R.Int | R.Real;
 
     if (first_operand.data.length > second_operand.data.length) {
         longer_operand = first_operand;
@@ -154,12 +160,77 @@ function recycle(
     };
 }
 
-function coerce_types(
-    first_operand: Logical | Int | Real,
-    second_operand: Logical | Int | Real,
+function createVectorOfType(data: [boolean | number], type: string) {
+    switch (type) {
+    case 'logical':
+        return {
+            attributes: RNull,
+            refcount: 0,
+            tag: 'logical',
+            data: data,
+        } as R.Logical;
+    case 'integer':
+        return {
+            attributes: RNull,
+            refcount: 0,
+            tag: 'integer',
+            data: data,
+        } as R.Int;
+    default:
+        return {
+            attributes: RNull,
+            refcount: 0,
+            tag: 'numeric',
+            data: data,
+        } as R.Real;
+    }
+}
+
+function coerceOperandToType(operand: R.Logical | R.Int | R.Real, type: string) {
+    switch (type) {
+    case 'logical':
+        return {
+            attributes: operand.attributes,
+            refcount: operand.refcount,
+            tag: 'logical',
+            data: (operand.data as any).map((x: any) => x === 0 ? false : true),
+        } as R.Logical;
+    case 'integer':
+        return {
+            attributes: operand.attributes,
+            refcount: operand.refcount,
+            tag: 'integer',
+            data: (operand.data as any).map((x: any) => {
+                if (operand.tag === 'logical') {
+                    return x ? 1 : 0;
+                } else {
+                    return x;
+                }
+            }),
+        } as R.Int;
+    default:
+        return {
+            attributes: operand.attributes,
+            refcount: operand.refcount,
+            tag: 'numeric',
+            data: (operand.data as any).map((x: any) => {
+                if (operand.tag === 'logical') {
+                    return x ? 1 : 0;
+                } else {
+                    return x;
+                }
+            }),
+        } as R.Real;
+    }
+}
+
+function coerceTypes(
+    first_operand: R.Logical | R.Int | R.Real,
+    second_operand: R.Logical | R.Int | R.Real,
 ) {
     let first_operand_modified;
     let second_operand_modified;
+    const type_hierarchy = ['logical', 'integer', 'numeric'];
 
     const type_index = Math.max(
         type_hierarchy.indexOf(first_operand.tag),
@@ -167,34 +238,34 @@ function coerce_types(
     );
     switch (type_hierarchy[type_index]) {
     case 'logical':
-        first_operand_modified = coerce_operand_to_type(
+        first_operand_modified = coerceOperandToType(
             first_operand,
             'logical',
         );
 
-        second_operand_modified = coerce_operand_to_type(
+        second_operand_modified = coerceOperandToType(
             second_operand,
             'logical',
         );
         break;
     case 'integer':
-        first_operand_modified = coerce_operand_to_type(
+        first_operand_modified = coerceOperandToType(
             first_operand,
             'integer',
         );
 
-        second_operand_modified = coerce_operand_to_type(
+        second_operand_modified = coerceOperandToType(
             second_operand,
             'integer',
         );
         break;
     default:
-        first_operand_modified = coerce_operand_to_type(
+        first_operand_modified = coerceOperandToType(
             first_operand,
             'numeric',
         );
 
-        second_operand_modified = coerce_operand_to_type(
+        second_operand_modified = coerceOperandToType(
             second_operand,
             'numeric',
         );
@@ -207,69 +278,6 @@ function coerce_types(
     };
 }
 
-function coerce_operand_to_type(operand: Logical | Int | Real, type: string) {
-    switch (type) {
-    case 'logical':
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'logical',
-            data: (operand.data as any).map((x: any) => x === 0 ? false : true),
-        } as Logical;
-    case 'integer':
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'integer',
-            data: (operand.data as any).map((x: any) => {
-                if (operand.tag === 'logical') {
-                    return x ? 1 : 0;
-                } else {
-                    return x;
-                }
-            }),
-        } as Int;
-    default:
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'numeric',
-            data: (operand.data as any).map((x: any) => {
-                if (operand.tag === 'logical') {
-                    return x ? 1 : 0;
-                } else {
-                    return x;
-                }
-            }),
-        } as Real;
-    }
-}
-
-function create_vector_of_type(data: [boolean | number], type: string) {
-    switch (type) {
-    case 'logical':
-        return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'logical',
-            data: data,
-        } as Logical;
-    case 'integer':
-        return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'integer',
-            data: data,
-        } as Int;
-    default:
-        return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'numeric',
-            data: data,
-        } as Real;
-    }
-}
 
 // Unary arithmetic functions include +, -
 function positive(
@@ -356,7 +364,7 @@ function modulus(
     });
 }
 
-function integer_division(
+function integerDivision(
     first_operand_data: [number | null],
     second_operand_data: [number | null],
 ) {

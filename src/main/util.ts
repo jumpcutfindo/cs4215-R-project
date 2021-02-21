@@ -1,22 +1,22 @@
-import { error } from "./error";
-import { LinkedList, Nil, PairList, RValue } from "./types";
-import { RNull } from "./values";
+import {error} from './error';
+import {LinkedList, Nil, PairList, RValue} from './types';
+import {RNull} from './values';
 
-/********************************************************
+/** ******************************************************
  * RValue manipulation facilities
- * 
+ *
  * These functions are not total, used to deal with
  * dynamic linked lists more ergonomically
- * 
+ *
  * Sample usage:
- * 
+ *
  * function test(x: R.PairList) {
  *     let ptr: R.PairList | R.Nil = x;
  *     while (ptr.tag === 'pairlist') {
  *         console.log(`${ptr.key} no type errors!`);
  *         ptr = tail(ptr);
  *     }
- * 
+ *
  *     for (ptr = x; ptr.tag !== 'NULL'; ptr = tail(ptr)) {
  *         console.log(`${ptr.key} no type errors!`);
  *     }
@@ -26,18 +26,18 @@ import { RNull } from "./values";
 export function head(pl : LinkedList|Nil) : RValue {
     if (pl === RNull) {
         error('Empty list');
-    } 
+    }
     return (<PairList>pl).value;
 }
 
 export function tail(pl : LinkedList|Nil) : PairList|Nil {
     if (pl === RNull) {
         error('Empty list');
-    } 
+    }
     return (<PairList>pl).next;
 }
 
-/********************************************************
+/** ******************************************************
  * String Truthiness utils
  ********************************************************/
 
@@ -58,12 +58,12 @@ const truenames = [
     'T',
     'True',
     'TRUE',
-    'true'
+    'true',
 ];
 
 const falsenames = [
     'F',
     'False',
     'FALSE',
-    'false'
+    'false',
 ];

@@ -1,6 +1,6 @@
 export interface LinkedList {
     key: string; // if all keys in linked list are "", names() returns NULL. Else missing names are ""
-    value: RValue; 
+    value: RValue;
     next: PairList | Nil;
 }
 
@@ -22,7 +22,7 @@ export interface Name {
     readonly tag: 'name';
     pname: string;
     value: Builtin | Special | Name; // Name is only used to mark unbound/missing sentinels
-    internal: Builtin | Special | Name; 
+    internal: Builtin | Special | Name;
 }
 
 // Linked list type used internally for attributes, language objects
@@ -140,8 +140,8 @@ export type RValue =
 
 
 export type PrimOp = (
-    call: Language, 
-    op: Builtin | Special, 
-    args: PairList | Nil, 
+    call: Language,
+    op: Builtin | Special,
+    args: PairList | Nil,
     env: Env
 ) => RValue

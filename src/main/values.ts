@@ -17,21 +17,21 @@ export const R_EmptyEnv: R.Env = {
     tag: 'environment',
     attributes: RNull,
     parent: RNull,
-    frame: new Map()
-}
+    frame: new Map(),
+};
 export const R_BaseEnv: R.Env = {
     tag: 'environment',
     attributes: RNull,
     parent: R_EmptyEnv,
-    frame: new Map()
-}
+    frame: new Map(),
+};
 
 export function mkName(name: string) : R.Name {
     return {
-        tag: 'name', 
-        pname: name, 
-        internal: R_UnboundValue, 
-        value: R_UnboundValue
+        tag: 'name',
+        pname: name,
+        internal: R_UnboundValue,
+        value: R_UnboundValue,
     };
 }
 
@@ -108,6 +108,6 @@ export function mkLang(
         attributes: RNull,
         key: key ?? '',
         value: val,
-        next: tail
+        next: tail,
     };
 }

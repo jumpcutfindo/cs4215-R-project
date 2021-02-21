@@ -1,4 +1,5 @@
-import { stringFalse, stringTrue } from "./util";
+import {Int, Logical, Real} from './types';
+import {stringFalse, stringTrue} from './util';
 
 export function logicalFromString(x: string|null) : boolean|null {
     if (x !== null) {

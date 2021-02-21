@@ -1,11 +1,7 @@
-import {Character, List, Logical, Nil, PairList, RValue} from './types';
+import {error} from './error';
+import * as R from './types';
 import {mkChar, mkLogical, mkPairlist, RNull} from './values';
 
-const types_with_attributes = [
-    'list', 'pairlist', 'PairList', 'logical',
-    'integer', 'numeric', 'character', 'environment',
-    'closure', 'promise', 'language', 'expression',
-];
 
 function do_attr() {
 
@@ -15,26 +11,26 @@ function do_attributes() {
     // If is null, coerce to an empty list
 }
 
-function set_attribute(vec: RValue, key: string, val: RValue) {
+function setAttribute(vec: R.RValue, key: string, val: R.RValue) {
     if (vec.tag === RNull.tag) {
-        console.error('invalid (NULL) left side of argument');
+        error('invalid (NULL) left side of argument');
         return;
     }
 
-    if (!has_attributes(vec)) {
-        console.error('attributes are not allowed on the given type');
+    if (!hasAttributes(vec)) {
+        error('attributes are not allowed on the given type');
         return RNull;
     }
 
     if (val.tag === RNull.tag) {
-        remove_attribute(vec, key);
+        removeAttribute(vec, key);
         return;
     }
 
-    const vector = vec as PairList;
+    const vector = vec as R.PairList;
 
-    let prev_attribute: PairList | Nil = RNull;
-    let attribute: PairList | Nil = vector.attributes;
+    let prev_attribute: R.PairList | R.Nil = RNull;
+    let attribute: R.PairList | R.Nil = vector.attributes;
 
     while (attribute.tag !== RNull.tag) {
         if (attribute.key === key) {
@@ -53,35 +49,35 @@ function set_attribute(vec: RValue, key: string, val: RValue) {
     }
 }
 
-function set_attributes(vec: RValue, list: RValue) {
+function setAttributes(vec: R.RValue, list: R.RValue) {
     if (list.tag !== 'pairlist') {
-        console.error('attributes must be a list or NULL');
+        error('attributes must be a list or NULL');
         return RNull;
     }
 
-    if (!has_attributes(vec)) {
-        console.error('attributes are not allowed on the given type');
+    if (!hasAttributes(vec)) {
+        error('attributes are not allowed on the given type');
         return RNull;
     }
 
-    const vector = vec as PairList;
-    vector.attributes = list as PairList;
+    const vector = vec as R.PairList;
+    vector.attributes = list as R.PairList;
 }
 
-function get_attribute(vec: RValue, which: string, match: boolean = false) {
+function getAttribute(vec: R.RValue, which: string, match: boolean = false) {
     if (vec.tag === RNull.tag) {
         return RNull;
     }
 
-    if (!has_attributes(vec)) {
-        console.error('attributes are not allowed on the given type');
+    if (!hasAttributes(vec)) {
+        error('attributes are not allowed on the given type');
         return RNull;
     }
 
-    const vector = vec as PairList;
+    const vector = vec as R.PairList;
 
     if (match) {
-        let attribute: PairList | Nil = vector.attributes;
+        let attribute: R.PairList | R.Nil = vector.attributes;
 
         while (attribute.tag !== RNull.tag) {
             if (attribute.key === which) {
@@ -92,7 +88,7 @@ function get_attribute(vec: RValue, which: string, match: boolean = false) {
 
         return RNull;
     } else {
-        let attribute: PairList | Nil = vector.attributes;
+        let attribute: R.PairList | R.Nil = vector.attributes;
 
         const potential_attributes = [];
 
@@ -101,7 +97,7 @@ function get_attribute(vec: RValue, which: string, match: boolean = false) {
                 if (attribute.key === which) return attribute;
                 potential_attributes.push(attribute);
             }
-            attribute = attribute.next as PairList;
+            attribute = attribute.next as R.PairList;
         }
 
         if (potential_attributes.length == 1) {
@@ -112,24 +108,24 @@ function get_attribute(vec: RValue, which: string, match: boolean = false) {
     }
 }
 
-function get_attributes(vec: RValue) {
+function getAttributes(vec: R.RValue) {
     if (vec.tag === RNull.tag) {
         return RNull;
     }
 
-    if (!has_attributes(vec)) {
-        console.error('attributes are not allowed on the given type');
+    if (!hasAttributes(vec)) {
+        error('attributes are not allowed on the given type');
         return RNull;
     }
 
-    return (vec as PairList).attributes;
+    return (vec as R.PairList).attributes;
 }
 
-function remove_attribute(vec: RValue, key: string) {
-    const vector = vec as PairList;
+function removeAttribute(vec: R.RValue, key: string) {
+    const vector = vec as R.PairList;
 
-    let prev_attribute: PairList | Nil = RNull;
-    let attribute: PairList | Nil = vector.attributes;
+    let prev_attribute: R.PairList | R.Nil = RNull;
+    let attribute: R.PairList | R.Nil = vector.attributes;
 
     while (attribute.tag !== RNull.tag) {
         if (attribute.key === key) {
@@ -144,10 +140,10 @@ function remove_attribute(vec: RValue, key: string) {
     }
 }
 
-function attributes_to_list(vec: RValue) : List {
+function attributesToList(vec: R.RValue) : R.List {
     const keys = [];
     const values = [];
-    let attribute = (vec as PairList).attributes;
+    let attribute = (vec as R.PairList).attributes;
 
     while (attribute.tag !== RNull.tag) {
         keys.push(attribute.key);
@@ -160,16 +156,31 @@ function attributes_to_list(vec: RValue) : List {
         refcount: 0,
         tag: 'character',
         data: keys,
-    } as Character;
+    } as R.Character;
 
     return {
         attributes: mkPairlist([names, 'names']),
         refcount: 0,
         tag: 'list',
         data: values,
-    } as List;
+    } as R.List;
 }
 
-function has_attributes(vec: RValue): boolean {
-    return types_with_attributes.indexOf(vec.tag) !== -1;
+function hasAttributes(vec: R.RValue): boolean {
+    switch (vec.tag) {
+    case ('list'):
+    case ('pairlist'):
+    case ('logical'):
+    case ('integer'):
+    case ('numeric'):
+    case ('character'):
+    case ('environment'):
+    case ('closure'):
+    case ('promise'):
+    case ('language'):
+    case ('expression'):
+        return true;
+    default:
+        return false;
+    }
 }
