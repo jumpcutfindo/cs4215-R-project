@@ -1,5 +1,6 @@
 import * as R from './types';
-import {R_SymbolTable} from './globals';
+import {EvalContext} from './globals';
+import { ddval } from './dotdotdot';
 
 const v : any = {tag: 'name', pname: ''};
 v.internal = v;
@@ -11,6 +12,9 @@ export const RNull : R.Nil = {tag: 'NULL'};
 export const R_MissingArg = v as R.Name;
 export const R_UnboundValue = v2 as R.Name;
 
+// Symbols used in code
+export const R_DotsSymbol : R.Name = install('...');
+export const R_LastValueSymbol : R.Name = install('.Last.value');
 
 // Global constants which are the base environments
 export const R_EmptyEnv: R.Env = {
@@ -26,8 +30,22 @@ export const R_BaseEnv: R.Env = {
     frame: new Map()
 }
 
+export const R_GlobalEnv: R.Env = {
+    tag: 'environment',
+    attributes: RNull,
+    parent: R_BaseEnv,
+    frame: new Map()
+}
+
 export function mkName(name: string) : R.Name {
-    return {
+    let ddnum = ddval(name);
+    return ddnum !== null ? {
+        tag: 'name', 
+        pname: name, 
+        internal: R_UnboundValue, 
+        value: R_UnboundValue,
+        ddval: ddnum
+    } : {
         tag: 'name', 
         pname: name, 
         internal: R_UnboundValue, 
@@ -43,7 +61,7 @@ export function mkName(name: string) : R.Name {
  * @return {R.Name} A Name with given string as pname
  */
 export function install(symbolname: string) : R.Name {
-    let result = R_SymbolTable.get(symbolname);
+    let result = EvalContext.R_SymbolTable.get(symbolname);
     if (result !== undefined) {
         return result;
     } else {
@@ -52,29 +70,29 @@ export function install(symbolname: string) : R.Name {
             throw new Error('attempt to use zero-length variable name');
         }
         result = mkName(symbolname);
-        R_SymbolTable.set(symbolname, result);
+        EvalContext.R_SymbolTable.set(symbolname, result);
         return result;
     }
 }
 
 // Used to directly install symbols in setup
 export function installSymbol(symbol: R.Name) {
-    R_SymbolTable.set(symbol.pname, symbol);
+    EvalContext.R_SymbolTable.set(symbol.pname, symbol);
 }
 
 export function mkLogical(value: boolean | null) : R.Logical {
     return {tag: 'logical', refcount: 0, attributes: RNull, data: [value]};
 }
 
-export function mkInt(value: number) : R.Int {
+export function mkInt(value: number | null) : R.Int {
     return {tag: 'integer', refcount: 0, attributes: RNull, data: [value]};
 }
 
-export function mkReal(value: number) : R.Real {
+export function mkReal(value: number | null) : R.Real {
     return {tag: 'numeric', refcount: 0, attributes: RNull, data: [value]};
 }
 
-export function mkChar(value: string) : R.Character {
+export function mkChar(value: string | null) : R.Character {
     return {tag: 'character', refcount: 0, attributes: RNull, data: [value]};
 }
 
@@ -110,4 +128,16 @@ export function mkLang(
         value: val,
         next: tail
     };
+}
+
+export function mkPromise(expr: R.RValue, env: R.Env) : R.Prom {
+    return {
+        tag: 'promise',
+        attributes: RNull,
+        refcount: 0,
+        cached: R_UnboundValue,
+        expression: expr,
+        seen: false,
+        environment: env
+    }
 }

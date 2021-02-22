@@ -1,6 +1,40 @@
-import { error } from "./error";
-import { LinkedList, Nil, PairList, RValue } from "./types";
+import { error, errorcall } from "./error";
+import { Builtin, Env, Language, LinkedList, Nil, PairList, RValue, Special } from "./types";
 import { RNull } from "./values";
+
+/********************************************************
+ * Length of any RValue
+ ********************************************************/
+
+// implementation copied from Rinlinedfuns.h
+export function length(s: RValue) : number {
+    switch (s.tag) {
+    case 'NULL':
+	    return 0;
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+    case 'list':
+    case 'expression':
+	    return s.data.length;
+    case 'pairlist':
+    case 'language':
+    case 'dotdotdot':
+        let i = 0;
+        while (s.tag !== 'NULL') {
+            i++;
+            s = tail(s);
+        }
+        return i;
+    case 'environment':
+	    return s.frame.size;
+    default:
+	    return 1;
+    }
+}
+
+
 
 /********************************************************
  * RValue manipulation facilities
@@ -30,11 +64,65 @@ export function head(pl : LinkedList|Nil) : RValue {
     return (<PairList>pl).value;
 }
 
+export function headkey(pl : LinkedList|Nil) : string {
+    if (pl === RNull) {
+        error('Empty list');
+    }
+    return (<PairList>pl).key;
+}
+
 export function tail(pl : LinkedList|Nil) : PairList|Nil {
     if (pl === RNull) {
         error('Empty list');
     } 
     return (<PairList>pl).next;
+}
+
+export function cons(val: RValue, pl: PairList|Nil) : PairList {
+    return {
+        tag: 'pairlist',
+        refcount: 0,
+        attributes: RNull,
+        key: '',
+        value: val,
+        next: pl
+    };
+}
+
+export class LinkedListIter implements Iterable<PairList> {
+    private static dummy: PairList = {
+        tag: 'pairlist',
+        refcount: 0,
+        attributes: RNull,
+        key: '',
+        value: RNull,
+        next: RNull
+    };
+    private _node: LinkedList|Nil;
+
+    constructor(pl: LinkedList|Nil) {
+        this._node = pl;
+    }
+
+    [Symbol.iterator]() {
+        return this;
+    }
+
+    public next() {
+        if (this._node === RNull) {
+            return {
+                done: true,
+                value: LinkedListIter.dummy
+            };
+        } else {
+            let result = {
+                done: false,
+                value: <PairList>this._node
+            };
+            this._node = (<PairList>this._node).next;
+            return result;
+        }
+    }
 }
 
 /********************************************************
@@ -67,3 +155,14 @@ const falsenames = [
     'FALSE',
     'false'
 ];
+
+/********************************************************
+ * Arity checking for Builtin/Specials
+ ********************************************************/
+
+ export function checkArity(call: Language, op: Builtin|Special, args: PairList|Nil) {
+     if (op.arity >= 0 && op.arity !== length(args)) {
+         errorcall(call, 
+            `${length(args)} argument(s) passed to call which requires ${op.arity}`);
+     }
+ }

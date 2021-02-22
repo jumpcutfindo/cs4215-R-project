@@ -13,9 +13,9 @@ export function copy(val: R.RValue) : R.RValue {
     case 'special':
     case 'promise':
     case 'environment':
-    case 'dotdotdot': // not sure if it is ever copied
         result = val;
         break;
+    case 'dotdotdot': // not sure if it is ever copied
     case 'pairlist':
     case 'language':
         result = {...val};
@@ -40,6 +40,7 @@ export function copy(val: R.RValue) : R.RValue {
     case 'closure':
         result = {...val};
         result.formals = copy(val.formals) as R.PairList;
+        result.attributes = copy(val.attributes) as R.Nil|R.PairList;
         result.body = copy(val.body) as R.Language;
         break;
     }
