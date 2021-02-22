@@ -29,8 +29,8 @@ const internals = [
 ];
 
 // Should put into initializing function and explicitly call it
-primitives.forEach((p) => installSymbol(p));
-internals.forEach((i) => installSymbol(i));
+// primitives.forEach((p) => installSymbol(p));
+// internals.forEach((i) => installSymbol(i));
 
 export function internalSymbol(
     name: string,

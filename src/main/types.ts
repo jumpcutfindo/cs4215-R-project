@@ -32,7 +32,6 @@ export interface PairList extends LinkedList {
     readonly tag: 'pairlist';
 }
 
-
 export interface Logical {
     attributes: PairList | Nil;
     refcount: number;

@@ -66,18 +66,17 @@ export function mkLogical(value: boolean | null) : R.Logical {
     return {tag: 'logical', refcount: 0, attributes: RNull, data: [value]};
 }
 
-export function mkInt(value: number) : R.Int {
+export function mkInt(value: number | null) : R.Int {
     return {tag: 'integer', refcount: 0, attributes: RNull, data: [value]};
 }
 
-export function mkReal(value: number) : R.Real {
+export function mkReal(value: number | null) : R.Real {
     return {tag: 'numeric', refcount: 0, attributes: RNull, data: [value]};
 }
 
-export function mkChar(value: string) : R.Character {
+export function mkChar(value: string | null) : R.Character {
     return {tag: 'character', refcount: 0, attributes: RNull, data: [value]};
 }
-
 
 // Make sure you supply at least 1 argument!
 export function mkPairlist(

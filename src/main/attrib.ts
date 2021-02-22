@@ -1,7 +1,7 @@
-import { copy } from './copy';
+import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
-import {mkChar, mkLogical, mkPairlist, RNull} from './values';
+import {mkPairlist, RNull} from './values';
 
 
 function do_attr() {
@@ -172,7 +172,7 @@ function attributesToList(vec: R.RValue) : R.List {
     } as R.List;
 }
 
-function hasAttributes(vec: R.RValue): boolean {
+export function hasAttributes(vec: R.RValue): boolean {
     switch (vec.tag) {
     case ('list'):
     case ('pairlist'):

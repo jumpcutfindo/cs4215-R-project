@@ -1,3 +1,4 @@
+import { hasAttributes } from './attrib';
 import {error} from './error';
 import {LinkedList, Nil, PairList, RValue} from './types';
 import {RNull} from './values';
@@ -37,6 +38,33 @@ export function tail(pl : LinkedList|Nil) : PairList|Nil {
     return (<PairList>pl).next;
 }
 
+export function length(pl: LinkedList | Nil) {
+    let len = 0;
+    let curr: LinkedList | Nil = pl;
+
+    while (curr !== RNull) {
+        len ++;
+        curr = (curr as LinkedList).next;
+    }
+
+    return len;
+}
+
+export function getAtLinkedListIndex(pl: LinkedList | Nil, index: number): LinkedList | Nil {
+    let curr = pl;
+
+    for (let i = 0; i < index; i ++) {
+        if (curr === RNull) {
+            error('Index out of bounds');
+            return RNull;
+        }
+
+        curr = (curr as LinkedList).next;
+    }
+
+    return curr;
+}
+
 /** ******************************************************
  * String Truthiness utils
  ********************************************************/
@@ -67,3 +95,20 @@ const falsenames = [
     'FALSE',
     'false',
 ];
+
+/** ******************************************************
+ * Other utils
+ ********************************************************/
+
+export function isVector(x: RValue): boolean {
+    switch (x.tag) {
+    case ('logical'):
+    case ('integer'):
+    case ('numeric'):
+    case ('character'):
+    case ('expression'):
+        return x.attributes === RNull;
+    default:
+        return false;
+    }
+}

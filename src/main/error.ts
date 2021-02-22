@@ -1,8 +1,8 @@
-import { Language } from "./types";
+import {Language} from './types';
 
 // Discuss with Daniel error handling; for now use this wherever error is encountered
 export function error(msg: string) {
-    throw new Error(msg)
+    throw new Error(msg);
 }
 
 // errorcall should be used to include the call object in the message but I'm not sure yet how.
