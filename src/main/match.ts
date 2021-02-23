@@ -1,6 +1,13 @@
-/*********************************************
+/*********************************************************************
  * Module for matching of formals to arguments
- *********************************************/
+ * 
+ * Differences from GNU R:
+ * 
+ * 1. Error messages do not have separate singular/plural form
+ * 2. matchArgs does not search the supplied arguments 1 extra time to
+ *    determine which arguments are unused, but just reports that there
+ *    are unused arguments
+ **********************************************************************/
 
 import { errorcall, ErrorOptions, warncall } from "./error";
 import { DotDotDot, Language, Nil, PairList, RValue } from "./types";

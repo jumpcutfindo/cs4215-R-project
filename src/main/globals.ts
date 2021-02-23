@@ -9,8 +9,6 @@ export class EvalContext {
     public static R_PendingPromises: Prom[] = [];
 }
 
-// R_DotsSymbol
-
 export function initPrimitives() {
     const do_something : PrimOp = (call, op, args, env) => RNull
 

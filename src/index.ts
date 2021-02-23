@@ -21,6 +21,7 @@ x <- y <<- 10
 
 const sampleProg3 : string = `
 if (T) 3 else 4
+.Last.value
 `;
 
 function interpret(prog: string, env: R.Env) {

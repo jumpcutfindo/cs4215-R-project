@@ -140,7 +140,11 @@ export type RValue =
             | Expression
             | DotDotDot
 
-
+// The interface of all R primitive and internal calls
+// call: Used largely for error reporting
+// op: Contains underlying js function, and some extra evaluation instructions
+// args: Arguments
+// env: Environment to execute this primitive.
 export type PrimOp = (
     call: Language,
     op: Builtin | Special,

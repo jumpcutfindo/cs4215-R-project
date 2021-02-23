@@ -5,6 +5,9 @@ import * as R from './types';
 import { head, tail } from './util';
 import { install, mkPromise, RNull, R_BaseEnv, R_DotsSymbol, R_EmptyEnv, R_MissingArg, R_UnboundValue } from './values';
 
+
+// Specialized version of NewEnvironment in GNU R which handles creating the execution environment
+// of a closure. Thus we can add default arguments together in 1 step.
 export function closureEnv(pl: R.PairList|R.Nil, vals: R.PairList|R.Nil, parent: R.Env): R.Env {
     let result : R.Env = {
         tag: 'environment',
