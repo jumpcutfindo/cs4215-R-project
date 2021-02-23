@@ -11,7 +11,6 @@ export function parse(prog: string) : RValue {
     const tokens = new CommonTokenStream(lexer);
     const parser = new RParser(tokens);
     const tree = parser.prog();
-    console.log(tree.toStringTree(parser));
     const visitor = new ASTVisitor();
     return visitor.visit(tree);
 }

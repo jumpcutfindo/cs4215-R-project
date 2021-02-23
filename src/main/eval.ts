@@ -55,7 +55,7 @@ export function Reval(e: RValue, env: Env) : RValue {
         break;
     case 'language':
         let lang = head(e);
-        let op = lang.tag === 'name' ? findFun(lang, env) : Reval(lang, env);
+        let op = lang.tag === 'name' ? findFun(lang, env, e) : Reval(lang, env);
         let args: PairList|Nil = tail(e);
         switch (op.tag) {
         case 'builtin':
@@ -71,9 +71,11 @@ export function Reval(e: RValue, env: Env) : RValue {
         case 'closure':
             let pargs = promiseArgs(args, env);
             result = applyClosure(e, op, pargs, env, RNull);
+            break;
         default:
             error('attempt to apply non-function');
         }
+        break;
     case 'dotdotdot':
         error("'...' used in an incorrect context");
     default:

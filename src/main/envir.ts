@@ -1,5 +1,5 @@
 import { lengthDots } from './dotdotdot';
-import { error } from './error';
+import { error, errorcall } from './error';
 import { Reval } from './eval';
 import * as R from './types';
 import { head, tail } from './util';
@@ -83,13 +83,17 @@ export function findVarType(
 
 const functionTypes = ['special', 'builtin', 'closure'];
 
-export function findFun(symbol: R.Name, env: R.Env): R.Closure|R.Builtin|R.Special { 
-    return findVarType(
+export function findFun(symbol: R.Name, env: R.Env, call: R.Language): R.Closure|R.Builtin|R.Special { 
+    let found = findVarType(
         symbol,
         env,
         true, 
         s => functionTypes.indexOf(s) !== -1
-    ) as R.Closure|R.Builtin|R.Special;
+    );
+    if (found === R_UnboundValue) {
+        errorcall(call, `could not find function ${symbol.pname}`);
+    }
+    return found as R.Closure|R.Builtin|R.Special;
 }
 
 export function defineVar(sym: R.Name, val: R.RValue, env: R.Env) {

@@ -1,6 +1,7 @@
 import * as R from './types';
-import {EvalContext} from './globals';
 import { ddval } from './dotdotdot';
+
+const R_SymbolTable : Map<string, R.Name> = new Map();
 
 const v : any = {tag: 'name', pname: ''};
 v.internal = v;
@@ -61,7 +62,7 @@ export function mkName(name: string) : R.Name {
  * @return {R.Name} A Name with given string as pname
  */
 export function install(symbolname: string) : R.Name {
-    let result = EvalContext.R_SymbolTable.get(symbolname);
+    let result = R_SymbolTable.get(symbolname);
     if (result !== undefined) {
         return result;
     } else {
@@ -70,14 +71,14 @@ export function install(symbolname: string) : R.Name {
             throw new Error('attempt to use zero-length variable name');
         }
         result = mkName(symbolname);
-        EvalContext.R_SymbolTable.set(symbolname, result);
+        R_SymbolTable.set(symbolname, result);
         return result;
     }
 }
 
 // Used to directly install symbols in setup
 export function installSymbol(symbol: R.Name) {
-    EvalContext.R_SymbolTable.set(symbol.pname, symbol);
+    R_SymbolTable.set(symbol.pname, symbol);
 }
 
 export function mkLogical(value: boolean | null) : R.Logical {

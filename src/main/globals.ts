@@ -7,32 +7,26 @@ import { installSymbol, RNull, R_UnboundValue } from './values';
 export class EvalContext {
     public static R_Visible: Vis = Vis.On;
     public static R_PendingPromises: Prom[] = [];
-    public static R_SymbolTable : Map<string, Name> = new Map();
 }
 
 // R_DotsSymbol
 
-// SAMPLE OF OUR VERSION OF SYMBOL TABLE + FUNCTION TABLE COMBINED
-
-const do_something : PrimOp = (call, op, args, env) => RNull
-
-const primitives = [
-    primitiveSymbol('if', do_if, 'special', {visibility: Vis.OnMut, arity: 2}),
-    primitiveSymbol('for', do_for, 'special', {visibility: Vis.Off, arity: 3}),
-    primitiveSymbol('break', do_break, 'special', {visibility: Vis.On, arity: 0, variant: 2}),
-    primitiveSymbol('next', do_break, 'special', {visibility: Vis.On, arity: 0, variant: 1}),
-    primitiveSymbol('return', do_return, 'special', {visibility: Vis.On, arity: 0})
-]
-
-const internals = [
-    internalSymbol('something', do_something, 'builtin', {visibility: Vis.On, arity: 1, variant: 1}),
-    internalSymbol('something.else', do_something, 'builtin', {visibility: Vis.On, arity: 1, variant: 2}),
-    internalSymbol('something.more', do_something, 'builtin', {visibility: Vis.On, arity: 1, variant: 3})
-]
-
-// Should put into initializing function and explicitly call it
-
 export function initPrimitives() {
+    const do_something : PrimOp = (call, op, args, env) => RNull
+
+    const primitives = [
+        primitiveSymbol('if', do_if, 'special', {visibility: Vis.OnMut, arity: 2}),
+        primitiveSymbol('for', do_for, 'special', {visibility: Vis.Off, arity: 3}),
+        primitiveSymbol('break', do_break, 'special', {visibility: Vis.On, arity: 0, variant: 2}),
+        primitiveSymbol('next', do_break, 'special', {visibility: Vis.On, arity: 0, variant: 1}),
+        primitiveSymbol('return', do_return, 'special', {visibility: Vis.On, arity: 0})
+    ]
+
+    const internals = [
+        internalSymbol('something', do_something, 'builtin', {visibility: Vis.On, arity: 1, variant: 1}),
+        internalSymbol('something.else', do_something, 'builtin', {visibility: Vis.On, arity: 1, variant: 2}),
+        internalSymbol('something.more', do_something, 'builtin', {visibility: Vis.On, arity: 1, variant: 3})
+    ]
     primitives.forEach(p => installSymbol(p));
     internals.forEach(i => installSymbol(i));
 }
