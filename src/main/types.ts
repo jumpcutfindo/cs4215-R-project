@@ -21,8 +21,9 @@ export interface List {
 export interface Name {
     readonly tag: 'name';
     pname: string;
-    value: Builtin | Special | Name; // Name is only used to mark unbound/missing sentinels
-    internal: Builtin | Special | Name;
+    value: RValue; 
+    internal: RValue; 
+    ddval?: number;
 }
 
 // Linked list type used internally for attributes, language objects
@@ -71,31 +72,34 @@ export interface Closure {
     attributes: PairList | Nil;
     refcount: number;
     readonly tag: 'closure';
-    formals: PairList; // should we make a pairlist type which can have undefined values? Or just have a single list type
-    body: Language;
+    formals: PairList|Nil; 
+    body: RValue;
     environment: Env;
 }
 
 export interface Builtin {
     readonly tag: 'builtin';
     jsFunc: PrimOp;
-    visibility: 'on' | 'off' | 'on-but-mutable';
+    visibility: Vis;
     variant: number; // May change to something more understandable
+    arity: number;
 }
 
 export interface Special {
     readonly tag: 'special';
     jsFunc: PrimOp;
-    visibility: 'on' | 'off' | 'on-but-mutable';
+    visibility: Vis;
     variant: number;
+    arity: number;
 }
 
 export interface Prom {
     attributes: PairList | Nil;
     refcount: number;
     readonly tag: 'promise';
-    cached: RValue // changed - UnboundValue is implemented as a sentinel RValue, not undefined
-    expression: RValue
+    cached: RValue; 
+    expression: RValue;
+    seen: boolean; // prevent infinite recursion
     environment: Env;
 }
 
@@ -117,7 +121,6 @@ export interface Expression {
     readonly tag: 'expression';
     data: RValue[]; // Mainly language objects, but could include literals of the atomic types as well
 }
-
 
 export type RValue =
               Nil
@@ -144,3 +147,9 @@ export type PrimOp = (
     args: PairList | Nil,
     env: Env
 ) => RValue
+
+export enum Vis {
+    Off,
+    On,
+    OnMut
+}

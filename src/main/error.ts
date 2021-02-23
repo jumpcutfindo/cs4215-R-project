@@ -17,3 +17,7 @@ export function warn(msg: string) {
 export function warncall(call: Language, msg: string) {
     console.warn(msg);
 }
+
+export class ErrorOptions {
+    public static R_warn_partial_match_args = false;
+}

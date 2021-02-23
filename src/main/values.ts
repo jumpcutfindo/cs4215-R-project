@@ -1,5 +1,7 @@
 import * as R from './types';
-import {R_SymbolTable} from './globals';
+import { ddval } from './dotdotdot';
+
+const R_SymbolTable : Map<string, R.Name> = new Map();
 
 const v : any = {tag: 'name', pname: ''};
 v.internal = v;
@@ -11,6 +13,9 @@ export const RNull : R.Nil = {tag: 'NULL'};
 export const R_MissingArg = v as R.Name;
 export const R_UnboundValue = v2 as R.Name;
 
+// Symbols used in code
+export const R_DotsSymbol : R.Name = install('...');
+export const R_LastValueSymbol : R.Name = install('.Last.value');
 
 // Global constants which are the base environments
 export const R_EmptyEnv: R.Env = {
@@ -26,12 +31,26 @@ export const R_BaseEnv: R.Env = {
     frame: new Map(),
 };
 
+export const R_GlobalEnv: R.Env = {
+    tag: 'environment',
+    attributes: RNull,
+    parent: R_BaseEnv,
+    frame: new Map()
+}
+
 export function mkName(name: string) : R.Name {
-    return {
-        tag: 'name',
-        pname: name,
-        internal: R_UnboundValue,
+    let ddnum = ddval(name);
+    return ddnum !== null ? {
+        tag: 'name', 
+        pname: name, 
+        internal: R_UnboundValue, 
         value: R_UnboundValue,
+        ddval: ddnum
+    } : {
+        tag: 'name', 
+        pname: name, 
+        internal: R_UnboundValue, 
+        value: R_UnboundValue
     };
 }
 
@@ -109,4 +128,16 @@ export function mkLang(
         value: val,
         next: tail,
     };
+}
+
+export function mkPromise(expr: R.RValue, env: R.Env) : R.Prom {
+    return {
+        tag: 'promise',
+        attributes: RNull,
+        refcount: 0,
+        cached: R_UnboundValue,
+        expression: expr,
+        seen: false,
+        environment: env
+    }
 }

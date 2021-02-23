@@ -17,6 +17,7 @@ import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor
 import {RValue} from '../main/types';
 import {mkLang, RNull, R_MissingArg} from '../main/values';
 import {install, mkInt, mkLogical, mkReal, mkChar, mkPairlist} from '../main/values'; 
+import { warn } from '../main/error';
 
 function formatId(id: string) : string {
     return id.startsWith('`') ? id.slice(1,-1) : id;
@@ -63,7 +64,7 @@ export class ASTVisitor extends AbstractParseTreeVisitor<RValue>
         } else if (lit.INT()) {
             let val = parseFloat(str);
             if (!Number.isInteger(val)) {
-                console.warn(
+                warn(
                     `Warning: integer literal ${str} contains decimal; 
                     using numeric value`
                 );

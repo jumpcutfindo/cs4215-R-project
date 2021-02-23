@@ -1,9 +1,43 @@
-import { hasAttributes } from './attrib';
-import {error} from './error';
-import {LinkedList, Nil, PairList, RValue} from './types';
+import {error, errorcall} from './error';
+import {Builtin, Language, LinkedList, Nil, PairList, RValue, Special} from './types';
 import {RNull} from './values';
 
-/** ******************************************************
+
+/********************************************************
+ * Length of any RValue
+ ********************************************************/
+
+// implementation copied from Rinlinedfuns.h
+export function length(s: RValue) : number {
+    switch (s.tag) {
+    case 'NULL':
+	    return 0;
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+    case 'list':
+    case 'expression':
+	    return s.data.length;
+    case 'pairlist':
+    case 'language':
+    case 'dotdotdot':
+        let i = 0;
+        while (s.tag !== 'NULL') {
+            i++;
+            s = tail(s);
+        }
+        return i;
+    case 'environment':
+	    return s.frame.size;
+    default:
+	    return 1;
+    }
+}
+
+
+
+/********************************************************
  * RValue manipulation facilities
  *
  * These functions are not total, used to deal with
@@ -31,6 +65,13 @@ export function head(pl : LinkedList|Nil) : RValue {
     return (<PairList>pl).value;
 }
 
+export function headkey(pl : LinkedList|Nil) : string {
+    if (pl === RNull) {
+        error('Empty list');
+    }
+    return (<PairList>pl).key;
+}
+
 export function tail(pl : LinkedList|Nil) : PairList|Nil {
     if (pl === RNull) {
         error('Empty list');
@@ -38,17 +79,6 @@ export function tail(pl : LinkedList|Nil) : PairList|Nil {
     return (<PairList>pl).next;
 }
 
-export function length(pl: LinkedList | Nil) {
-    let len = 0;
-    let curr: LinkedList | Nil = pl;
-
-    while (curr !== RNull) {
-        len ++;
-        curr = (curr as LinkedList).next;
-    }
-
-    return len;
-}
 
 export function getAtLinkedListIndex(pl: LinkedList | Nil, index: number): LinkedList | Nil {
     let curr = pl;
@@ -65,7 +95,55 @@ export function getAtLinkedListIndex(pl: LinkedList | Nil, index: number): Linke
     return curr;
 }
 
-/** ******************************************************
+
+export function cons(val: RValue, pl: PairList|Nil) : PairList {
+    return {
+        tag: 'pairlist',
+        refcount: 0,
+        attributes: RNull,
+        key: '',
+        value: val,
+        next: pl
+    };
+}
+
+export class LinkedListIter implements Iterable<PairList> {
+    private static dummy: PairList = {
+        tag: 'pairlist',
+        refcount: 0,
+        attributes: RNull,
+        key: '',
+        value: RNull,
+        next: RNull
+    };
+    private _node: LinkedList|Nil;
+
+    constructor(pl: LinkedList|Nil) {
+        this._node = pl;
+    }
+
+    [Symbol.iterator]() {
+        return this;
+    }
+
+    public next() {
+        if (this._node === RNull) {
+            return {
+                done: true,
+                value: LinkedListIter.dummy
+            };
+        } else {
+            let result = {
+                done: false,
+                value: <PairList>this._node
+            };
+            this._node = (<PairList>this._node).next;
+            return result;
+        }
+    }
+}
+
+/********************************************************
  * String Truthiness utils
  ********************************************************/
 
@@ -112,3 +190,14 @@ export function isVector(x: RValue): boolean {
         return false;
     }
 }
+
+/********************************************************
+ * Arity checking for Builtin/Specials
+ ********************************************************/
+
+ export function checkArity(call: Language, op: Builtin|Special, args: PairList|Nil) {
+     if (op.arity >= 0 && op.arity !== length(args)) {
+         errorcall(call, 
+            `${length(args)} argument(s) passed to call which requires ${op.arity}`);
+     }
+ }
