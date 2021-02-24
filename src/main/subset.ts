@@ -163,7 +163,7 @@ function extractSingleByName(x: R.RValue, name: string, exact: boolean = true) {
     return ans;
 }
 
-function extractMultipleAtIndexes(x: R.RValue, indexes: number[]) {
+function extractMultipleAtIndexes(x: R.RValue, indexes: (number | null)[]) {
     if (!isSubsettable(x)) {
         error('not a subsettable type');
         return;
@@ -174,22 +174,22 @@ function extractMultipleAtIndexes(x: R.RValue, indexes: number[]) {
     switch (x.tag) {
     case 'logical':
         ans = mkLogicals(indexes.map((index) => {
-            return index < x.data.length ? x.data[index] : null;
+            return index !== null && index < x.data.length ? x.data[index] : null;
         }));
         break;
     case 'integer':
         ans = mkInts(indexes.map((index) => {
-            return index < x.data.length ? x.data[index] : null;
+            return index !== null && index < x.data.length ? x.data[index] : null;
         }));
         break;
     case 'numeric':
         ans = mkReals(indexes.map((index) => {
-            return index < x.data.length ? x.data[index] : null;
+            return index !== null && index < x.data.length ? x.data[index] : null;
         }));
         break;
     case 'character':
         ans = mkChars(indexes.map((index) => {
-            return index < x.data.length ? x.data[index] : null;
+            return index !== null && index < x.data.length ? x.data[index] : null;
         }));
         break;
     case 'expression':
@@ -198,13 +198,13 @@ function extractMultipleAtIndexes(x: R.RValue, indexes: number[]) {
             refcount: 0,
             tag: 'expression',
             data: indexes.map((index) => {
-                return index < x.data.length ? copy(x.data[index]) : RNull;
+                return index !== null && index < x.data.length ? copy(x.data[index]) : RNull;
             }),
         } as R.Expression;
         break;
     case 'list':
         const temp = indexes.map((index) => {
-            return index < x.data.length ? copy(x.data[index]) : RNull;
+            return index !== null && index < x.data.length ? copy(x.data[index]) : RNull;
         });
 
         ans = {
@@ -216,25 +216,29 @@ function extractMultipleAtIndexes(x: R.RValue, indexes: number[]) {
         break;
     case 'pairlist':
         let curr: R.PairList | R.Nil = x;
-        let index: number = 0;
-        let indexes_curr: number = 0;
+
         const names = [];
         const values: R.RValue[] = [];
-        while (curr.tag !== RNull.tag) {
-            if (index === indexes[indexes_curr]) {
-                names.push(curr.key);
-                values.push(curr.value);
-                indexes_curr ++;
+
+        for (const index of indexes) {
+            curr = x;
+            let currIndex = 0;
+            while (curr.tag !== RNull.tag) {
+                if (index === currIndex) {
+                    names.push(curr.key);
+                    values.push(curr.value);
+                    break;
+                }
+                curr = curr.next;
+                currIndex ++;
             }
-            curr = curr.next;
-            index ++;
+
+            if (curr === RNull) {
+                names.push(null);
+                values.push(RNull);
+            }
         }
 
-        while (indexes_curr < indexes.length) {
-            names.push(null);
-            values.push(RNull);
-            indexes_curr ++;
-        }
         ans = {
             attributes: mkPairlist([mkChars(names), 'names']),
             refcount: 0,
@@ -254,10 +258,37 @@ function extractMultipleAtIndexes(x: R.RValue, indexes: number[]) {
 
         if (names.tag !== RNull.tag) {
             const newNames: (string | null)[] = indexes.map(
-                (index) => index < names.data.length ? names.data[index] : null,
+                (index) => index !== null && index < names.data.length ? names.data[index] : null,
             );
             ans.attributes = mkPairlist([mkChars(newNames), 'names']);
         }
+    }
+
+    return ans;
+}
+
+function extractMultipleByNames(x: R.RValue, names: string[]) {
+    if (!isSubsettable(x)) {
+        error('not a subsettable type');
+        return;
+    }
+
+    let ans;
+
+    switch (x.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+    case 'expression':
+    case 'list':
+    case 'pairlist':
+        const indexes = getIndexesOfNames(x, names);
+        ans = extractMultipleAtIndexes(x, indexes);
+        break;
+    default:
+        ans = RNull;
+        break;
     }
 
     return ans;
@@ -344,3 +375,40 @@ function getNamesAttributeOfVector(
 
     return curr;
 }
+
+function getIndexesOfNames(
+    x: R.Logical | R.Int | R.Real | R.Character | R.Expression | R.List | R.PairList,
+    names: string[],
+) {
+    let namesOfVector: (string | null)[] = [];
+    let ans: (number | null)[] = [];
+
+    if (x.tag === 'pairlist') {
+        let curr: R.PairList | R.Nil = x;
+        const keys: string[] = [];
+        while (curr.tag !== RNull.tag) {
+            keys.push(curr.key);
+            curr = curr.next;
+        }
+
+        namesOfVector = keys;
+    } else {
+        let curr: R.PairList | R.Nil = x.attributes;
+        while (curr.tag !== RNull.tag) {
+            if (curr.key === 'names') {
+                namesOfVector = (curr.value as R.Character).data;
+                break;
+            }
+            curr = curr.next;
+        }
+    }
+
+    ans = names.map((name) => {
+        const index = namesOfVector.indexOf(name);
+        if (index === -1) return null;
+        else return index;
+    });
+
+    return ans;
+}
+
