@@ -1,22 +1,22 @@
-import { lengthDots } from './dotdotdot';
-import { error, errorcall } from './error';
-import { Reval } from './eval';
+import {lengthDots} from './dotdotdot';
+import {error, errorcall} from './error';
+import {Reval} from './eval';
 import * as R from './types';
-import { head, tail } from './util';
-import { install, mkPromise, RNull, R_BaseEnv, R_DotsSymbol, R_EmptyEnv, R_MissingArg, R_UnboundValue } from './values';
+import {head, tail} from './util';
+import {install, mkPromise, RNull, R_BaseEnv, R_DotsSymbol, R_EmptyEnv, R_MissingArg, R_UnboundValue} from './values';
 
 
 // Specialized version of NewEnvironment in GNU R which handles creating the execution environment
 // of a closure. Thus we can add default arguments together in 1 step.
 export function closureEnv(pl: R.PairList|R.Nil, vals: R.PairList|R.Nil, parent: R.Env): R.Env {
-    let result : R.Env = {
+    const result : R.Env = {
         tag: 'environment',
         attributes: RNull,
         frame: new Map(),
-        parent: parent
+        parent: parent,
     };
     while (pl.tag !== 'NULL' && vals.tag !== 'NULL') {
-        let val = vals.value === R_MissingArg && pl.value !== R_MissingArg ?
+        const val = vals.value === R_MissingArg && pl.value !== R_MissingArg ?
             mkPromise(pl.value, result) : vals.value;
         result.frame.set(install(pl.key), val);
         pl = tail(pl);
@@ -69,6 +69,7 @@ export function findVarType(
         result = findVarInFrame(symbol, env);
         if (result !== R_UnboundValue) {
             if (result.tag === 'promise') {
+                // eslint-disable-next-line new-cap
                 result = Reval(result, env);
             }
             if (typepred(result.tag)) {
@@ -86,12 +87,12 @@ export function findVarType(
 
 const functionTypes = ['special', 'builtin', 'closure'];
 
-export function findFun(symbol: R.Name, env: R.Env, call: R.Language): R.Closure|R.Builtin|R.Special { 
-    let found = findVarType(
+export function findFun(symbol: R.Name, env: R.Env, call: R.Language): R.Closure|R.Builtin|R.Special {
+    const found = findVarType(
         symbol,
         env,
-        true, 
-        s => functionTypes.indexOf(s) !== -1
+        true,
+        (s) => functionTypes.indexOf(s) !== -1,
     );
     if (found === R_UnboundValue) {
         errorcall(call, `could not find function ${symbol.pname}`);

@@ -1,24 +1,31 @@
 import {error, errorcall} from './error';
-import {Builtin, Language, LinkedList, Nil, PairList, RValue, Special} from './types';
+import {
+    Builtin,
+    Language,
+    LinkedList,
+    Nil,
+    PairList,
+    RValue,
+    Special,
+} from './types';
 import {RNull} from './values';
 
-
-/********************************************************
+/** ******************************************************
  * Length of any RValue
  ********************************************************/
 
 // implementation copied from Rinlinedfuns.h
-export function length(s: RValue) : number {
+export function length(s: RValue): number {
     switch (s.tag) {
     case 'NULL':
-	    return 0;
+        return 0;
     case 'logical':
     case 'integer':
     case 'numeric':
     case 'character':
     case 'list':
     case 'expression':
-	    return s.data.length;
+        return s.data.length;
     case 'pairlist':
     case 'language':
     case 'dotdotdot':
@@ -29,15 +36,13 @@ export function length(s: RValue) : number {
         }
         return i;
     case 'environment':
-	    return s.frame.size;
+        return s.frame.size;
     default:
-	    return 1;
+        return 1;
     }
 }
 
-
-
-/********************************************************
+/** ******************************************************
  * RValue manipulation facilities
  *
  * These functions are not total, used to deal with
@@ -58,32 +63,34 @@ export function length(s: RValue) : number {
  * }
  ********************************************************/
 
-export function head(pl : LinkedList|Nil) : RValue {
+export function head(pl: LinkedList | Nil): RValue {
     if (pl === RNull) {
         error('Empty list');
     }
     return (<PairList>pl).value;
 }
 
-export function headkey(pl : LinkedList|Nil) : string {
+export function headkey(pl: LinkedList | Nil): string {
     if (pl === RNull) {
         error('Empty list');
     }
     return (<PairList>pl).key;
 }
 
-export function tail(pl : LinkedList|Nil) : PairList|Nil {
+export function tail(pl: LinkedList | Nil): PairList | Nil {
     if (pl === RNull) {
         error('Empty list');
     }
     return (<PairList>pl).next;
 }
 
-
-export function getAtLinkedListIndex(pl: LinkedList | Nil, index: number): LinkedList | Nil {
+export function getAtLinkedListIndex(
+    pl: LinkedList | Nil,
+    index: number,
+): LinkedList | Nil {
     let curr = pl;
 
-    for (let i = 0; i < index; i ++) {
+    for (let i = 0; i < index; i++) {
         if (curr === RNull) {
             error('Index out of bounds');
             return RNull;
@@ -95,15 +102,14 @@ export function getAtLinkedListIndex(pl: LinkedList | Nil, index: number): Linke
     return curr;
 }
 
-
-export function cons(val: RValue, pl: PairList|Nil) : PairList {
+export function cons(val: RValue, pl: PairList | Nil): PairList {
     return {
         tag: 'pairlist',
         refcount: 0,
         attributes: RNull,
         key: '',
         value: val,
-        next: pl
+        next: pl,
     };
 }
 
@@ -114,11 +120,11 @@ export class LinkedListIter implements Iterable<PairList> {
         attributes: RNull,
         key: '',
         value: RNull,
-        next: RNull
+        next: RNull,
     };
-    private _node: LinkedList|Nil;
+    private _node: LinkedList | Nil;
 
-    constructor(pl: LinkedList|Nil) {
+    constructor(pl: LinkedList | Nil) {
         this._node = pl;
     }
 
@@ -130,49 +136,38 @@ export class LinkedListIter implements Iterable<PairList> {
         if (this._node === RNull) {
             return {
                 done: true,
-                value: LinkedListIter.dummy
+                value: LinkedListIter.dummy,
             };
         } else {
-            let result = {
+            const result = {
                 done: false,
-                value: <PairList>this._node
+                value: <PairList> this._node,
             };
-            this._node = (<PairList>this._node).next;
+            this._node = (<PairList> this._node).next;
             return result;
         }
     }
 }
 
-/********************************************************
+/** ******************************************************
  * String Truthiness utils
  ********************************************************/
 
-export function generalLogicalConversion(x : number|null) : boolean|null {
+export function generalLogicalConversion(x: number | null): boolean | null {
     return x === null ? null : !!x;
 }
 
-
-export function stringTrue(s: string) : boolean {
+export function stringTrue(s: string): boolean {
     return truenames.indexOf(s) !== -1;
 }
 
-export function stringFalse(s: string) : boolean {
+export function stringFalse(s: string): boolean {
     return falsenames.indexOf(s) !== -1;
 }
 
-const truenames = [
-    'T',
-    'True',
-    'TRUE',
-    'true',
-];
+const truenames = ['T', 'True', 'TRUE', 'true'];
 
-const falsenames = [
-    'F',
-    'False',
-    'FALSE',
-    'false',
-];
+const falsenames = ['F', 'False', 'FALSE', 'false'];
 
 /** ******************************************************
  * Other utils
@@ -180,24 +175,32 @@ const falsenames = [
 
 export function isVector(x: RValue): boolean {
     switch (x.tag) {
-    case ('logical'):
-    case ('integer'):
-    case ('numeric'):
-    case ('character'):
-    case ('expression'):
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+    case 'expression':
         return x.attributes === RNull;
     default:
         return false;
     }
 }
 
-/********************************************************
+/** ******************************************************
  * Arity checking for Builtin/Specials
  ********************************************************/
 
- export function checkArity(call: Language, op: Builtin|Special, args: PairList|Nil) {
-     if (op.arity >= 0 && op.arity !== length(args)) {
-         errorcall(call, 
-            `${length(args)} argument(s) passed to call which requires ${op.arity}`);
-     }
- }
+export function checkArity(
+    call: Language,
+    op: Builtin | Special,
+    args: PairList | Nil,
+) {
+    if (op.arity >= 0 && op.arity !== length(args)) {
+        errorcall(
+            call,
+            `${length(args)} argument(s) passed to call which requires ${
+                op.arity
+            }`,
+        );
+    }
+}

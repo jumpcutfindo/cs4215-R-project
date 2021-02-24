@@ -2,7 +2,9 @@ import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
 import {getAtLinkedListIndex, length} from './util';
-import {mkChar, mkChars, mkInt, mkInts, mkList, mkLogical, mkLogicals, mkPairlist, mkReal, mkReals, RNull} from './values';
+import {mkChar, mkChars, mkInt, mkInts,
+    mkLogical, mkLogicals, mkPairlist,
+    mkReal, mkReals, RNull} from './values';
 
 /**
  * Implementation for '[' subsetting
@@ -411,4 +413,3 @@ function getIndexesOfNames(
 
     return ans;
 }
-

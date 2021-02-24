@@ -1,18 +1,18 @@
-/*********************************************************************
+/** *******************************************************************
  * Module for matching of formals to arguments
- * 
+ *
  * Differences from GNU R:
- * 
+ *
  * 1. Error messages do not have separate singular/plural form
  * 2. matchArgs does not search the supplied arguments 1 extra time to
  *    determine which arguments are unused, but just reports that there
  *    are unused arguments
  **********************************************************************/
 
-import { errorcall, ErrorOptions, warncall } from "./error";
-import { DotDotDot, Language, Nil, PairList, RValue } from "./types";
-import { cons, length, LinkedListIter, tail } from "./util";
-import { mkPairlist, RNull, R_MissingArg } from "./values";
+import {errorcall, ErrorOptions, warncall} from './error';
+import {DotDotDot, Language, Nil, PairList, RValue} from './types';
+import {cons, length, LinkedListIter, tail} from './util';
+import {mkPairlist, RNull, R_MissingArg} from './values';
 
 // From match.c line 60
 function psmatch(formal: string, supplied: string, exact: boolean) {
@@ -22,20 +22,20 @@ function psmatch(formal: string, supplied: string, exact: boolean) {
 export function matchArgs(formals: PairList|Nil, supplied: PairList|Nil, call: Language) {
     let fargi = 0;
     let actuals: PairList|Nil = RNull;
-    for (let _ of new LinkedListIter(formals)) {
+    for (const _ of new LinkedListIter(formals)) {
         actuals = cons(R_MissingArg, actuals);
         fargi++;
     }
-    let formalUsed = new Array(fargi).fill(0);
-    let argUsed = new Array(length(supplied)).fill(0);
+    const formalUsed = new Array(fargi).fill(0);
+    const argUsed = new Array(length(supplied)).fill(0);
     let actualptr = actuals;
-    
+
     // first pass: exact key matching
     fargi = 0;
-    for (let f of new LinkedListIter(formals)) {
+    for (const f of new LinkedListIter(formals)) {
         if (f.key !== '...' && f.key !== '') {
             let argi = 1;
-            for (let b of new LinkedListIter(supplied)) {
+            for (const b of new LinkedListIter(supplied)) {
                 if (f.key === b.key) {
                     if (formalUsed[fargi] === 2) {
                         errorcall(call, `formal argument "${f.key}" matched by multiple actual arguments`);
@@ -61,7 +61,7 @@ export function matchArgs(formals: PairList|Nil, supplied: PairList|Nil, call: L
     let seendot = false;
     fargi = 0;
     actualptr = actuals;
-    for (let f of new LinkedListIter(formals)) {
+    for (const f of new LinkedListIter(formals)) {
         if (formalUsed[fargi] === 0) {
             if (f.key === '...' && !seendot) {
                 // record where ... goes for 3rd pass
@@ -69,7 +69,7 @@ export function matchArgs(formals: PairList|Nil, supplied: PairList|Nil, call: L
                 seendot = true;
             } else {
                 let argi = 1;
-                for (let b of new LinkedListIter(supplied)) {
+                for (const b of new LinkedListIter(supplied)) {
                     if (argUsed[argi-1] !== 2 && psmatch(f.key, b.key, seendot)) {
                         if (argUsed[argi-1]) {
                             errorcall(call, `argument ${argi} matches multiple formal arguments`);
@@ -92,12 +92,12 @@ export function matchArgs(formals: PairList|Nil, supplied: PairList|Nil, call: L
         fargi++;
     }
 
-    // Third pass: matches based on order 
-    // All args specified in tag=value form 
-    // have now been matched.  If we find ... 
-    // we gobble up all the remaining args. 
-    // Otherwise we bind untagged values in 
-    // order to any unmatched formals. 
+    // Third pass: matches based on order
+    // All args specified in tag=value form
+    // have now been matched.  If we find ...
+    // we gobble up all the remaining args.
+    // Otherwise we bind untagged values in
+    // order to any unmatched formals.
     let f: PairList|Nil = formals;
     actualptr = actuals;
     let b = supplied;
@@ -111,9 +111,9 @@ export function matchArgs(formals: PairList|Nil, supplied: PairList|Nil, call: L
             f = tail(f);
             actualptr = tail(actualptr);
         } else if (actualptr.value !== R_MissingArg) {
-            // Already matched by tag 
-            // skip to next formal 
-            f = tail(f)
+            // Already matched by tag
+            // skip to next formal
+            f = tail(f);
             actualptr = tail(actualptr);
         } else if (argUsed[argi] || b.key !== '') {
             b = tail(b);
@@ -129,23 +129,23 @@ export function matchArgs(formals: PairList|Nil, supplied: PairList|Nil, call: L
     }
 
     if (dots.tag !== 'NULL') {
-        if (argUsed.some(i => i === 0)) {
+        if (argUsed.some((i) => i === 0)) {
             argi = 0;
-            let result: [RValue, string][] = [];
-            for (let b of new LinkedListIter(supplied)) {
+            const result: [RValue, string][] = [];
+            for (const b of new LinkedListIter(supplied)) {
                 if (!argUsed[argi]) {
                     result.push([b.value, b.key]);
                 }
                 argi++;
             }
-            let dotval : any = mkPairlist(...result);
+            const dotval : any = mkPairlist(...result);
             dotval.tag = 'dotdotdot';
             dots.value = dotval as DotDotDot;
         }
     } else {
         // cut a little corner here, do not search and deparse unused argument
         // but just error and tell user that some argument is unused
-        if (argUsed.some(i => i === 0)) {
+        if (argUsed.some((i) => i === 0)) {
             errorcall(call, 'unused argument(s)');
         }
     }

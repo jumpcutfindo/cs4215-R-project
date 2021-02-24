@@ -1,17 +1,18 @@
-import { logicalFromString } from "./coerce";
-import { ddFind, defineVar, findFun, findVar, closureEnv } from "./envir";
-import { error, errorcall, warncall } from "./error";
-import { EvalContext } from "./globals";
-import { matchArgs } from "./match";
-import { forcePromise, promiseArgs } from "./promise";
-import { Closure, Env, Language, Name, Nil, PairList, PrimOp, RValue, Vis } from "./types";
-import { checkArity, cons, head, length, LinkedListIter, tail } from "./util";
-import { install, mkChar, mkInt, mkLogical, mkReal, RNull, R_DotsSymbol, R_MissingArg, R_UnboundValue } from "./values";
+/* eslint-disable new-cap */
+import {logicalFromString} from './coerce';
+import {ddFind, defineVar, findFun, findVar, closureEnv} from './envir';
+import {error, errorcall, warncall} from './error';
+import {EvalContext} from './globals';
+import {matchArgs} from './match';
+import {forcePromise, promiseArgs} from './promise';
+import {Closure, Env, Language, Name, Nil, PairList, PrimOp, RValue, Vis} from './types';
+import {checkArity, cons, head, length, LinkedListIter, tail} from './util';
+import {install, mkChar, mkInt, mkLogical, mkReal, RNull, R_DotsSymbol, R_MissingArg, R_UnboundValue} from './values';
 
-/**********************************************************
+/** ********************************************************
  *
  *               CORE EVALUATION FUNCTIONS
- * 
+ *
  **********************************************************/
 
 export function Reval(e: RValue, env: Env) : RValue {
@@ -34,7 +35,7 @@ export function Reval(e: RValue, env: Env) : RValue {
         break;
     case 'name':
         if (e === R_DotsSymbol) {
-            error("... used in an incorrect context");
+            error('... used in an incorrect context');
         } else if (e.ddval !== undefined) {
             result = ddFind(e.ddval, env);
         } else {
@@ -45,7 +46,7 @@ export function Reval(e: RValue, env: Env) : RValue {
         } else if (result === R_MissingArg) {
             error(`argument "${e.pname}" is missing, with no default`);
         } else if (result.tag === 'promise') {
-            result = result.cached === R_UnboundValue ? 
+            result = result.cached === R_UnboundValue ?
                 forcePromise(result) :
                 result.cached;
         }
@@ -54,8 +55,8 @@ export function Reval(e: RValue, env: Env) : RValue {
         result = forcePromise(e);
         break;
     case 'language':
-        let lang = head(e);
-        let op = lang.tag === 'name' ? findFun(lang, env, e) : Reval(lang, env);
+        const lang = head(e);
+        const op = lang.tag === 'name' ? findFun(lang, env, e) : Reval(lang, env);
         let args: PairList|Nil = tail(e);
         switch (op.tag) {
         case 'builtin':
@@ -69,7 +70,7 @@ export function Reval(e: RValue, env: Env) : RValue {
             }
             break;
         case 'closure':
-            let pargs = promiseArgs(args, env);
+            const pargs = promiseArgs(args, env);
             result = applyClosure(e, op, pargs, env, RNull);
             break;
         default:
@@ -77,7 +78,7 @@ export function Reval(e: RValue, env: Env) : RValue {
         }
         break;
     case 'dotdotdot':
-        error("'...' used in an incorrect context");
+        error('\'...\' used in an incorrect context');
     default:
         error('unimplemented type for eval');
     }
@@ -88,14 +89,14 @@ export function RevalList(el: PairList|Nil, env: Env, call: Language, n: number)
     let headPtr: PairList|Nil = RNull;
     let tailPtr: PairList|Nil = RNull;
 
-    for (let elem of new LinkedListIter(el)) {
+    for (const elem of new LinkedListIter(el)) {
         n++;
         if (elem.value === R_DotsSymbol) {
-            let dots = findVar(elem.value, env);
+            const dots = findVar(elem.value, env);
             if (dots.tag === 'NULL' || dots.tag === 'dotdotdot') {
-                for (let dotelem of new LinkedListIter(dots)) {
-                    let val = Reval(dotelem.value, env);
-                    let ev = cons(val, RNull);
+                for (const dotelem of new LinkedListIter(dots)) {
+                    const val = Reval(dotelem.value, env);
+                    const ev = cons(val, RNull);
                     if (headPtr === RNull) {
                         headPtr = ev;
                     } else {
@@ -105,13 +106,13 @@ export function RevalList(el: PairList|Nil, env: Env, call: Language, n: number)
                     tailPtr = ev;
                 }
             } else if (dots !== R_MissingArg) {
-                error("'...' used in an incorrect context");
+                error('\'...\' used in an incorrect context');
             }
         } else if (elem.value === R_MissingArg) {
             errorcall(call, `argument ${n} is empty`);
         } else {
-            let val = Reval(elem.value, env);
-            let ev = cons(val, RNull);
+            const val = Reval(elem.value, env);
+            const ev = cons(val, RNull);
             if (headPtr === RNull) {
                 headPtr = ev;
             } else {
@@ -119,24 +120,23 @@ export function RevalList(el: PairList|Nil, env: Env, call: Language, n: number)
             }
             ev.key = elem.key;
             tailPtr = ev;
-
         }
     }
     return headPtr;
 }
 
 export function applyClosure(
-    call: Language, 
-    op: Closure, 
-    pargs: PairList|Nil, 
-    env: Env, 
-    suppliedVars: PairList|Nil
+    call: Language,
+    op: Closure,
+    pargs: PairList|Nil,
+    env: Env,
+    suppliedVars: PairList|Nil,
 ) : RValue {
-    let actuals = matchArgs(op.formals, pargs, call);
-    let newenv = closureEnv(op.formals, actuals, env);
+    const actuals = matchArgs(op.formals, pargs, call);
+    const newenv = closureEnv(op.formals, actuals, env);
 
     // suppliedvars from usemethod
-    for (let v of new LinkedListIter(suppliedVars)) {
+    for (const v of new LinkedListIter(suppliedVars)) {
         newenv.frame.set(install(v.key), v.value);
     }
 
@@ -148,16 +148,16 @@ export function applyClosure(
 }
 
 
-/**********************************************************
+/** ********************************************************
  *
  *               CONTROL FLOW PRIMITIVES
- * 
+ *
  **********************************************************/
 
-/**********************************************************
+/** ********************************************************
  *
  *                         IF
- * 
+ *
  **********************************************************/
 
 export const do_if : PrimOp = (call, op, args, env) => {
@@ -206,21 +206,21 @@ function asLogicalNoNA(s: RValue, call: Language) : boolean {
     return result as boolean; // safe cast as errorcall throws if null
 }
 
-/**********************************************************
+/** ********************************************************
  *
  *               RETURN, BREAK, NEXT
- * 
+ *
  **********************************************************/
 
 export function Rreturn(val: RValue): Name {
-    let result: Name = install('return');
+    const result: Name = install('return');
     result.internal = val;
     return result;
 }
 
 export function isReturn(rval: RValue): boolean {
-    return rval.tag === 'name' && 
-           rval.pname === 'return' && 
+    return rval.tag === 'name' &&
+           rval.pname === 'return' &&
            rval.internal !== R_UnboundValue;
 }
 
@@ -234,45 +234,45 @@ export const do_return : PrimOp = (call, op, args, env) => {
         }
     }
     return Rreturn(result);
-}
+};
 
 export function Rbreak(): Name {
-    let result: Name = install('break');
+    const result: Name = install('break');
     result.internal = RNull; // just some non R_UnboundValue value to indicate break return
     return result;
 }
 
 export function isBreak(bval: RValue): boolean {
-    return bval.tag === 'name' && 
-           bval.pname === 'break' && 
+    return bval.tag === 'name' &&
+           bval.pname === 'break' &&
            bval.internal !== R_UnboundValue;
 }
 
 export const do_break : PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     return op.variant === 1 ? Rnext() : Rbreak();
-}
+};
 
 export function Rnext(): Name {
-    let result: Name = install('next');
+    const result: Name = install('next');
     result.internal = RNull; // just some non R_UnboundValue value to indicate break return
     return result;
 }
 
 export function isNext(nval: RValue): boolean {
-    return nval.tag === 'name' && 
-           nval.pname === 'next' && 
+    return nval.tag === 'name' &&
+           nval.pname === 'next' &&
            nval.internal !== R_UnboundValue;
 }
 
 export const do_for : PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
-    let sym = head(args);
+    const sym = head(args);
     let val = head(tail(args));
-    let body = head(tail(tail(args)));
+    const body = head(tail(tail(args)));
 
     if (sym.tag !== 'name') {
-        errorcall(call, "non-symbol loop variable");
+        errorcall(call, 'non-symbol loop variable');
     } else {
         for (let i = 0; i < length(val); i++) {
             switch (val.tag) {
@@ -299,7 +299,7 @@ export const do_for : PrimOp = (call, op, args, env) => {
             default:
                 errorcall(call, 'invalid for() loop sequence');
             }
-            let result = Reval(body, env);
+            const result = Reval(body, env);
             if (isBreak(result)) {
                 break;
             }
@@ -309,4 +309,4 @@ export const do_for : PrimOp = (call, op, args, env) => {
         }
     }
     return RNull;
-}
+};

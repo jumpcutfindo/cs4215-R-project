@@ -1,10 +1,10 @@
-import { findVar } from "./envir";
-import { error } from "./error";
-import { Reval } from "./eval";
-import { EvalContext } from "./globals";
-import { Env, LinkedList, Nil, PairList, Prom, RValue } from "./types";
-import { head, headkey, tail } from "./util";
-import { mkPairlist, mkPromise, RNull, R_DotsSymbol, R_MissingArg, R_UnboundValue } from "./values";
+import {findVar} from './envir';
+import {error} from './error';
+import {Reval} from './eval';
+import {EvalContext} from './globals';
+import {Env, LinkedList, Nil, PairList, Prom, RValue} from './types';
+import {head, headkey, tail} from './util';
+import {mkPairlist, mkPromise, RNull, R_DotsSymbol, R_MissingArg, R_UnboundValue} from './values';
 
 export function forcePromise(e: Prom) : RValue {
     if (e.cached === R_UnboundValue) {
@@ -26,9 +26,9 @@ export function promiseArgs(el: PairList | Nil, env: Env): PairList | Nil {
     let ans: PairList = mkPairlist([RNull]) as PairList;
     while (el.tag !== 'NULL') {
         if (head(el) === R_DotsSymbol) {
-            let h = findVar(R_DotsSymbol, env);
+            const h = findVar(R_DotsSymbol, env);
             if (h.tag === 'dotdotdot' || h.tag === 'NULL') {
-                let ptr: LinkedList | Nil = h;
+                const ptr: LinkedList | Nil = h;
                 while (ptr !== RNull) {
                     if (head(ptr) === R_MissingArg) {
                         ans.next = mkPairlist([head(ptr), headkey(ptr)]);
@@ -38,7 +38,7 @@ export function promiseArgs(el: PairList | Nil, env: Env): PairList | Nil {
                     ans = ans.next as PairList;
                 }
             } else if (h !== R_MissingArg) {
-                error("'...' used in an incorrect context");
+                error('\'...\' used in an incorrect context');
             }
         } else if (head(el) === R_MissingArg) {
             ans.next = mkPairlist([R_MissingArg, headkey(el)]);
