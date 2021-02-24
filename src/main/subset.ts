@@ -296,6 +296,26 @@ function extractMultipleByNames(x: R.RValue, names: string[]) {
     return ans;
 }
 
+function extractMultipleByLogicals(x: R.RValue, logicals: boolean[]) {
+    if (!isSubsettable(x)) {
+        error('not a subsettable type');
+        return;
+    }
+
+    const len = length(x);
+    const recycledLogicals = recycleLogicals(logicals, len);
+
+    const indexes: (number | null)[] = [];
+
+    for (let index = 0; index < recycleLogicals.length; index ++) {
+        if (recycledLogicals[index]) indexes.push(index);
+    }
+
+    const ans = extractMultipleAtIndexes(x, indexes);
+
+    return ans;
+}
+
 function isSubsettable(x: R.RValue) {
     switch (x.tag) {
     case 'logical':
@@ -410,6 +430,18 @@ function getIndexesOfNames(
         if (index === -1) return null;
         else return index;
     });
+
+    return ans;
+}
+
+function recycleLogicals(bools: boolean[], expectedLength: number) {
+    const ans: boolean[] = [];
+
+    const factor = bools.length;
+
+    for (let i = 0; i < expectedLength; i ++) {
+        ans.push(bools[Math.floor(i % factor)]);
+    }
 
     return ans;
 }
