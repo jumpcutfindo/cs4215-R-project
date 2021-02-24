@@ -21,8 +21,8 @@ export interface List {
 export interface Name {
     readonly tag: 'name';
     pname: string;
-    value: RValue; 
-    internal: RValue; 
+    value: RValue;
+    internal: RValue;
     ddval?: number;
 }
 
@@ -72,7 +72,7 @@ export interface Closure {
     attributes: PairList | Nil;
     refcount: number;
     readonly tag: 'closure';
-    formals: PairList|Nil; 
+    formals: PairList|Nil;
     body: RValue;
     environment: Env;
 }
@@ -97,7 +97,7 @@ export interface Prom {
     attributes: PairList | Nil;
     refcount: number;
     readonly tag: 'promise';
-    cached: RValue; 
+    cached: RValue;
     expression: RValue;
     seen: boolean; // prevent infinite recursion
     environment: Env;

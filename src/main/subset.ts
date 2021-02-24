@@ -2,7 +2,7 @@ import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
 import {getAtLinkedListIndex, length} from './util';
-import {mkChar, mkInt, mkLogical, mkPairlist, mkReal, RNull} from './values';
+import {mkChar, mkChars, mkInt, mkInts, mkList, mkLogical, mkLogicals, mkPairlist, mkReal, mkReals, RNull} from './values';
 
 /**
  * Implementation for '[' subsetting
@@ -23,7 +23,10 @@ function do_subset2() {
  * Implementation for '$' subsetting
  */
 function do_subset3() {
-
+    if (!isSubsettableList) {
+        error('$ operator is invalid for atomic vectors');
+        return;
+    }
 }
 
 function extractSingleAtIndex(x: R.RValue, index: number) {
@@ -160,6 +163,106 @@ function extractSingleByName(x: R.RValue, name: string, exact: boolean = true) {
     return ans;
 }
 
+function extractMultipleAtIndexes(x: R.RValue, indexes: number[]) {
+    if (!isSubsettable(x)) {
+        error('not a subsettable type');
+        return;
+    }
+
+    let ans;
+
+    switch (x.tag) {
+    case 'logical':
+        ans = mkLogicals(indexes.map((index) => {
+            return index < x.data.length ? x.data[index] : null;
+        }));
+        break;
+    case 'integer':
+        ans = mkInts(indexes.map((index) => {
+            return index < x.data.length ? x.data[index] : null;
+        }));
+        break;
+    case 'numeric':
+        ans = mkReals(indexes.map((index) => {
+            return index < x.data.length ? x.data[index] : null;
+        }));
+        break;
+    case 'character':
+        ans = mkChars(indexes.map((index) => {
+            return index < x.data.length ? x.data[index] : null;
+        }));
+        break;
+    case 'expression':
+        ans = {
+            attributes: RNull,
+            refcount: 0,
+            tag: 'expression',
+            data: indexes.map((index) => {
+                return index < x.data.length ? copy(x.data[index]) : RNull;
+            }),
+        } as R.Expression;
+        break;
+    case 'list':
+        const temp = indexes.map((index) => {
+            return index < x.data.length ? copy(x.data[index]) : RNull;
+        });
+
+        ans = {
+            attributes: RNull,
+            refcount: 0,
+            tag: 'list',
+            data: temp,
+        } as R.List;
+        break;
+    case 'pairlist':
+        let curr: R.PairList | R.Nil = x;
+        let index: number = 0;
+        let indexes_curr: number = 0;
+        const names = [];
+        const values: R.RValue[] = [];
+        while (curr.tag !== RNull.tag) {
+            if (index === indexes[indexes_curr]) {
+                names.push(curr.key);
+                values.push(curr.value);
+                indexes_curr ++;
+            }
+            curr = curr.next;
+            index ++;
+        }
+
+        while (indexes_curr < indexes.length) {
+            names.push(null);
+            values.push(RNull);
+            indexes_curr ++;
+        }
+        ans = {
+            attributes: mkPairlist([mkChars(names), 'names']),
+            refcount: 0,
+            tag: 'list',
+            data: values,
+        } as R.List;
+        break;
+    default:
+        ans = RNull;
+        break;
+    }
+
+    if (ans && ans.tag !== RNull.tag && x.tag !== 'pairlist' && isNamedVector(x)) {
+        const names: R.Character | R.Nil = getNamesAttributeOfVector(
+            x as R.Logical | R.Int | R.Real | R.Character | R.Expression | R.List | R.PairList,
+        );
+
+        if (names.tag !== RNull.tag) {
+            const newNames: (string | null)[] = indexes.map(
+                (index) => index < names.data.length ? names.data[index] : null,
+            );
+            ans.attributes = mkPairlist([mkChars(newNames), 'names']);
+        }
+    }
+
+    return ans;
+}
+
 function isSubsettable(x: R.RValue) {
     switch (x.tag) {
     case 'logical':
@@ -192,4 +295,52 @@ function isIndexOutOfBounds(x: R.RValue, index: number) {
     default:
         return;
     }
+}
+
+function isSubsettableList(x: R.RValue) {
+    switch (x.tag) {
+    case 'list':
+    case 'pairlist':
+    case 'NULL':
+        return true;
+    default:
+        return false;
+    }
+}
+
+function isNamedVector(x: R.RValue) {
+    switch (x.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+    case 'expression':
+    case 'list':
+    case 'pairlist':
+        let curr = x.attributes;
+        while (curr.tag !== RNull.tag) {
+            if (curr.key === 'names') {
+                return true;
+            }
+            curr = curr.next;
+        }
+        return false;
+    default:
+        return false;
+    }
+}
+
+function getNamesAttributeOfVector(
+    x: R.Logical | R.Int | R.Real | R.Character | R.Expression | R.List | R.PairList,
+): R.Character | R.Nil {
+    let curr = x.attributes;
+
+    while (curr.tag !== RNull.tag) {
+        if (curr.key === 'names') {
+            return curr.value as R.Character;
+        }
+        curr = curr.next;
+    }
+
+    return curr;
 }
