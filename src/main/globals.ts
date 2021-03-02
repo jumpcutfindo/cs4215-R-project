@@ -3,6 +3,7 @@
 import {do_arith, ARITH_OPTYPES} from './arithmetic';
 import {do_break, do_for, do_if, do_return} from './eval';
 import {do_logic, LOGICAL_OPTYPES} from './logic';
+import { do_relop, RELATIONAL_OPTYPES } from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
 import {installSymbol, RNull, R_UnboundValue} from './values';
 
@@ -39,6 +40,14 @@ export function initPrimitives() {
         primitiveSymbol('&&',       do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
         primitiveSymbol('|',        do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMOROP}),
         primitiveSymbol('||',       do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.OROP}),
+
+        /* Relational operators, all primitive */
+        primitiveSymbol('<',        do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LTOP}),
+        primitiveSymbol('>',        do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.GTOP}),
+        primitiveSymbol('<=',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LEQOP}),
+        primitiveSymbol('>=',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.GEQOP}),
+        primitiveSymbol('==',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.EQOP}),
+        primitiveSymbol('!=',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.NEQOP}),
     ];
 
     const internals = [

@@ -25,7 +25,7 @@ if (T) 3 else 4
 `;
 
 const sampleProg4 : string = `
-50 + 50
+50 == 50
 `;
 
 function interpret(prog: string, env: R.Env) {

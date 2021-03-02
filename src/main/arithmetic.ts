@@ -80,7 +80,7 @@ function applyUnaryArithmeticOperation(
     operand: R.RValue,
 ) : R.Logical | R.Real | R.Int {
     if (
-        isAllowedOperand(operand)
+        !isAllowedOperand(operand)
     ) {
         error(`Error: non-numeric argument to unary operator`);
     }
