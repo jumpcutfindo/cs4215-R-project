@@ -1,6 +1,6 @@
-import { error } from './main/error';
-import { isBreak, isNext, isReturn, Reval } from './main/eval';
-import { EvalContext, initPrimitives } from './main/globals';
+import {error} from './main/error';
+import {isBreak, isNext, isReturn, Reval} from './main/eval';
+import {EvalContext, initPrimitives} from './main/globals';
 import * as R from './main/types';
 import {RNull, R_GlobalEnv, R_LastValueSymbol} from './main/values';
 import {parse} from './parser';
@@ -24,10 +24,14 @@ if (T) 3 else 4
 .Last.value
 `;
 
+const sampleProg4 : string = `
++1
+`;
+
 function interpret(prog: string, env: R.Env) {
-    let ast = parse(prog); // should wrap in try-catch
-    for (let expr of (<R.Expression>ast).data) {
-        let result = Reval(expr, env);
+    const ast = parse(prog); // should wrap in try-catch
+    for (const expr of (<R.Expression>ast).data) {
+        const result = Reval(expr, env);
         if (isReturn(result)) {
             error('no function to return from, jumping to top level');
         }
@@ -46,7 +50,7 @@ function interpret(prog: string, env: R.Env) {
 
 // placeholders
 const printValueEnv = (r: R.RValue, e: R.Env) => console.log(r);
-const printWarnings = () => {}
+const printWarnings = () => {};
 
 initPrimitives();
-interpret(sampleProg3, R_GlobalEnv);
+interpret(sampleProg4, R_GlobalEnv);

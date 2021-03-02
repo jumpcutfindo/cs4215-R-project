@@ -2,6 +2,8 @@ import {error, warn} from './error';
 import * as R from './types';
 import {RNull} from './values';
 import * as Coerce from './coerce';
+import {PrimOp} from './types';
+import {head, tail, length, checkArity} from './util';
 
 /**
  * We define the supported unary and binary operators here.
@@ -21,15 +23,67 @@ const binary_arithmetic_functions: any = {
     '%/%': integerDivision,
 };
 
+export const ARITH_OPTYPES = {
+    PLUSOP: 1,
+    MINUSOP: 2,
+    TIMESOP: 3,
+    DIVOP: 4,
+    POWOP: 5,
+    MODOP: 6,
+    IDIVOP: 7,
+};
+
+export const do_arith : PrimOp = (call, op, args, env) => {
+    let ans: R.RValue = RNull;
+
+    if (length(args) === 1) {
+        const operand = head(args);
+        switch (op.variant) {
+        case ARITH_OPTYPES.PLUSOP:
+            ans = applyUnaryArithmeticOperation('+', operand);
+            break;
+        case ARITH_OPTYPES.MINUSOP:
+            ans = applyUnaryArithmeticOperation('-', operand);
+        }
+    } else if (length(args) === 2) {
+        const first_operand = head(args);
+        const second_operand = head(tail(args));
+        switch (op.variant) {
+        case ARITH_OPTYPES.PLUSOP:
+            ans = applyBinaryArithmeticOperation('+', first_operand, second_operand);
+            break;
+        case ARITH_OPTYPES.MINUSOP:
+            ans = applyBinaryArithmeticOperation('-', first_operand, second_operand);
+            break;
+        case ARITH_OPTYPES.TIMESOP:
+            ans = applyBinaryArithmeticOperation('*', first_operand, second_operand);
+            break;
+        case ARITH_OPTYPES.DIVOP:
+            ans = applyBinaryArithmeticOperation('/', first_operand, second_operand);
+            break;
+        case ARITH_OPTYPES.POWOP:
+            ans = applyBinaryArithmeticOperation('^', first_operand, second_operand);
+            break;
+        case ARITH_OPTYPES.MODOP:
+            ans = applyBinaryArithmeticOperation('%%', first_operand, second_operand);
+            break;
+        case ARITH_OPTYPES.IDIVOP:
+            ans = applyBinaryArithmeticOperation('%/%', first_operand, second_operand);
+            break;
+        }
+    }
+
+    return ans;
+};
+
 function applyUnaryArithmeticOperation(
     operator: string,
     operand: R.RValue,
-) : R.Logical | R.Real | R.Int | undefined {
+) : R.Logical | R.Real | R.Int {
     if (
         isAllowedOperand(operand)
     ) {
-        error(`Error: non-numeric argument to binary operator`);
-        return;
+        error(`Error: non-numeric argument to unary operator`);
     }
 
     const operands = {
@@ -53,13 +107,12 @@ function applyBinaryArithmeticOperation(
     operator: string,
     first_operand: R.RValue,
     second_operand: R.RValue,
-) : R.Logical | R.Real | R.Int | undefined {
+) : R.Logical | R.Real | R.Int {
     if (
         !isAllowedOperand(first_operand) ||
         !isAllowedOperand(second_operand)
     ) {
         error(`Error: non-numeric argument to binary operator`);
-        return;
     }
 
     let operands = {
