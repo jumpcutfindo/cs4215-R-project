@@ -1,7 +1,7 @@
 import {error, warn} from './error';
-import {Int, Logical, Real, RValue} from './types';
+import * as R from './types';
 import {RNull} from './values';
-import * as Coerce from './coerce';
+import {head, tail, length, checkArity} from './util';
 
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
@@ -17,16 +17,61 @@ const binary_logical_functions: any = {
     'xor': xor,
 };
 
+export const LOGICAL_OPTYPES = {
+    NOTOP: 1,
+    ELEMANDOP: 2,
+    ANDOP: 3,
+    ELEMOROP: 4,
+    OROP: 5,
+    XOROP: 6,
+};
+
+export const do_logic : R.PrimOp = (call, op, args, env) => {
+    let ans: R.RValue = RNull;
+
+    if (length(args) === 1) {
+        const operand = head(args);
+
+        switch (op.variant) {
+        case LOGICAL_OPTYPES.NOTOP:
+            ans = applyUnaryLogicalOperation('!', operand);
+            break;
+        }
+    } else if (length(args) === 2) {
+        const first_operand = head(args);
+        const second_operand = head(tail(args));
+        switch (op.variant) {
+        case LOGICAL_OPTYPES.ELEMANDOP:
+            ans = applyBinaryLogicalOperation('&', first_operand, second_operand);
+            break;
+        case LOGICAL_OPTYPES.ANDOP:
+            ans = applyBinaryLogicalOperation('&&', first_operand, second_operand);
+            break;
+        case LOGICAL_OPTYPES.ELEMOROP:
+            ans = applyBinaryLogicalOperation('|', first_operand, second_operand);
+            break;
+        case LOGICAL_OPTYPES.OROP:
+            ans = applyBinaryLogicalOperation('||', first_operand, second_operand);
+            break;
+        case LOGICAL_OPTYPES.XOROP:
+            ans = applyBinaryLogicalOperation('xor', first_operand, second_operand);
+            break;
+        }
+    }
+
+    return ans;
+};
+
 function applyUnaryLogicalOperation(
     operator: any,
-    operand: RValue,
+    operand: R.RValue,
 ) {
     if (type_hierarchy.indexOf(operand.tag) == -1) {
         error(`Error: logical operations are possible only for logical, integer or numeric types`);
     }
 
     const operands = {
-        operand: operand as Logical | Int | Real,
+        operand: operand as R.Logical | R.Int | R.Real,
     };
 
     const logical_result_type = 'logical';
@@ -51,20 +96,19 @@ function applyUnaryLogicalOperation(
 
 function applyBinaryLogicalOperation(
     operator: any,
-    first_operand: RValue,
-    second_operand: RValue,
+    first_operand: R.RValue,
+    second_operand: R.RValue,
 ) {
     if (
         type_hierarchy.indexOf(first_operand.tag) === -1 ||
         type_hierarchy.indexOf(second_operand.tag) === -1
     ) {
         error(`Error: logical operations are possible only for logical, integer or numeric types`);
-        return;
     }
 
     let operands = {
-        first_operand: first_operand as Logical | Int | Real,
-        second_operand: second_operand as Logical | Int | Real,
+        first_operand: first_operand as R.Logical | R.Int | R.Real,
+        second_operand: second_operand as R.Logical | R.Int | R.Real,
     };
 
     // 1. Coerce both operands to logical type
@@ -90,11 +134,11 @@ function applyBinaryLogicalOperation(
 }
 
 function recycle(
-    first_operand: Logical | Int | Real,
-    second_operand: Logical | Int | Real,
+    first_operand: R.Logical | R.Int | R.Real,
+    second_operand: R.Logical | R.Int | R.Real,
 ) {
-    let shorter_operand: Logical | Int | Real;
-    let longer_operand: Logical | Int | Real;
+    let shorter_operand: R.Logical | R.Int | R.Real;
+    let longer_operand: R.Logical | R.Int | R.Real;
 
     if (first_operand.data.length > second_operand.data.length) {
         longer_operand = first_operand;
@@ -132,25 +176,25 @@ function createVectorOfType(data: [boolean | number], type: string) {
             refcount: 0,
             tag: 'logical',
             data: data,
-        } as Logical;
+        } as R.Logical;
     case 'integer':
         return {
             attributes: RNull,
             refcount: 0,
             tag: 'integer',
             data: data,
-        } as Int;
+        } as R.Int;
     default:
         return {
             attributes: RNull,
             refcount: 0,
             tag: 'numeric',
             data: data,
-        } as Real;
+        } as R.Real;
     }
 }
 
-function coerceOperandToLogical(operand: Logical | Int | Real) {
+function coerceOperandToLogical(operand: R.Logical | R.Int | R.Real) {
     return {
         attributes: operand.attributes,
         refcount: operand.refcount,
@@ -164,7 +208,7 @@ function coerceOperandToLogical(operand: Logical | Int | Real) {
                 return true;
             }
         }),
-    } as Logical;
+    } as R.Logical;
 }
 
 function not(
@@ -189,8 +233,6 @@ function and(
 ) {
     const bool = first_operand_data[0];
     const other_bool = second_operand_data[0];
-
-    console.log(bool, other_bool);
 
     if (bool !== null && other_bool !== null) {
         return bool && other_bool;

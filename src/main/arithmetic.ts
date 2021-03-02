@@ -2,7 +2,6 @@ import {error, warn} from './error';
 import * as R from './types';
 import {RNull} from './values';
 import * as Coerce from './coerce';
-import {PrimOp} from './types';
 import {head, tail, length, checkArity} from './util';
 
 /**
@@ -33,7 +32,7 @@ export const ARITH_OPTYPES = {
     IDIVOP: 7,
 };
 
-export const do_arith : PrimOp = (call, op, args, env) => {
+export const do_arith : R.PrimOp = (call, op, args, env) => {
     let ans: R.RValue = RNull;
 
     if (length(args) === 1) {
