@@ -8,7 +8,11 @@ import {mkChar, mkChars, mkInt, mkInts, mkLang, mkList,
 
 const type_hierarchy = ['NULL', 'logical', 'integer', 'numeric', 'character', 'pairlist', 'list', 'expression'];
 
-function combineValues(values: R.RValue[]): R.RValue {
+export const do_c: R.PrimOp = (call, op, args, env) => {
+    return RNull;
+};
+
+function combineValues(values: R.RValue[], recursive: boolean): R.RValue {
     // 1. Check if the values provided are combinable
     if (!isCombinable) {
         error('Not combinable');
@@ -18,12 +22,19 @@ function combineValues(values: R.RValue[]): R.RValue {
     const outputType = getOutputType(values);
     if (outputType === 'NULL') return RNull;
 
-    console.log('expected type: ' + outputType);
+    let actual_values;
+    let names: (string | null)[] = [];
+    if (recursive) {
+        names = recursivelyExtractNames(values);
+        actual_values = recursivelyExtractValues(values);
+    } else {
+        actual_values = values;
+    }
 
     // 3. Coerce all values to expected output type
     const coercedValues = [];
 
-    for (const value of values) {
+    for (const value of actual_values) {
         if (value.tag === RNull.tag) continue;
         coercedValues.push(
             coerceToType(
@@ -102,6 +113,7 @@ function combineValues(values: R.RValue[]): R.RValue {
             tag: 'character',
             data: [],
         };
+
         for (const expr of coercedValues as R.Expression[]) {
             newExprVals = newExprVals.concat(expr.data);
 
@@ -121,6 +133,10 @@ function combineValues(values: R.RValue[]): R.RValue {
             data: newExprVals,
         } as R.Expression;
         break;
+    }
+
+    if (recursive && names.length !== 0) {
+        (output as R.Logical).attributes = mkPairlist([mkChars(names), 'names']);
     }
 
     return output;
@@ -250,7 +266,7 @@ function coerceToType(
             transferNames(operand, ans);
         } else if (operand.tag === 'list') {
             ans = {
-                attributes: getNames(operand),
+                attributes: mkPairlist([getNames(operand), 'names']),
                 refcount: 0,
                 tag: 'expression',
                 data: operand.data,
@@ -364,3 +380,137 @@ function isCombinable(values: R.RValue[]) {
 
     return ans.indexOf(false) === -1;
 }
+
+function recursivelyExtractValues(values: R.RValue[]) {
+    let output: R.RValue[] = [];
+    for (const value of values) {
+        switch (value.tag) {
+        case 'list':
+            let listOutputData: R.RValue[] = [];
+            for (const data of value.data) {
+                listOutputData = listOutputData.concat(recursivelyExtractValues([data]));
+            }
+            output = output.concat(listOutputData);
+            break;
+        case 'language':
+        case 'pairlist':
+            let plOutputData: R.RValue[] = [];
+            let curr: R.PairList | R.Language | R.Nil = value;
+            while (curr.tag !== RNull.tag) {
+                plOutputData = plOutputData.concat(recursivelyExtractValues([curr.value]));
+                curr = curr.next;
+            }
+            output = output.concat(plOutputData);
+            break;
+        default:
+            output.push(value);
+            break;
+        }
+    }
+
+    return output;
+}
+
+function recursivelyExtractNames(values: R.RValue[]) {
+    let output: (string | null)[] = [];
+    for (const value of values) {
+        switch (value.tag) {
+        case 'list':
+            let list_names = [];
+            if (getNames(value).tag === RNull.tag) {
+                for (const item of value.data) list_names.push('');
+            } else {
+                list_names = (getNames(value) as R.Character).data;
+            }
+
+            let list_index = 0;
+            for (const list_item of value.data) {
+                if (list_item.tag === 'list' || list_item.tag === 'pairlist' || list_item.tag === 'language') {
+                    output = output.concat(recursivelyExtractNames([list_item]));
+                } else {
+                    output.push(list_names[list_index]);
+                }
+                list_index ++;
+            }
+
+            break;
+        case 'language':
+        case 'pairlist':
+            let plist_names = [];
+            if (getNames(value).tag === RNull.tag) {
+                let curr: R.PairList | R.Language | R.Nil = value;
+                while (curr.tag !== RNull.tag) {
+                    plist_names.push('');
+                    curr = curr.next;
+                }
+            } else {
+                plist_names = (getNames(value) as R.Character).data;
+            }
+
+            let curr: R.PairList | R.Language | R.Nil = value;
+            let plist_index = 0;
+            while (curr.tag !== RNull.tag) {
+                if (curr.value.tag === 'list' || curr.value.tag === 'pairlist' ||curr.value.tag === 'language') {
+                    output = output.concat(recursivelyExtractNames([curr.value]));
+                } else {
+                    output.push(plist_names[plist_index]);
+                }
+                plist_index ++;
+                curr = curr.next;
+            }
+
+            break;
+        default:
+            if (getNames(value).tag === RNull.tag) {
+                output.push('');
+            } else {
+                output = output.concat((getNames(value) as R.Character).data);
+            }
+            break;
+        }
+    }
+
+    return output;
+}
+
+// =========== c() TESTS ===========
+// const type_hierarchy =
+//  ['NULL', 'logical', 'integer', 'numeric', 'character', 'pairlist', 'list', 'expression'];
+const null_value = RNull;
+const logical_value = mkLogicals([true, false, true]);
+(logical_value as R.Logical).attributes = {
+    attributes: RNull,
+    key: 'names',
+    value: mkChars(['logical_01', 'logical_02', 'logical_03']),
+    tag: 'pairlist',
+    refcount: 0,
+} as R.PairList;
+const integer_value = mkInts([1, 2, 3, 4]);
+const numeric_value = mkReals([100, 101, 102, 103]);
+const char_value = mkChars(['a', 'b', 'c', 'd']);
+const pairlist_value = mkPairlist([mkInt(1), 'abc'], [mkInt(2), 'xyz']);
+
+(pairlist_value as R.PairList).attributes = {
+    attributes: RNull,
+    key: 'names',
+    value: mkChars(['abc', 'xyz']),
+    tag: 'pairlist',
+    refcount: 0,
+} as R.PairList;
+
+const list_value = mkList([mkInt(1000), 'hello'], [mkInt(2000), 'world']);
+const expression_value = {
+    attributes: RNull,
+    refcount: 0,
+    tag: 'expression',
+    data: [mkLang([mkChar('5 + 5')], [RNull])],
+} as R.Expression;
+
+const list_1 = mkList([list_value, 'list_1'], [pairlist_value, 'plist_1'], [expression_value, 'expr_1']);
+
+console.log('actual: ');
+console.log(combineValues([logical_value, list_1, expression_value], true));
+console.log('attributes: ');
+console.log((combineValues([logical_value, list_1, expression_value], true) as R.List).attributes);
+console.log('values: ');
+console.log((combineValues([logical_value, list_1, expression_value], true) as R.List).data);
