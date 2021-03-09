@@ -25,7 +25,7 @@ if (T) 3 else 4
 `;
 
 const sampleProg4 : string = `
-c(1, 2, "a");
+c(abc=1, def=2, "a", recursive=TRUE);
 `;
 
 function interpret(prog: string, env: R.Env) {

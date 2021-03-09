@@ -1,3 +1,4 @@
+import { hasAttributes } from './attrib';
 import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
@@ -9,17 +10,29 @@ import {mkChar, mkChars, mkInt, mkInts, mkLang, mkList,
 const type_hierarchy = ['NULL', 'logical', 'integer', 'numeric', 'character', 'pairlist', 'list', 'expression'];
 
 export const do_c: R.PrimOp = (call, op, args, env) => {
-    return RNull;
+    const values: R.RValue[] = [];
+    let isRecursive = false;
+    let isUseNames = true;
+    let curr = args;
+    while (curr.tag !== RNull.tag) {
+        if (curr.key === 'recursive' && curr.value.tag === 'logical') {
+            isRecursive = curr.value.data[0] as boolean;
+        } else if (curr.key === 'use.names' && curr.value.tag === 'logical') {
+            isUseNames = curr.value.data[0] as boolean;
+        } else {
+            if (hasAttributes(curr.value)) {
+                (curr.value as R.Logical).attributes = mkPairlist([mkChar(curr.key), 'names']);
+            }
+            values.push(curr.value);
+        }
+        curr = curr.next;
+    }
+    return combineValues(values, isRecursive, isUseNames);
 };
 
-function combineValues(values: R.RValue[], recursive: boolean): R.RValue {
-    // 1. Check if the values provided are combinable
-    if (!isCombinable) {
-        error('Not combinable');
-    }
-
-    // 2. Check for expected output type, handle NULL type
-    const outputType = getOutputType(values);
+function combineValues(values: R.RValue[], recursive: boolean, preserveNames: boolean): R.RValue {
+    // 1. Check for expected output type, handle NULL type
+    let outputType = getOutputType(values);
     if (outputType === 'NULL') return RNull;
 
     let actual_values;
@@ -27,11 +40,13 @@ function combineValues(values: R.RValue[], recursive: boolean): R.RValue {
     if (recursive) {
         names = recursivelyExtractNames(values);
         actual_values = recursivelyExtractValues(values);
+
+        if (outputType === 'expression') outputType = 'list';
     } else {
         actual_values = values;
     }
 
-    // 3. Coerce all values to expected output type
+    // 2. Coerce all values to expected output type
     const coercedValues = [];
 
     for (const value of actual_values) {
@@ -43,7 +58,7 @@ function combineValues(values: R.RValue[], recursive: boolean): R.RValue {
         );
     }
 
-    // 4. Combine the data and create the new value
+    // 3. Combine the data and create the new value
     let output: R.RValue = RNull;
     switch (outputType) {
     case 'logical':
@@ -139,6 +154,10 @@ function combineValues(values: R.RValue[], recursive: boolean): R.RValue {
         (output as R.Logical).attributes = mkPairlist([mkChars(names), 'names']);
     }
 
+    if (!preserveNames) {
+        (output as R.Logical).attributes = RNull;
+    }
+
     return output;
 }
 
@@ -191,7 +210,7 @@ function coerceToType(
         transferNames(operand, ans);
         break;
     case 'list':
-        operand = operand as R.Logical | R.Int | R.Real | R.Character | R.PairList | R.List;
+        operand = operand as R.Logical | R.Int | R.Real | R.Character | R.PairList | R.List | R.Expression;
         if (operand.tag === 'list') {
             ans = copy(operand) as R.List;
             transferNames(operand, ans);
@@ -245,6 +264,9 @@ function coerceToType(
                     break;
                 case 'character':
                     data.push(mkChar(item as (string | null)));
+                    break;
+                case 'expression':
+                    data.push((item as R.RValue));
                     break;
                 }
             }
@@ -373,14 +395,6 @@ function getOutputType(values: R.RValue[]): string {
     return ans;
 }
 
-function isCombinable(values: R.RValue[]) {
-    const ans = values.map((value) => {
-        return type_hierarchy.indexOf(value.tag) !== -1;
-    });
-
-    return ans.indexOf(false) === -1;
-}
-
 function recursivelyExtractValues(values: R.RValue[]) {
     let output: R.RValue[] = [];
     for (const value of values) {
@@ -472,45 +486,3 @@ function recursivelyExtractNames(values: R.RValue[]) {
 
     return output;
 }
-
-// =========== c() TESTS ===========
-// const type_hierarchy =
-//  ['NULL', 'logical', 'integer', 'numeric', 'character', 'pairlist', 'list', 'expression'];
-const null_value = RNull;
-const logical_value = mkLogicals([true, false, true]);
-(logical_value as R.Logical).attributes = {
-    attributes: RNull,
-    key: 'names',
-    value: mkChars(['logical_01', 'logical_02', 'logical_03']),
-    tag: 'pairlist',
-    refcount: 0,
-} as R.PairList;
-const integer_value = mkInts([1, 2, 3, 4]);
-const numeric_value = mkReals([100, 101, 102, 103]);
-const char_value = mkChars(['a', 'b', 'c', 'd']);
-const pairlist_value = mkPairlist([mkInt(1), 'abc'], [mkInt(2), 'xyz']);
-
-(pairlist_value as R.PairList).attributes = {
-    attributes: RNull,
-    key: 'names',
-    value: mkChars(['abc', 'xyz']),
-    tag: 'pairlist',
-    refcount: 0,
-} as R.PairList;
-
-const list_value = mkList([mkInt(1000), 'hello'], [mkInt(2000), 'world']);
-const expression_value = {
-    attributes: RNull,
-    refcount: 0,
-    tag: 'expression',
-    data: [mkLang([mkChar('5 + 5')], [RNull])],
-} as R.Expression;
-
-const list_1 = mkList([list_value, 'list_1'], [pairlist_value, 'plist_1'], [expression_value, 'expr_1']);
-
-console.log('actual: ');
-console.log(combineValues([logical_value, list_1, expression_value], true));
-console.log('attributes: ');
-console.log((combineValues([logical_value, list_1, expression_value], true) as R.List).attributes);
-console.log('values: ');
-console.log((combineValues([logical_value, list_1, expression_value], true) as R.List).data);
