@@ -1,13 +1,13 @@
 /* eslint-disable new-cap */
 import {logicalFromString} from './coerce';
-import {ddFind, defineVar, findFun, findVar, closureEnv} from './envir';
+import {ddFind, defineVar, findFun, findVar, closureEnv, setVar, findVarInFrame} from './envir';
 import {error, errorcall, warncall} from './error';
 import {EvalContext} from './globals';
 import {matchArgs} from './match';
 import {forcePromise, promiseArgs} from './promise';
-import {Closure, Env, Language, Name, Nil, PairList, PrimOp, RValue, Vis} from './types';
-import {checkArity, cons, head, length, LinkedListIter, tail} from './util';
-import {install, mkChar, mkInt, mkLogical, mkReal, RNull, R_DotsSymbol, R_MissingArg, R_UnboundValue} from './values';
+import * as R from './types';
+import {checkArity, cons, head, lcons, length, LinkedListIter, tail} from './util';
+import {install, mkChar, mkInt, mkLogical, mkReal, mkLang, mkPairlist, RNull, R_BaseEnv, R_DotsSymbol, R_MissingArg, R_UnboundValue} from './values';
 
 /** ********************************************************
  *
@@ -15,9 +15,9 @@ import {install, mkChar, mkInt, mkLogical, mkReal, RNull, R_DotsSymbol, R_Missin
  *
  **********************************************************/
 
-export function Reval(e: RValue, env: Env) : RValue {
-    EvalContext.R_Visible = Vis.On;
-    let result: RValue = RNull;
+export function Reval(e: R.RValue, env: R.Env) : R.RValue {
+    EvalContext.R_Visible = R.Vis.On;
+    let result: R.RValue = RNull;
     switch (e.tag) {
     case 'NULL':
     case 'builtin':
@@ -57,7 +57,7 @@ export function Reval(e: RValue, env: Env) : RValue {
     case 'language':
         const lang = head(e);
         const op = lang.tag === 'name' ? findFun(lang, env, e) : Reval(lang, env);
-        let args: PairList|Nil = tail(e);
+        let args: R.PairList|R.Nil = tail(e);
         switch (op.tag) {
         case 'builtin':
             args = RevalList(args, env, e, 0);
@@ -65,7 +65,7 @@ export function Reval(e: RValue, env: Env) : RValue {
         case 'special':
             EvalContext.R_Visible = op.visibility;
             result = (op.jsFunc)(e, op, args, env);
-            if (op.visibility !== Vis.OnMut) {
+            if (op.visibility !== R.Vis.OnMut) {
                 EvalContext.R_Visible = op.visibility;
             }
             break;
@@ -85,9 +85,9 @@ export function Reval(e: RValue, env: Env) : RValue {
     return result;
 }
 
-export function RevalList(el: PairList|Nil, env: Env, call: Language, n: number): PairList|Nil {
-    let headPtr: PairList|Nil = RNull;
-    let tailPtr: PairList|Nil = RNull;
+export function RevalList(el: R.PairList|R.Nil, env: R.Env, call: R.Language, n: number): R.PairList|R.Nil {
+    let headPtr: R.PairList|R.Nil = RNull;
+    let tailPtr: R.PairList|R.Nil = RNull;
 
     for (const elem of new LinkedListIter(el)) {
         n++;
@@ -100,7 +100,7 @@ export function RevalList(el: PairList|Nil, env: Env, call: Language, n: number)
                     if (headPtr === RNull) {
                         headPtr = ev;
                     } else {
-                        (<PairList>tailPtr).next = ev;
+                        (<R.PairList>tailPtr).next = ev;
                     }
                     ev.key = dotelem.key;
                     tailPtr = ev;
@@ -116,7 +116,7 @@ export function RevalList(el: PairList|Nil, env: Env, call: Language, n: number)
             if (headPtr === RNull) {
                 headPtr = ev;
             } else {
-                (<PairList>tailPtr).next = ev;
+                (<R.PairList>tailPtr).next = ev;
             }
             ev.key = elem.key;
             tailPtr = ev;
@@ -126,12 +126,12 @@ export function RevalList(el: PairList|Nil, env: Env, call: Language, n: number)
 }
 
 export function applyClosure(
-    call: Language,
-    op: Closure,
-    pargs: PairList|Nil,
-    env: Env,
-    suppliedVars: PairList|Nil,
-) : RValue {
+    call: R.Language,
+    op: R.Closure,
+    pargs: R.PairList|R.Nil,
+    env: R.Env,
+    suppliedVars: R.PairList|R.Nil,
+) : R.RValue {
     const actuals = matchArgs(op.formals, pargs, call);
     const newenv = closureEnv(op.formals, actuals, env);
 
@@ -142,7 +142,7 @@ export function applyClosure(
 
     let result = Reval(op.body, newenv);
     if (isReturn(result)) {
-        result = (<Name>result).internal;
+        result = (<R.Name>result).internal;
     }
     return result;
 }
@@ -160,18 +160,18 @@ export function applyClosure(
  *
  **********************************************************/
 
-export const do_if : PrimOp = (call, op, args, env) => {
+export const do_if : R.PrimOp = (call, op, args, env) => {
     // we use unsafe head/tail functions as we are guaranteed that if is
     // called with at least 2 arguments (in ASTVisitor, if will be given NULL arguments if)
     // not enough arguments are supplied. See grammar/Parsing.md
-    let statement : RValue = RNull;
+    let statement : R.RValue = RNull;
     const cond = Reval(head(args), env);
     if (asLogicalNoNA(cond, call)) {
         statement = head(tail(args));
     } else {
         const alt = tail(tail(args));
         if (alt === RNull) {
-            EvalContext.R_Visible = Vis.Off;
+            EvalContext.R_Visible = R.Vis.Off;
             return RNull;
         }
         statement = head(alt);
@@ -179,7 +179,7 @@ export const do_if : PrimOp = (call, op, args, env) => {
     return Reval(statement, env);
 };
 
-function asLogicalNoNA(s: RValue, call: Language) : boolean {
+function asLogicalNoNA(s: R.RValue, call: R.Language) : boolean {
     let result : boolean|null = null;
     switch (s.tag) {
     case 'logical':
@@ -212,20 +212,20 @@ function asLogicalNoNA(s: RValue, call: Language) : boolean {
  *
  **********************************************************/
 
-export function Rreturn(val: RValue): Name {
-    const result: Name = install('return');
+export function Rreturn(val: R.RValue): R.Name {
+    const result: R.Name = install('return');
     result.internal = val;
     return result;
 }
 
-export function isReturn(rval: RValue): boolean {
+export function isReturn(rval: R.RValue): boolean {
     return rval.tag === 'name' &&
            rval.pname === 'return' &&
            rval.internal !== R_UnboundValue;
 }
 
-export const do_return : PrimOp = (call, op, args, env) => {
-    let result: RValue = RNull;
+export const do_return : R.PrimOp = (call, op, args, env) => {
+    let result: R.RValue = RNull;
     if (args.tag !== 'NULL') {
         if (args.next.tag !== 'NULL') {
             result = Reval(args.value, env);
@@ -236,36 +236,36 @@ export const do_return : PrimOp = (call, op, args, env) => {
     return Rreturn(result);
 };
 
-export function Rbreak(): Name {
-    const result: Name = install('break');
+export function Rbreak(): R.Name {
+    const result: R.Name = install('break');
     result.internal = RNull; // just some non R_UnboundValue value to indicate break return
     return result;
 }
 
-export function isBreak(bval: RValue): boolean {
+export function isBreak(bval: R.RValue): boolean {
     return bval.tag === 'name' &&
            bval.pname === 'break' &&
            bval.internal !== R_UnboundValue;
 }
 
-export const do_break : PrimOp = (call, op, args, env) => {
+export const do_break : R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     return op.variant === 1 ? Rnext() : Rbreak();
 };
 
-export function Rnext(): Name {
-    const result: Name = install('next');
+export function Rnext(): R.Name {
+    const result: R.Name = install('next');
     result.internal = RNull; // just some non R_UnboundValue value to indicate break return
     return result;
 }
 
-export function isNext(nval: RValue): boolean {
+export function isNext(nval: R.RValue): boolean {
     return nval.tag === 'name' &&
            nval.pname === 'next' &&
            nval.internal !== R_UnboundValue;
 }
 
-export const do_for : PrimOp = (call, op, args, env) => {
+export const do_for : R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const sym = head(args);
     let val = head(tail(args));
@@ -310,3 +310,176 @@ export const do_for : PrimOp = (call, op, args, env) => {
     }
     return RNull;
 };
+
+/** ********************************************************
+ *
+ *      OTHER LANGUAGE CONSTRUCTS (BRACE, PARENTHESIS)
+ *
+ **********************************************************/
+
+
+export const do_paren : R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
+    return head(args);
+} 
+
+export const do_begin : R.PrimOp = (call, op, args, env) => {
+    let result: R.RValue = RNull;
+    for (let arg of new LinkedListIter(args)) {
+        result = Reval(arg, env);
+        if (isReturn(result) || isBreak(result) || isNext(result)) {
+            break;
+        }
+    }
+    return result;
+}
+
+/** ********************************************************
+ *
+ *            SETTING BINDINGS IN ENVIRONMENT
+ *
+ **********************************************************/
+
+
+const assignmentSymbols = ["<-", "<<-"];
+
+export const do_set : R.PrimOp = (call, op, args, env) => {
+    // Don't ask why this does not use checkArity... simply following R implementation
+    if (length(args) !== 2) {
+        error(`incorrect number of arguments to "${assignmentSymbols[op.variant]}"`);
+    }
+    let lhs = head(args);
+    let rhs = Reval(head(tail(args)), env);
+    switch (lhs.tag) {
+    case 'character':
+        lhs = install(lhs.data[0]!); // May not be sound implementation. TODO: test
+        // fallthrough
+    case 'name':
+        if (op.variant === 0) {
+            defineVar(lhs, rhs, env);
+        } else {
+            setVar(lhs, rhs, env.parent as R.Env);
+        }
+        return rhs;
+    case 'language':
+        return applydefine(call, op, lhs, rhs, env);
+    default:
+        errorcall(call, 'invalid (do_set) left-hand side to assignment');
+    }
+}
+
+function applydefine(
+    call: R.Language, 
+    op: R.Builtin|R.Special, 
+    lhs: R.Language, 
+    rhs: R.RValue, 
+    env: R.Env
+) : R.RValue {
+    if (env === R_BaseEnv) {
+        errorcall(call, 'cannot do complex assignments in base environment');
+    }
+    // TODO: Check how head(tail(lhs)) (CADR in GNU C) can work here - it appears to return Nil in GNU C if language object
+    // has no arguments (e.g. names() <- 4) which explains the NULL check in evalseq. But in our implementation it should fail
+    // already in head() -- empty list
+    let { assignSymbol, partialEvals } = evalseq(head(tail(lhs)), op.variant === 0, env);
+    for (let partialEval of new LinkedListIter(partialEvals)) {
+        const fun = head(lhs);
+        let repFun: R.RValue;
+        switch (fun.tag) {
+        case 'name':
+            repFun = getAssignFcnSymbol(fun);
+            break;
+        case 'language':
+            // check for and handle assignments of the form foo::bar(x) <- y
+            if (length(fun) === 3 && 
+                head(fun) === install('::') &&
+                (repFun = head(tail(tail(fun)))).tag === 'name') {
+                repFun = mkLang([head(fun)], [head(tail(fun))], [getAssignFcnSymbol(repFun)]);
+                break;
+            }
+            // fallthrough
+        default:
+            error('invalid function in complex assignment');
+        }
+        const restArgs = tail(tail(lhs));
+        rhs = replaceCall(repFun, partialEval, restArgs, rhs);
+        rhs = Reval(rhs, env);
+        lhs = head(tail(lhs)) as R.Language; // Should by theory be guaranteed not to fail, since length(partialEvals) == number of nested calls
+    }
+    if (op.variant === 0) {
+        defineVar(assignSymbol, rhs, env);
+    } else {
+        setVar(assignSymbol, rhs, env.parent as R.Env);
+    }
+    return rhs;
+    
+}
+
+// Given a complex LHS expression for assignment, evalseq evaluates
+// all the necessary subsections of the LHS expression. For example,
+// Given an assignment names(x$a[2]) <- "hello"
+// evalseq will produce a list (eval(x$a[2]), eval(x$a), eval(x), x)
+// Note that the last item x should be a symbol which is eventually assigned to
+//
+// evalseq is written this way (not computed alongside applydefine) so that each partial evaluation
+// is only computed once, instead of multiple times (deepest expression computed n times, outermost
+// computed once)
+function evalseq(
+    expr: R.RValue, 
+    forceLocal: boolean, 
+    env: R.Env
+) : { assignSymbol: R.Name, partialEvals: R.PairList } {
+    if (expr.tag === 'NULL') {
+        error('invalid (NULL) left side of assignment');
+    }
+    if (expr.tag === 'name') {
+        let nval = forceLocal 
+            ? ensureLocal(expr, env) 
+            : Reval(expr, env.parent as R.Env);
+        return { 
+            assignSymbol: expr, 
+            partialEvals: mkPairlist([nval]) as R.PairList 
+        };
+    } else if (expr.tag === 'language') {
+        let { assignSymbol, partialEvals } = evalseq(head(tail(expr)), forceLocal, env);
+        let nexpr = lcons(head(expr), cons(head(partialEvals), tail(tail(expr))));
+        let nval = Reval(nexpr, env);
+        return {
+            assignSymbol: assignSymbol,
+            partialEvals: cons(nval, partialEvals)
+        };
+    } else {
+        error('target of assignment expands to non-language object');
+    }
+}
+
+function ensureLocal(sym: R.Name, env: R.Env) : R.RValue {
+    let val = findVarInFrame(sym, env);
+    if (val !== R_UnboundValue) {
+        val = Reval(sym, env); // for promises
+        return val;
+    } else {
+        val = Reval(sym, env.parent as R.Env);
+        if (val === R_UnboundValue) {
+            error(`object '${sym.pname}' not found`);
+        }
+        defineVar(sym, val, env);
+        return val;
+    }
+}
+
+function getAssignFcnSymbol(fn: R.Name) : R.Name {
+    return install(fn.pname + '<-');
+}
+
+// Creates replacement function call with replacement function fun, 1st arg val, remaining args args, assignment rhs rhs
+function replaceCall(fun: R.RValue, val: R.RValue, args: R.PairList|R.Nil, rhs: R.RValue) : R.Language {
+    let result = mkLang([fun], [val]);
+    let ptr = tail(result) as R.PairList;
+    for (let arg of new LinkedListIter(args)) {
+        ptr.next = {...arg};
+        ptr = ptr.next;
+    }
+    ptr.next = mkPairlist([rhs]);
+    return result;
+}

@@ -3,7 +3,7 @@ import {error, errorcall} from './error';
 import {Reval} from './eval';
 import * as R from './types';
 import {head, tail} from './util';
-import {install, mkPromise, RNull, R_BaseEnv, R_DotsSymbol, R_EmptyEnv, R_MissingArg, R_UnboundValue} from './values';
+import {install, mkPromise, RNull, R_BaseEnv, R_DotsSymbol, R_EmptyEnv, R_GlobalEnv, R_MissingArg, R_UnboundValue} from './values';
 
 
 // Specialized version of NewEnvironment in GNU R which handles creating the execution environment
@@ -112,4 +112,27 @@ export function defineVar(sym: R.Name, val: R.RValue, env: R.Env) {
         sym.value = val;
     }
     env.frame.set(sym, val);
+}
+
+export function setVar(sym: R.Name, val: R.RValue, env: R.Env) {
+    let vl: R.RValue = RNull;
+    while (env !== R_EmptyEnv) {
+        if (env === R_BaseEnv) {
+            if (sym.value !== R_UnboundValue) {
+                sym.value = val;
+                vl = sym;
+            }
+        } else {
+            if (env.frame.has(sym)) {
+                env.frame.set(sym, val);
+                vl = sym;
+            }
+        }
+        
+        if (vl !== RNull) {
+            return;
+        }
+        env = env.parent as R.Env;
+    }
+    defineVar(sym, val, R_GlobalEnv);
 }

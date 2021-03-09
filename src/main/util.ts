@@ -113,6 +113,17 @@ export function cons(val: RValue, pl: PairList | Nil): PairList {
     };
 }
 
+export function lcons(val: RValue, pl: PairList | Nil): Language {
+    return {
+        tag: 'language',
+        refcount: 0,
+        attributes: RNull,
+        key: '',
+        value: val,
+        next: pl,
+    };
+}
+
 export class LinkedListIter implements Iterable<PairList> {
     private static dummy: PairList = {
         tag: 'pairlist',
@@ -195,12 +206,11 @@ export function checkArity(
     op: Builtin | Special,
     args: PairList | Nil,
 ) {
-    if (op.arity >= 0 && op.arity !== length(args)) {
+    const arglen = length(args);
+    if (op.arity >= 0 && op.arity !== arglen) {
         errorcall(
             call,
-            `${length(args)} argument(s) passed to call which requires ${
-                op.arity
-            }`,
+            `${arglen} argument(s) passed to call which requires ${op.arity}`
         );
     }
 }

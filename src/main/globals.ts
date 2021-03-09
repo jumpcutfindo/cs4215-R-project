@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable no-multi-spaces */
 import {do_arith, ARITH_OPTYPES} from './arithmetic';
-import {do_break, do_for, do_if, do_return} from './eval';
+import {do_begin, do_break, do_for, do_if, do_paren, do_return} from './eval';
 import {do_logic, LOGICAL_OPTYPES} from './logic';
 import { do_relop, RELATIONAL_OPTYPES } from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
@@ -24,6 +24,8 @@ export function initPrimitives() {
         primitiveSymbol('break',    do_break,   'special',  {visibility: Vis.On, arity: 0, variant: 2}),
         primitiveSymbol('next',     do_break,   'special',  {visibility: Vis.On, arity: 0, variant: 1}),
         primitiveSymbol('return',   do_return,  'special',  {visibility: Vis.On, arity: 0}),
+        primitiveSymbol('{',        do_begin,   'special',  {visibility: Vis.OnMut, arity: -1}),
+        primitiveSymbol('(',        do_paren,   'builtin',  {visibility: Vis.On, arity: 1}),
 
         /* Arithmetic operators, all primitve */
         primitiveSymbol('+',        do_arith,   'special',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.PLUSOP}),
