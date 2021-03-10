@@ -2,6 +2,7 @@
 /* eslint-disable no-multi-spaces */
 import {do_arith, ARITH_OPTYPES} from './arithmetic';
 import {do_begin, do_break, do_for, do_function, do_if, do_paren, do_return, do_set} from './eval';
+import { do_c } from './bind';
 import {do_logic, LOGICAL_OPTYPES} from './logic';
 import { do_relop, RELATIONAL_OPTYPES } from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
@@ -53,6 +54,9 @@ export function initPrimitives() {
         primitiveSymbol('>=',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.GEQOP}),
         primitiveSymbol('==',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.EQOP}),
         primitiveSymbol('!=',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.NEQOP}),
+
+        /* Combination, built-in*/
+        primitiveSymbol('c',        do_c,       'special',  {visibility: Vis.On, arity: 0}),
     ];
 
     const internals = [

@@ -1,5 +1,4 @@
 /* eslint-disable new-cap */
-import { NamespaceContext } from '../grammar/RParser';
 import {logicalFromString} from './coerce';
 import {ddFind, defineVar, findFun, findVar, closureEnv, setVar, findVarInFrame} from './envir';
 import {error, errorcall, warncall} from './error';

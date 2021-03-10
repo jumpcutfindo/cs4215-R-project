@@ -1,6 +1,8 @@
+import {copy} from './copy';
 import {error, errorcall} from './error';
 import {
     Builtin,
+    Character,
     Language,
     LinkedList,
     Nil,
@@ -195,6 +197,36 @@ export function isVector(x: RValue): boolean {
     default:
         return false;
     }
+}
+
+export function getNames(x: RValue): Character | Nil {
+    let ans: Character | Nil = RNull;
+    switch (x.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+    case 'expression':
+    case 'list':
+    case 'pairlist':
+    case 'environment':
+    case 'closure':
+    case 'dotdotdot':
+    case 'language':
+        let curr = x.attributes;
+        while (curr.tag !== RNull.tag) {
+            if (curr.key === 'names') {
+                ans = curr.value as Character;
+                break;
+            }
+            curr = curr.next;
+        }
+        break;
+    default:
+        ans = RNull;
+    }
+
+    return ans;
 }
 
 /** ******************************************************

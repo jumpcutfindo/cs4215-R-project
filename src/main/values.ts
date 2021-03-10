@@ -152,7 +152,7 @@ export function mkPairlist(
             key: key ?? '',
             value: val,
             next: result,
-        };
+        } as R.PairList;
     });
     return result;
 }
