@@ -22,7 +22,7 @@ expr :  literal # Lit
      |  op='(' expr ')' # Call
      |  expr '(' arglist ')' # FunCall
      |  'function' '(' formallist ')' expr # Function
-     |  op='{' exprlist '}' # Call
+     |  op='{' (expr eoe)* '}' # Call
      |  name '::' name # Namespace
      |  expr '$' name # ComponentExtraction
      |  expr '[' arglist ']' # Subset
@@ -47,9 +47,9 @@ expr :  literal # Lit
      |  op='next'  # Call
      ;
 
-exprlist
-    :   (expr eoe)*
-    ;
+// exprlist
+//     :   (expr eoe)*
+//     ;
 
 // Represents end of expressions
 eoe :    ';'

@@ -16,7 +16,6 @@ import { AssignContext } from "./RParser";
 import { ForContext } from "./RParser";
 import { ProgContext } from "./RParser";
 import { ExprContext } from "./RParser";
-import { ExprlistContext } from "./RParser";
 import { EoeContext } from "./RParser";
 import { LiteralContext } from "./RParser";
 import { NameContext } from "./RParser";
@@ -135,13 +134,6 @@ export interface RVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitExpr?: (ctx: ExprContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by `RParser.exprlist`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitExprlist?: (ctx: ExprlistContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `RParser.eoe`.

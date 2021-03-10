@@ -16,7 +16,6 @@ import { AssignContext } from "./RParser";
 import { ForContext } from "./RParser";
 import { ProgContext } from "./RParser";
 import { ExprContext } from "./RParser";
-import { ExprlistContext } from "./RParser";
 import { EoeContext } from "./RParser";
 import { LiteralContext } from "./RParser";
 import { NameContext } from "./RParser";
@@ -195,17 +194,6 @@ export interface RListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitExpr?: (ctx: ExprContext) => void;
-
-	/**
-	 * Enter a parse tree produced by `RParser.exprlist`.
-	 * @param ctx the parse tree
-	 */
-	enterExprlist?: (ctx: ExprlistContext) => void;
-	/**
-	 * Exit a parse tree produced by `RParser.exprlist`.
-	 * @param ctx the parse tree
-	 */
-	exitExprlist?: (ctx: ExprlistContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `RParser.eoe`.

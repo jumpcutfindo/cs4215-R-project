@@ -24,6 +24,7 @@ export function forcePromise(e: Prom) : RValue {
 export function promiseArgs(el: PairList | Nil, env: Env): PairList | Nil {
     // Start of with a pairlist with a dummy first value for the iterative algorithm
     let ans: PairList = mkPairlist([RNull]) as PairList;
+    let ansptr = ans;
     while (el.tag !== 'NULL') {
         if (head(el) === R_DotsSymbol) {
             const h = findVar(R_DotsSymbol, env);
@@ -31,21 +32,21 @@ export function promiseArgs(el: PairList | Nil, env: Env): PairList | Nil {
                 const ptr: LinkedList | Nil = h;
                 while (ptr !== RNull) {
                     if (head(ptr) === R_MissingArg) {
-                        ans.next = mkPairlist([head(ptr), headkey(ptr)]);
+                        ansptr.next = mkPairlist([head(ptr), headkey(ptr)]);
                     } else {
-                        ans.next = mkPairlist([mkPromise(head(ptr), env), headkey(ptr)]);
+                        ansptr.next = mkPairlist([mkPromise(head(ptr), env), headkey(ptr)]);
                     }
-                    ans = ans.next as PairList;
+                    ansptr = ansptr.next as PairList;
                 }
             } else if (h !== R_MissingArg) {
                 error('\'...\' used in an incorrect context');
             }
         } else if (head(el) === R_MissingArg) {
-            ans.next = mkPairlist([R_MissingArg, headkey(el)]);
-            ans = ans.next as PairList;
+            ansptr.next = mkPairlist([R_MissingArg, headkey(el)]);
+            ansptr = ansptr.next as PairList;
         } else {
-            ans.next = mkPairlist([mkPromise(head(el), env), headkey(el)]);
-            ans = ans.next as PairList;
+            ansptr.next = mkPairlist([mkPromise(head(el), env), headkey(el)]);
+            ansptr = ansptr.next as PairList;
         }
         el = tail(el);
     }

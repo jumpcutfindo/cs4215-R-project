@@ -32,31 +32,31 @@ export function initPrimitives() {
         primitiveSymbol('<<-',      do_set,     'special',  {visibility: Vis.Off, arity: -1, variant: 1}),
 
         /* Arithmetic operators, all primitve */
-        primitiveSymbol('+',        do_arith,   'special',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.PLUSOP}),
-        primitiveSymbol('-',        do_arith,   'special',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.MINUSOP}),
-        primitiveSymbol('*',        do_arith,   'special',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.TIMESOP}),
-        primitiveSymbol('/',        do_arith,   'special',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.DIVOP}),
-        primitiveSymbol('^',        do_arith,   'special',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.POWOP}),
-        primitiveSymbol('%%',       do_arith,   'special',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.MODOP}),
-        primitiveSymbol('%/%',      do_arith,   'special',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.IDIVOP}),
+        primitiveSymbol('+',        do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.PLUSOP}),
+        primitiveSymbol('-',        do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.MINUSOP}),
+        primitiveSymbol('*',        do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.TIMESOP}),
+        primitiveSymbol('/',        do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.DIVOP}),
+        primitiveSymbol('^',        do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.POWOP}),
+        primitiveSymbol('%%',       do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.MODOP}),
+        primitiveSymbol('%/%',      do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.IDIVOP}),
 
         /* Logical operators, all primitive */
-        primitiveSymbol('!',        do_logic,   'special',  {visibility: Vis.On, arity: 1, variant: LOGICAL_OPTYPES.NOTOP}),
-        primitiveSymbol('&',        do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMANDOP}),
+        primitiveSymbol('!',        do_logic,   'builtin',  {visibility: Vis.On, arity: 1, variant: LOGICAL_OPTYPES.NOTOP}),
+        primitiveSymbol('&',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMANDOP}),
         primitiveSymbol('&&',       do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
-        primitiveSymbol('|',        do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMOROP}),
+        primitiveSymbol('|',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMOROP}),
         primitiveSymbol('||',       do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.OROP}),
 
         /* Relational operators, all primitive */
-        primitiveSymbol('<',        do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LTOP}),
-        primitiveSymbol('>',        do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.GTOP}),
-        primitiveSymbol('<=',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LEQOP}),
-        primitiveSymbol('>=',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.GEQOP}),
-        primitiveSymbol('==',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.EQOP}),
-        primitiveSymbol('!=',       do_relop,   'special',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.NEQOP}),
+        primitiveSymbol('<',        do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LTOP}),
+        primitiveSymbol('>',        do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.GTOP}),
+        primitiveSymbol('<=',       do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LEQOP}),
+        primitiveSymbol('>=',       do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.GEQOP}),
+        primitiveSymbol('==',       do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.EQOP}),
+        primitiveSymbol('!=',       do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.NEQOP}),
 
         /* Combination, built-in*/
-        primitiveSymbol('c',        do_c,       'special',  {visibility: Vis.On, arity: 0}),
+        primitiveSymbol('c',        do_c,       'builtin',  {visibility: Vis.On, arity: 0}),
     ];
 
     const internals = [

@@ -16,6 +16,7 @@ import {install, mkChar, mkInt, mkLogical, mkReal, mkLang, mkPairlist, RNull, R_
  **********************************************************/
 
 export function Reval(e: R.RValue, env: R.Env) : R.RValue {
+    // console.log('evaluating: ', e);
     EvalContext.R_Visible = R.Vis.On;
     let result: R.RValue = RNull;
     switch (e.tag) {
@@ -70,6 +71,7 @@ export function Reval(e: R.RValue, env: R.Env) : R.RValue {
             }
             break;
         case 'closure':
+            // console.log("args:", args);
             const pargs = promiseArgs(args, env);
             result = applyClosure(e, op, pargs, env, RNull);
             break;
@@ -132,9 +134,12 @@ export function applyClosure(
     env: R.Env,
     suppliedVars: R.PairList|R.Nil,
 ) : R.RValue {
+    //console.log("formals: ", op.formals);
+    //console.log("pargs: ", pargs);
     const actuals = matchArgs(op.formals, pargs, call);
     const newenv = closureEnv(op.formals, actuals, env);
 
+    //console.log(newenv.frame);
     // suppliedvars from usemethod
     for (const v of new LinkedListIter(suppliedVars)) {
         newenv.frame.set(install(v.key), v.value);
@@ -326,10 +331,12 @@ export const do_paren : R.PrimOp = (call, op, args, env) => {
 export const do_begin : R.PrimOp = (call, op, args, env) => {
     let result: R.RValue = RNull;
     for (let arg of new LinkedListIter(args)) {
-        result = Reval(arg, env);
+        result = Reval(arg.value, env);
         if (isReturn(result) || isBreak(result) || isNext(result)) {
             break;
         }
+        console.log("Eval result: ", result);
+        console.log(env.frame);
     }
     return result;
 }
@@ -377,6 +384,7 @@ export const do_set : R.PrimOp = (call, op, args, env) => {
     }
     let lhs = head(args);
     let rhs = Reval(head(tail(args)), env);
+    console.log(`Setting ${(lhs as R.Name).pname} to ${rhs}`);
     switch (lhs.tag) {
     case 'character':
         lhs = install(lhs.data[0]!); // May not be sound implementation. TODO: test
