@@ -3,12 +3,15 @@ grammar R;
 @parser::members {
 
 public lineTerminatorAhead() : boolean {
-    let possibleIndex = this.currentToken.tokenIndex - 1;
-    let ahead : Token = this._input.get(possibleIndex);
-    if (ahead.channel != Token.HIDDEN_CHANNEL) {
-        return false;
+    let possibleIndex = this.currentToken.tokenIndex + 1;
+    if (possibleIndex < this._input.size) {
+        let ahead : Token = this._input.get(possibleIndex);
+        if (ahead.channel != Token.HIDDEN_CHANNEL) {
+            return false;
+        }
+        return (ahead.type === RParser.COMMENT) || (ahead.text.includes('\n'));
     }
-    return (ahead.type == RParser.COMMENT) || (ahead.type == RParser.NL);
+    return true;
 }
 }
 
@@ -177,7 +180,4 @@ USER_OP :   '%' .*? '%' ;
 
 COMMENT :   '#' .*? '\r'? '\n' -> channel(HIDDEN) ; // change comments to just emit NL
 
-// Match both UNIX and Windows newlines
-NL      :   '\r'? '\n' -> channel(HIDDEN);
-
-WS      :   [ \t\u000C]+ -> channel(HIDDEN) ;
+WS      :   [ \t\u000C\r\n]+ -> channel(HIDDEN) ;

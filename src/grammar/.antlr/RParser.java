@@ -23,7 +23,7 @@ public class RParser extends Parser {
 		T__31=32, T__32=33, T__33=34, T__34=35, T__35=36, T__36=37, T__37=38, 
 		T__38=39, T__39=40, T__40=41, T__41=42, LBRACE=43, RBRACE=44, NULL=45, 
 		NA=46, NAN=47, INF=48, BOOL=49, DOTS=50, HEX=51, INT=52, FLOAT=53, STRING=54, 
-		ID=55, USER_OP=56, COMMENT=57, NL=58, WS=59;
+		ID=55, USER_OP=56, COMMENT=57, WS=58;
 	public static final int
 		RULE_prog = 0, RULE_expr = 1, RULE_eoe = 2, RULE_literal = 3, RULE_name = 4, 
 		RULE_formallist = 5, RULE_formal = 6, RULE_arglist = 7, RULE_arg = 8;
@@ -53,7 +53,7 @@ public class RParser extends Parser {
 			null, null, null, null, null, null, null, null, null, null, null, null, 
 			null, null, null, null, null, null, null, "LBRACE", "RBRACE", "NULL", 
 			"NA", "NAN", "INF", "BOOL", "DOTS", "HEX", "INT", "FLOAT", "STRING", 
-			"ID", "USER_OP", "COMMENT", "NL", "WS"
+			"ID", "USER_OP", "COMMENT", "WS"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -105,12 +105,15 @@ public class RParser extends Parser {
 
 
 	public lineTerminatorAhead() : boolean {
-	    let possibleIndex = this.currentToken.tokenIndex - 1;
-	    let ahead : Token = this._input.get(possibleIndex);
-	    if (ahead.channel != Token.HIDDEN_CHANNEL) {
-	        return false;
+	    let possibleIndex = this.currentToken.tokenIndex + 1;
+	    if (possibleIndex < this._input.size) {
+	        let ahead : Token = this._input.get(possibleIndex);
+	        if (ahead.channel != Token.HIDDEN_CHANNEL) {
+	            return false;
+	        }
+	        return (ahead.type === RParser.COMMENT) || (ahead.text.includes('\n'));
 	    }
-	    return (ahead.type == RParser.COMMENT) || (ahead.type == RParser.NL);
+	    return true;
 	}
 
 	public RParser(TokenStream input) {
@@ -1296,7 +1299,7 @@ public class RParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3=\u00c8\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3<\u00c8\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\3\2\3\2"+
 		"\3\2\7\2\30\n\2\f\2\16\2\33\13\2\3\2\5\2\36\n\2\3\3\3\3\3\3\3\3\3\3\3"+
 		"\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\7\3\61\n\3\f\3\16\3\64"+

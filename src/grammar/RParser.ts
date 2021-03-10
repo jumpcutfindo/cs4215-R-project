@@ -85,8 +85,7 @@ export class RParser extends Parser {
 	public static readonly ID = 55;
 	public static readonly USER_OP = 56;
 	public static readonly COMMENT = 57;
-	public static readonly NL = 58;
-	public static readonly WS = 59;
+	public static readonly WS = 58;
 	public static readonly RULE_prog = 0;
 	public static readonly RULE_expr = 1;
 	public static readonly RULE_eoe = 2;
@@ -118,7 +117,7 @@ export class RParser extends Parser {
 		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
 		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
 		undefined, "LBRACE", "RBRACE", "NULL", "NA", "NAN", "INF", "BOOL", "DOTS", 
-		"HEX", "INT", "FLOAT", "STRING", "ID", "USER_OP", "COMMENT", "NL", "WS",
+		"HEX", "INT", "FLOAT", "STRING", "ID", "USER_OP", "COMMENT", "WS",
 	];
 	public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(RParser._LITERAL_NAMES, RParser._SYMBOLIC_NAMES, []);
 
@@ -145,12 +144,15 @@ export class RParser extends Parser {
 
 
 	public lineTerminatorAhead() : boolean {
-	    let possibleIndex = this.currentToken.tokenIndex - 1;
-	    let ahead : Token = this._input.get(possibleIndex);
-	    if (ahead.channel != Token.HIDDEN_CHANNEL) {
-	        return false;
+	    let possibleIndex = this.currentToken.tokenIndex + 1;
+	    if (possibleIndex < this._input.size) {
+	        let ahead : Token = this._input.get(possibleIndex);
+	        if (ahead.channel != Token.HIDDEN_CHANNEL) {
+	            return false;
+	        }
+	        return (ahead.type === RParser.COMMENT) || (ahead.text!.includes('\n'));
 	    }
-	    return (ahead.type == RParser.COMMENT) || (ahead.type == RParser.NL);
+	    return true;
 	}
 
 	constructor(input: TokenStream) {
@@ -1264,7 +1266,7 @@ export class RParser extends Parser {
 	}
 
 	public static readonly _serializedATN: string =
-		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03=\xC8\x04\x02" +
+		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03<\xC8\x04\x02" +
 		"\t\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x04\x07" +
 		"\t\x07\x04\b\t\b\x04\t\t\t\x04\n\t\n\x03\x02\x03\x02\x03\x02\x07\x02\x18" +
 		"\n\x02\f\x02\x0E\x02\x1B\v\x02\x03\x02\x05\x02\x1E\n\x02\x03\x03\x03\x03" +

@@ -19,8 +19,8 @@ x
 const sampleProg2 : string = 
 `x <- 4
 fun <- function(x) {
-    x <- x + 3;
-    x <- x * 2;
+    x <- x + 3
+    x <- x * 2   # random comment
     x * x
 }
 fun(x)
@@ -36,32 +36,30 @@ c(abc=1, def=2, "a", recursive=TRUE);
 `;
 
 const sampleProg5 : string = `
+{
 x <- 4
 x * 2
 x <- x * 4
 x
+}
 `
 
-function printCall(call: R.Language) {
-    var str = ''
+function printAST(call: R.Language) {
     for (let i of new LinkedListIter(call)) {
         if (i.value.tag === 'name') {
-            str += i.value.pname;
+            process.stdout.write(i.value.pname + ', ');
         } else if (i.value.tag === 'numeric') {
-            str += i.value.data;
-        } else if (i.value.tag === 'language') {
-            printCall(i.value);
+            process.stdout.write(`${i.value.data}, `);
         }
-        str += ', ';
     }
-    console.log(str);
+    console.log();
 }
 
 
 function interpret(prog: string, env: R.Env) {
     const ast = parse(prog); // should wrap in try-catch
     for (const expr of (<R.Expression>ast).data) {
-        // printCall(expr as R.Language);
+        // printAST(expr as R.Language);
         const result = Reval(expr, env);
         if (isReturn(result)) {
             error('no function to return from, jumping to top level');
@@ -84,4 +82,4 @@ const printValueEnv = (r: R.RValue, e: R.Env) => console.log(r);
 const printWarnings = () => {};
 
 initPrimitives();
-interpret(sampleProg5, R_GlobalEnv);
+interpret(sampleProg2, R_GlobalEnv);
