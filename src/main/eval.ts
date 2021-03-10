@@ -1,4 +1,5 @@
 /* eslint-disable new-cap */
+import { NamespaceContext } from '../grammar/RParser';
 import {logicalFromString} from './coerce';
 import {ddFind, defineVar, findFun, findVar, closureEnv, setVar, findVarInFrame} from './envir';
 import {error, errorcall, warncall} from './error';
@@ -7,7 +8,7 @@ import {matchArgs} from './match';
 import {forcePromise, promiseArgs} from './promise';
 import * as R from './types';
 import {checkArity, cons, head, lcons, length, LinkedListIter, tail} from './util';
-import {install, mkChar, mkInt, mkLogical, mkReal, mkLang, mkPairlist, RNull, R_BaseEnv, R_DotsSymbol, R_MissingArg, R_UnboundValue} from './values';
+import {install, mkChar, mkInt, mkLogical, mkReal, mkLang, mkPairlist, RNull, R_BaseEnv, R_DotsSymbol, R_MissingArg, R_UnboundValue, mkClosure} from './values';
 
 /** ********************************************************
  *
@@ -336,10 +337,37 @@ export const do_begin : R.PrimOp = (call, op, args, env) => {
 
 /** ********************************************************
  *
- *            SETTING BINDINGS IN ENVIRONMENT
+ *                 FUNCTION OBJECT CREATION
  *
  **********************************************************/
 
+export const do_function : R.PrimOp = (call, op, args, env) => {
+    if (length(args) < 2) {
+        error(`incorrect number of arguments to "function"`);
+    }
+    let formals = head(args);
+    checkFormals(formals);
+    return mkClosure(formals, head(tail(args)), env);
+}
+
+function checkFormals(formals: R.RValue): asserts formals is R.PairList {
+    if (formals.tag === 'pairlist') {
+        for (let formal of new LinkedListIter(formals)) {
+            if (formal.key === '') {
+                error('invalid formal argument list for "function"');
+            }
+        }
+    } else {
+        error('invalid formal argument list for "function"');
+    }
+}
+
+
+/** ********************************************************
+ *
+ *            SETTING BINDINGS IN ENVIRONMENT
+ *
+ **********************************************************/
 
 const assignmentSymbols = ["<-", "<<-"];
 
