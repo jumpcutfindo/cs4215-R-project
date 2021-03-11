@@ -2,7 +2,7 @@ import {error} from './main/error';
 import {isBreak, isNext, isReturn, Reval} from './main/eval';
 import {EvalContext, initPrimitives} from './main/globals';
 import * as R from './main/types';
-import { head, LinkedListIter, tail } from './main/util';
+import {head, LinkedListIter, tail} from './main/util';
 import {RNull, R_GlobalEnv, R_LastValueSymbol} from './main/values';
 import {parse} from './parser';
 
@@ -16,7 +16,7 @@ if (length(x) > 2) {
 x
 `;
 
-const sampleProg2 : string = 
+const sampleProg2 : string =
 `x <- 4
 fun <- function(x) {
     x <- x + 3
@@ -42,7 +42,7 @@ x * 2
 x <- x * 4
 x
 }
-`
+`;
 
 function printAST(call: R.Language) {
     for (let i of new LinkedListIter(call)) {
@@ -58,9 +58,10 @@ function printAST(call: R.Language) {
 
 function interpret(prog: string, env: R.Env) {
     const ast = parse(prog); // should wrap in try-catch
+    let result;
     for (const expr of (<R.Expression>ast).data) {
         // printAST(expr as R.Language);
-        const result = Reval(expr, env);
+        result = Reval(expr, env);
         if (isReturn(result)) {
             error('no function to return from, jumping to top level');
         }
@@ -75,6 +76,23 @@ function interpret(prog: string, env: R.Env) {
             printWarnings();
         }
     }
+    return result;
+}
+
+export function testInterpret(prog: string, env: R.Env) {
+    const ast = parse(prog); // should wrap in try-catch
+    let result;
+    for (const expr of (<R.Expression>ast).data) {
+        // printAST(expr as R.Language);
+        result = Reval(expr, env);
+        if (isReturn(result)) {
+            error('no function to return from, jumping to top level');
+        }
+        if (isBreak(result) || isNext(result)) {
+            error('no loop for break/next, jumping to top level');
+        }
+    }
+    return result;
 }
 
 // placeholders
@@ -82,4 +100,4 @@ const printValueEnv = (r: R.RValue, e: R.Env) => console.log(r);
 const printWarnings = () => {};
 
 initPrimitives();
-interpret(sampleProg2, R_GlobalEnv);
+// console.log('output', interpret(sampleProg2, R_GlobalEnv));
