@@ -1,8 +1,8 @@
 import {error, warn} from './error';
 import * as R from './types';
-import {RNull} from './values';
+import {mkReal, RNull} from './values';
 import * as Coerce from './coerce';
-import {head, tail, length, checkArity} from './util';
+import {head, tail, length, checkArity, getAttributeOfName} from './util';
 
 /**
  * We define the supported unary and binary operators here.
@@ -43,6 +43,7 @@ export const do_arith : R.PrimOp = (call, op, args, env) => {
             break;
         case ARITH_OPTYPES.MINUSOP:
             ans = applyUnaryArithmeticOperation('-', operand);
+            break;
         }
     } else if (length(args) === 2) {
         const first_operand = head(args);
@@ -90,14 +91,46 @@ function applyUnaryArithmeticOperation(
     };
 
     let arithmetic_result_type = operands.operand.tag;
+    let was_coerced = false;
     // 1. If type logical, coerce to integer
     if (operands.operand.tag === 'logical') {
         operands.operand = coerceOperandToType(operands.operand, 'integer');
         arithmetic_result_type = 'integer';
+        was_coerced = true;
     }
 
     // 2. Carry out operation
     const arithmetic_result = unary_arithmetic_functions[operator](operands.operand.data);
+
+    const ans = createVectorOfType(arithmetic_result, arithmetic_result_type);
+
+    // If coerced, no attributes other than names, dims and dimnames should be copied
+    if (was_coerced) {
+        const names: R.PairList | R.Nil = getAttributeOfName(operands.operand, 'names');
+        const dims: R.PairList | R.Nil = getAttributeOfName(operands.operand, 'dims');
+        const dimnames: R.PairList | R.Nil = getAttributeOfName(operands.operand, 'dimnames');
+
+        const array = [names, dims, dimnames];
+
+        let orig: R.PairList | R.Nil = RNull;
+        let attributes: R.PairList | R.Nil = RNull;
+
+        for (const pairlist of array) {
+            if (pairlist.tag === RNull.tag) {
+                continue;
+            }
+
+            if (attributes.tag === RNull.tag) {
+                orig = pairlist;
+                attributes = pairlist;
+            } else {
+                attributes.next = pairlist;
+                attributes = attributes.next;
+            }
+        }
+
+        ans.attributes = orig;
+    } else ans.attributes = operands.operand.attributes;
 
     return createVectorOfType(arithmetic_result, arithmetic_result_type);
 }
@@ -119,7 +152,11 @@ function applyBinaryArithmeticOperation(
         second_operand: second_operand as R.Logical | R.Int | R.Real,
     };
 
-    // 1. Coercion to the same type
+    // 1. Handle attributes
+    const resultant_attributes: R.PairList | R.Nil =
+        binaryArithCopyAttributes(operands.first_operand, operands.second_operand);
+
+    // 2. Coercion to the same type
     if (operands.first_operand.tag !== operands.second_operand.tag) {
         operands = coerceTypes(
             first_operand as R.Logical | R.Int | R.Real,
@@ -128,14 +165,14 @@ function applyBinaryArithmeticOperation(
     }
 
     let arithmetic_result_type = operands.first_operand.tag;
-    // 2. Check for the expected type depending on the arithmetic operator
+    // 3. Check for the expected type depending on the arithmetic operator
     if (operator === '%/%') {
         arithmetic_result_type = 'integer';
-    } else if (operator === '/' || operator ==='%%') {
+    } else if (operator === '/' || operator ==='%%' || operator === '^') {
         arithmetic_result_type = 'numeric';
     }
 
-    // 3. If both are logical types, convert to integer types
+    // 4. If both are logical types, convert to integer types
     if (arithmetic_result_type === 'logical') {
         operands.first_operand =
             coerceOperandToType(
@@ -150,20 +187,78 @@ function applyBinaryArithmeticOperation(
         arithmetic_result_type = 'integer';
     }
 
-    // 4. Check vector lengths and do recycling
+    // 5. Check vector lengths and do recycling
     if (operands.first_operand.data.length !==
         operands.second_operand.data.length) {
         operands = recycle(operands.first_operand, operands.second_operand);
     }
 
-    // 5. Carry out operation
+    // 6. Carry out operation
     const arithmetic_result = binary_arithmetic_functions[operator](
         operands.first_operand.data,
         operands.second_operand.data,
     );
 
-    // 6. Return result as a newly created vector
+    // 7. Return result as a newly created vector
+    const ans = createVectorOfType(arithmetic_result, arithmetic_result_type);
+    ans.attributes = resultant_attributes;
     return createVectorOfType(arithmetic_result, arithmetic_result_type);
+}
+
+function binaryArithCopyAttributes(
+    first_operand: R.Logical | R.Int | R.Real,
+    second_operand: R.Logical | R.Int | R.Real,
+): R.PairList | R.Nil {
+    if (first_operand.attributes.tag === RNull.tag &&
+        second_operand.attributes.tag === RNull.tag) {
+        return RNull;
+    }
+
+    let orig: R.PairList | R.Nil = RNull;
+    let attributes: R.PairList | R.Nil = RNull;
+
+    // Attributes are taken from the longer argument
+    // Names are taken from the argument with length equal to the answer (a.k.a. the longer argument)
+    if (first_operand.data.length > second_operand.data.length) {
+        orig = first_operand.attributes;
+    } else if (first_operand.data.length > second_operand.data.length) {
+        orig = second_operand.attributes;
+    } else {
+        const first_operand_attr_names = [];
+        let second_operand_attr_names = [];
+
+        let curr: R.PairList | R.Nil = first_operand.attributes;
+        while (curr.tag !== RNull.tag) {
+            first_operand_attr_names.push(curr.key);
+            curr = curr.next;
+        }
+
+        curr = second_operand.attributes;
+        while (curr.tag !== RNull.tag) {
+            second_operand_attr_names.push(curr.key);
+            curr = curr.next;
+        }
+
+        // Creating the pairlist
+        orig = RNull;
+        attributes = RNull;
+
+        for (const key of first_operand_attr_names) {
+            if (second_operand_attr_names.indexOf(key) !== -1) {
+                second_operand_attr_names = second_operand_attr_names.filter((x)=> x !== key);
+            }
+
+            if (attributes.tag === RNull.tag) {
+                attributes = getAttributeOfName(first_operand, key);
+                orig = attributes;
+            } else {
+                attributes.next = getAttributeOfName(first_operand, key);
+                attributes = attributes.next;
+            }
+        }
+    }
+
+    return orig;
 }
 
 function isAllowedOperand(operand: R.RValue) {
@@ -391,9 +486,16 @@ function power(
 ) {
     return first_operand_data.map((num, index) => {
         const other_num = second_operand_data[index];
-        return (num !== null && other_num !== null) ?
-            num === 1 && (other_num === Infinity || other_num === -Infinity) ? 1 :
-                Math.pow(num, other_num) : null;
+        if (num !== null && other_num !== null) {
+            if (num === 1) return 1;
+            if (other_num === 0) return 1;
+            if (num === Infinity || other_num === Infinity) return Infinity;
+            if (num === -Infinity || other_num === -Infinity) return -Infinity;
+
+            return Math.pow(num, other_num);
+        } else {
+            return null;
+        }
     });
 }
 
@@ -426,3 +528,4 @@ function integerDivision(
             Math.floor(num / other_num) : null;
     });
 }
+

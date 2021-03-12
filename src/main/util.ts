@@ -229,6 +229,36 @@ export function getNames(x: RValue): Character | Nil {
     return ans;
 }
 
+export function getAttributeOfName(x: RValue, name: string): PairList | Nil {
+    let ans: PairList | Nil = RNull;
+    switch (x.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+    case 'expression':
+    case 'list':
+    case 'pairlist':
+    case 'environment':
+    case 'closure':
+    case 'dotdotdot':
+    case 'language':
+        let curr = x.attributes;
+        while (curr.tag !== RNull.tag) {
+            if (curr.key === name) {
+                ans = curr;
+                break;
+            }
+            curr = curr.next;
+        }
+        break;
+    default:
+        ans = RNull;
+    }
+
+    return ans;
+}
+
 /** ******************************************************
  * Arity checking for Builtin/Specials
  ********************************************************/
