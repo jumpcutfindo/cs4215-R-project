@@ -200,7 +200,7 @@ function coerceToType(
         operand = operand as R.Logical | R.Int | R.Real | R.Character;
         if (operand.tag === 'logical') {
             ans = mkChars(operand.data.map((x) => {
-                return x !== null ? (x ? 'true' : 'false') : null;
+                return x !== null ? (x ? 'TRUE' : 'FALSE') : null;
             }));
         } else if (operand.tag === 'integer' || operand.tag === 'numeric') {
             ans = mkChars(operand.data.map((x) => {
