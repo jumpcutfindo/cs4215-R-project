@@ -42,11 +42,11 @@ describe('simple logical tests', () => {
 
 describe('complex logical tests', () => {
     const tests = [
-        {testName: 'type coercion', program: 'c(1, 0, 1) & c(TRUE, TRUE, TRUE)', expectedData: [true, false, true], expectedType: 'logical'},
+        {testName: 'type coercion', program: 'c(300, 0, 1) & c(TRUE, TRUE, TRUE)', expectedData: [true, false, true], expectedType: 'logical'},
         {testName: 'recycling (smaller factor of larger)', program: 'c(1, 0) & c(TRUE, TRUE, TRUE, TRUE)', expectedData: [true, false, true, false], expectedType: 'logical'},
         {testName: 'recycling (smaller not factor of larger)', program: 'c(1, 0) & c(TRUE, TRUE, TRUE)', expectedData: [true, false, true], expectedType: 'logical'},
         {testName: 'NULL handling', program: 'c(NULL, TRUE, FALSE) & c(TRUE, FALSE, TRUE)', expectedData: [true, false, true], expectedType: 'logical'},
-        {testName: 'NA handling', program: 'c(NA, TRUE, FALSE) & c(TRUE, FALSE, TRUE)', expectedData: [null, false, false], expectedType: 'logical'},
+        {testName: 'NA handling', program: 'c(NA, NA, FALSE) & c(TRUE, FALSE, TRUE)', expectedData: [null, false, false], expectedType: 'logical'},
     ];
 
     for (const test of tests) {

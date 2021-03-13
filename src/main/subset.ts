@@ -1,3 +1,4 @@
+/* eslint-disable valid-jsdoc */
 import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
@@ -9,27 +10,27 @@ import {mkChar, mkChars, mkInt, mkInts,
 /**
  * Implementation for '[' subsetting
  */
-function do_subset() {
+const do_subset: R.PrimOp = (call, op, args, env) => {
 
-}
+};
 
 /**
  * Implementation for '[[' subsetting
  */
 
-function do_subset2() {
+const do_subset2: R.PrimOp = (call, op, args, env) => {
     // Extract a single value at a specific index (note that R indexing begins from 1)
-}
+};
 
 /**
  * Implementation for '$' subsetting
  */
-function do_subset3() {
+const do_subset3: R.PrimOp = (call, op, args, env) => {
     if (!isSubsettableList) {
         error('$ operator is invalid for atomic vectors');
         return;
     }
-}
+};
 
 function extractSingleAtIndex(x: R.RValue, index: number) {
     if (!isSubsettable(x)) {
