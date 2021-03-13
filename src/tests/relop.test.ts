@@ -47,6 +47,8 @@ describe('complex relop tests', () => {
         {testName: 'type coercion', program: 'c(TRUE, FALSE, TRUE) > c(FALSE, FALSE, FALSE)', expectedData: [true, false, true], expectedType: 'logical'},
         {testName: 'recycling (smaller factor of larger)', program: 'c(1, 2) > c(4, 5, 6, 7)', expectedData: [false, false, false, false], expectedType: 'logical'},
         {testName: 'recycling (smaller not factor of larger)', program: 'c(1, 2, 3) > c(4, 5, 6, 7)', expectedData: [false, false, false, false], expectedType: 'logical'},
+        {testName: 'string comparison (diff. strings)', program: '"abc"=="xyz"', expectedData: [false], expectedType: 'logical'},
+        {testName: 'string comparison (same strings)', program: '"abc"=="abc"', expectedData: [true], expectedType: 'logical'},
         {testName: 'NULL handling', program: 'c(NULL, 2, 3) > c(0, 1, 2)', expectedData: [true, true, false], expectedType: 'logical'},
         {testName: 'NA handling', program: 'c(NA, 2, 3) > c(0, 1, 2)', expectedData: [null, true, true], expectedType: 'logical'},
     ];
