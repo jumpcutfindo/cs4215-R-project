@@ -223,7 +223,7 @@ function elementwise_and(
 ) {
     return first_operand_data.map((bool, index) => {
         const other_bool = second_operand_data[index];
-        return and([bool], [other_bool]);
+        return and([bool], [other_bool])[0];
     });
 }
 
@@ -235,13 +235,13 @@ function and(
     const other_bool = second_operand_data[0];
 
     if (bool !== null && other_bool !== null) {
-        return bool && other_bool;
+        return [bool && other_bool];
     } else if (bool !== null && other_bool === null) {
-        return bool === false ? false : null;
+        return [bool === false ? false : null];
     } else if (bool === null && other_bool !== null) {
-        return other_bool === false ? false : null;
+        return [other_bool === false ? false : null];
     } else {
-        return null;
+        return [null];
     }
 }
 
@@ -251,7 +251,7 @@ function elementwise_or(
 ) {
     return first_operand_data.map((bool, index) => {
         const other_bool = second_operand_data[index];
-        return or([bool], [other_bool]);
+        return or([bool], [other_bool])[0];
     });
 }
 
@@ -263,13 +263,13 @@ function or(
     const other_bool = second_operand_data[0];
 
     if (bool !== null && other_bool !== null) {
-        return bool || other_bool;
+        return [bool || other_bool];
     } else if (bool !== null && other_bool === null) {
-        return bool === true ? true : null;
+        return [bool === true ? true : null];
     } else if (bool === null && other_bool !== null) {
-        return other_bool === true ? true : null;
+        return [other_bool === true ? true : null];
     } else {
-        return null;
+        return [null];
     }
 }
 

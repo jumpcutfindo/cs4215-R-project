@@ -43,9 +43,9 @@ export function initPrimitives() {
         /* Logical operators, all primitive */
         primitiveSymbol('!',        do_logic,   'builtin',  {visibility: Vis.On, arity: 1, variant: LOGICAL_OPTYPES.NOTOP}),
         primitiveSymbol('&',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMANDOP}),
-        primitiveSymbol('&&',       do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
+        primitiveSymbol('&&',       do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
         primitiveSymbol('|',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMOROP}),
-        primitiveSymbol('||',       do_logic,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.OROP}),
+        primitiveSymbol('||',       do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.OROP}),
 
         /* Relational operators, all primitive */
         primitiveSymbol('<',        do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LTOP}),

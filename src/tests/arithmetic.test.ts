@@ -46,7 +46,7 @@ describe('simple arithmetic tests', () => {
 
 describe('complex arithmetic tests', () => {
     const tests = [
-        {testName: 'vector of length > 1', program: 'c(1, 2, 3) * c (4, 5, 6)', expectedData: [4, 10, 18], expectedType: 'numeric'},
+        {testName: 'vector of length > 1', program: 'c(1, 2, 3) * c(4, 5, 6)', expectedData: [4, 10, 18], expectedType: 'numeric'},
         {testName: 'type coercion', program: 'c(TRUE, FALSE) + c(50, 50)', expectedData: [51, 50], expectedType: 'numeric'},
         {testName: 'recycling (smaller factor of larger)', program: 'c(1, 2) + c(1, 2, 3, 4)', expectedData: [2, 4, 4, 6], expectedType: 'numeric'},
         {testName: 'recycling (smaller not factor of larger)', program: 'c(1, 2, 3) + c(1, 2, 3, 4)', expectedData: [2, 4, 6, 5], expectedType: 'numeric'},

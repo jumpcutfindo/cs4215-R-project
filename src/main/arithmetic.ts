@@ -1,8 +1,9 @@
 import {error, warn} from './error';
 import * as R from './types';
-import {mkReal, RNull} from './values';
+import {mkChar, mkPairlist, mkReal, mkReals, RNull} from './values';
 import * as Coerce from './coerce';
 import {head, tail, length, checkArity, getAttributeOfName} from './util';
+import { ConsoleErrorListener } from 'antlr4ts';
 
 /**
  * We define the supported unary and binary operators here.
@@ -202,7 +203,7 @@ function applyBinaryArithmeticOperation(
     // 7. Return result as a newly created vector
     const ans = createVectorOfType(arithmetic_result, arithmetic_result_type);
     ans.attributes = resultant_attributes;
-    return createVectorOfType(arithmetic_result, arithmetic_result_type);
+    return ans;
 }
 
 function binaryArithCopyAttributes(
