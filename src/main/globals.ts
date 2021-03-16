@@ -3,7 +3,7 @@
 import {do_arith, ARITH_OPTYPES} from './arithmetic';
 import {do_begin, do_break, do_for, do_function, do_if, do_paren, do_return, do_set} from './eval';
 import { do_c } from './bind';
-import {do_logic, LOGICAL_OPTYPES} from './logic';
+import {do_logic, do_logic2, LOGICAL_OPTYPES} from './logic';
 import { do_relop, RELATIONAL_OPTYPES } from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
 import {installSymbol, RNull, R_UnboundValue} from './values';
@@ -43,9 +43,10 @@ export function initPrimitives() {
         /* Logical operators, all primitive */
         primitiveSymbol('!',        do_logic,   'builtin',  {visibility: Vis.On, arity: 1, variant: LOGICAL_OPTYPES.NOTOP}),
         primitiveSymbol('&',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMANDOP}),
-        primitiveSymbol('&&',       do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
         primitiveSymbol('|',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMOROP}),
-        primitiveSymbol('||',       do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.OROP}),
+        /* Specials as we conditionally evaluate the 2nd arg */
+        primitiveSymbol('||',       do_logic2,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.OROP}),
+        primitiveSymbol('&&',       do_logic2,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
 
         /* Relational operators, all primitive */
         primitiveSymbol('<',        do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LTOP}),
