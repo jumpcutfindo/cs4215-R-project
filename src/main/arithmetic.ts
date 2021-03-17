@@ -3,7 +3,6 @@ import * as R from './types';
 import {mkChar, mkPairlist, mkReal, mkReals, RNull} from './values';
 import * as Coerce from './coerce';
 import {head, tail, length, checkArity, getAttributeOfName} from './util';
-import { ConsoleErrorListener } from 'antlr4ts';
 
 /**
  * We define the supported unary and binary operators here.

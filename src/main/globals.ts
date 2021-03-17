@@ -7,6 +7,7 @@ import {do_logic, do_logic2, LOGICAL_OPTYPES} from './logic';
 import { do_relop, RELATIONAL_OPTYPES } from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
 import {installSymbol, RNull, R_UnboundValue} from './values';
+import { do_attr, do_attributes, do_attributesgets } from './attrib';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -20,16 +21,16 @@ export function initPrimitives() {
 
     const primitives = [
         /* Language construct primitives */
-        primitiveSymbol('if',       do_if,      'special',  {visibility: Vis.OnMut, arity: 2}),
-        primitiveSymbol('for',      do_for,     'special',  {visibility: Vis.Off, arity: 3}),
-        primitiveSymbol('break',    do_break,   'special',  {visibility: Vis.On, arity: 0, variant: 2}),
-        primitiveSymbol('next',     do_break,   'special',  {visibility: Vis.On, arity: 0, variant: 1}),
-        primitiveSymbol('return',   do_return,  'special',  {visibility: Vis.On, arity: 0}),
-        primitiveSymbol('function', do_function,'special',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('{',        do_begin,   'special',  {visibility: Vis.OnMut, arity: -1}),
-        primitiveSymbol('(',        do_paren,   'builtin',  {visibility: Vis.On, arity: 1}),
-        primitiveSymbol('<-',       do_set,     'special',  {visibility: Vis.Off, arity: -1, variant: 0}),
-        primitiveSymbol('<<-',      do_set,     'special',  {visibility: Vis.Off, arity: -1, variant: 1}),
+        primitiveSymbol('if',       do_if,          'special',  {visibility: Vis.OnMut, arity: 2}),
+        primitiveSymbol('for',      do_for,         'special',  {visibility: Vis.Off, arity: 3}),
+        primitiveSymbol('break',    do_break,       'special',  {visibility: Vis.On, arity: 0, variant: 2}),
+        primitiveSymbol('next',     do_break,       'special',  {visibility: Vis.On, arity: 0, variant: 1}),
+        primitiveSymbol('return',   do_return,      'special',  {visibility: Vis.On, arity: 0}),
+        primitiveSymbol('function', do_function,    'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('{',        do_begin,       'special',  {visibility: Vis.OnMut, arity: -1}),
+        primitiveSymbol('(',        do_paren,       'builtin',  {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('<-',       do_set,         'special',  {visibility: Vis.Off, arity: -1, variant: 0}),
+        primitiveSymbol('<<-',      do_set,         'special',  {visibility: Vis.Off, arity: -1, variant: 1}),
 
         /* Arithmetic operators, all primitve */
         primitiveSymbol('+',        do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.PLUSOP}),
@@ -45,8 +46,8 @@ export function initPrimitives() {
         primitiveSymbol('&',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMANDOP}),
         primitiveSymbol('|',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMOROP}),
         /* Specials as we conditionally evaluate the 2nd arg */
-        primitiveSymbol('||',       do_logic2,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.OROP}),
-        primitiveSymbol('&&',       do_logic2,   'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
+        primitiveSymbol('||',       do_logic2,  'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.OROP}),
+        primitiveSymbol('&&',       do_logic2,  'special',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
 
         /* Relational operators, all primitive */
         primitiveSymbol('<',        do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.LTOP}),
@@ -56,8 +57,10 @@ export function initPrimitives() {
         primitiveSymbol('==',       do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.EQOP}),
         primitiveSymbol('!=',       do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.NEQOP}),
 
-        /* Combination, built-in*/
-        primitiveSymbol('c',        do_c,       'builtin',  {visibility: Vis.On, arity: 0}),
+        /* Vectors, Matrices and Arrays*/
+        primitiveSymbol('c',                do_c,                   'builtin',  {visibility: Vis.On, arity: 0}),
+        primitiveSymbol('attr',             do_attr,                'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('attributes',       do_attributes,          'builtin',  {visibility: Vis.On, arity: 1}),
     ];
 
     const internals = [
