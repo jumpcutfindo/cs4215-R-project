@@ -16,6 +16,7 @@ import {mkPairlist, RNull, R_MissingArg} from './values';
 
 // From match.c line 60
 function psmatch(formal: string, supplied: string, exact: boolean) {
+    if (supplied === '') return false;
     return exact ? formal === supplied : formal.startsWith(supplied);
 }
 

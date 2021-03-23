@@ -117,21 +117,51 @@ describe('complex programs tests', () => {
 
     it('vectorized operations', () => {
         const prog = `
+            output <- NULL
             triangle <- function(x, output="") {
                 y <- x * (x - 1)
                 if (output != "") {
                     output <<- y / 2
                 }
-                return y / 2
+                return (y / 2)
             }
             values <- 1:10
-            out <- NULL
-            triangle(values, out="out")
-            out
+            triangle(values, out="yes")
+            output
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [0,1,3,6,10,15,21,28,36,45]);
         expect(result).toHaveProperty('tag', 'numeric');
         resetEnvironment();
-    })
+    });
+
+    it('dotdotdot operations', () => {
+        const prog = `
+            testdots <- function(times, ...) {
+                res <- c(...)
+                res * times
+            }
+            values <- 1:10
+            testdots(10, a=1, b=2, c=3)
+        `;
+        const result = testInterpret(prog, testEnvironment);
+        expect(result).toHaveProperty('data', [10, 20, 30]);
+        expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
+    });
+
+    it('replacement functions', () => {
+        const prog = `
+            \`duck<-\` <- function(x, value) {
+                x + y
+            }
+            values <- c(4,5)
+            duck(values) <- 33
+            values
+        `;
+        const result = testInterpret(prog, testEnvironment);
+        expect(result).toHaveProperty('data', [37, 38]);
+        expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
+    });
 });

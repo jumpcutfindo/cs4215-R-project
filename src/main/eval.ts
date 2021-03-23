@@ -229,7 +229,7 @@ export function isReturn(rval: R.RValue): boolean {
 export const do_return : R.PrimOp = (call, op, args, env) => {
     let result: R.RValue = RNull;
     if (args.tag !== 'NULL') {
-        if (args.next.tag !== 'NULL') {
+        if (args.next.tag === 'NULL') {
             result = Reval(args.value, env);
         } else {
             errorcall(call, 'multi-argument returns are not permitted');
@@ -513,6 +513,6 @@ function replaceCall(fun: R.RValue, val: R.RValue, args: R.PairList|R.Nil, rhs: 
         ptr.next = {...arg};
         ptr = ptr.next;
     }
-    ptr.next = mkPairlist([rhs]);
+    ptr.next = mkPairlist([rhs, 'value']);
     return result;
 }

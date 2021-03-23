@@ -9,7 +9,7 @@ public lineTerminatorAhead() : boolean {
         if (ahead.channel != Token.HIDDEN_CHANNEL) {
             return false;
         }
-        return (ahead.type === RParser.COMMENT) || (ahead.text.includes('\n'));
+        return (ahead.type === RParser.COMMENT) || (ahead.text!.includes('\n'));
     }
     return true;
 }
@@ -79,7 +79,6 @@ formallist : formal (',' formal)*
 
 formal:   ID
       |   ID '=' expr
-      |   '...'
       ;
 
 
@@ -93,7 +92,6 @@ arg :   expr
     |   STRING '=' expr
     |   NULL '='
     |   NULL '=' expr
-    |   DOTS
     |   
     ;
 
@@ -115,9 +113,9 @@ BOOL : 'TRUE'
      ;
 
 // Only ..., ..1 and ..2 are reserved
-DOTS : '...'
-     | '..' DIGIT+
-     ;
+//DOTS : '...'
+//     | '..' DIGIT+
+//     ;
 
 HEX :   '0' ('x'|'X') HEXDIGIT+ ;
 

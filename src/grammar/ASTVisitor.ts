@@ -100,14 +100,15 @@ export class ASTVisitor extends AbstractParseTreeVisitor<RValue>
      */
     doArg(context: ArgContext) : [RValue, string?] {
         const val = context.expr()?.accept(this);
-        const dots = context.DOTS() && install(context.DOTS()!.text);
+        // const dots = context.DOTS() && install(context.DOTS()!.text);
         let name = "";
         if (context.ID()) {
             name = formatId(context.ID()!.text);
         } else if (context.STRING()) {
             name = formatString(context.STRING()!.text);
         }
-        return [val ?? dots ?? R_MissingArg, name];
+        // return [val ?? dots ?? R_MissingArg, name];
+        return [val ?? R_MissingArg, name];
     }
 
     doArglist(context: ArglistContext) : [RValue, string?][] {
@@ -116,17 +117,17 @@ export class ASTVisitor extends AbstractParseTreeVisitor<RValue>
 
     doFormal(context: FormalContext) : [RValue, string] {
         let id = context.ID();
-        if (id) {
-            let sym = formatId(id.text);
-            if (context.expr()) {
-                return [context.expr()!.accept(this), sym];
-            } else {
-                return [R_MissingArg, sym];
-            }
+        // if (id) {
+        let sym = formatId(id.text);
+        if (context.expr()) {
+            return [context.expr()!.accept(this), sym];
         } else {
-            // Is dot-dot-dot parameter
-            return [R_MissingArg, '...'];
+            return [R_MissingArg, sym];
         }
+        // } else {
+            // Is dot-dot-dot parameter
+        //     return [R_MissingArg, '...'];
+        // }
     }
 
     visitFunction(context: FunctionContext) : RValue {
