@@ -36,12 +36,8 @@ c(abc=1, def=2, "a", recursive=TRUE);
 `;
 
 const sampleProg5 : string = `
-{
-x <- 4
-x * 2
-x <- x * 4
-x
-}
+x <- 5
+attributes(x)<-c(1,2,3)
 `;
 
 function printAST(call: R.Language) {
@@ -100,4 +96,4 @@ const printValueEnv = (r: R.RValue, e: R.Env) => console.log(r);
 const printWarnings = () => {};
 
 initPrimitives();
-// console.log('output', interpret(sampleProg2, R_GlobalEnv));
+// console.log('output', interpret(sampleProg5, R_GlobalEnv));

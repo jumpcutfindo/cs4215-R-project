@@ -11,7 +11,7 @@ import {mkChar, mkChars, mkInt, mkInts,
  * Implementation for '[' subsetting
  */
 const do_subset: R.PrimOp = (call, op, args, env) => {
-
+    return RNull;
 };
 
 /**
@@ -20,6 +20,7 @@ const do_subset: R.PrimOp = (call, op, args, env) => {
 
 const do_subset2: R.PrimOp = (call, op, args, env) => {
     // Extract a single value at a specific index (note that R indexing begins from 1)
+    return RNull;
 };
 
 /**
@@ -28,8 +29,8 @@ const do_subset2: R.PrimOp = (call, op, args, env) => {
 const do_subset3: R.PrimOp = (call, op, args, env) => {
     if (!isSubsettableList) {
         error('$ operator is invalid for atomic vectors');
-        return;
     }
+    return RNull;
 };
 
 function extractSingleAtIndex(x: R.RValue, index: number) {

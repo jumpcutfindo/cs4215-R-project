@@ -1,7 +1,8 @@
 import {error, warn} from './error';
 import * as R from './types';
-import {RNull} from './values';
+import {mkLogical, mkLogicals, RNull} from './values';
 import {head, tail, length, checkArity} from './util';
+import {Reval} from './eval';
 
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
@@ -44,19 +45,62 @@ export const do_logic : R.PrimOp = (call, op, args, env) => {
         case LOGICAL_OPTYPES.ELEMANDOP:
             ans = applyBinaryLogicalOperation('&', first_operand, second_operand);
             break;
-        case LOGICAL_OPTYPES.ANDOP:
-            ans = applyBinaryLogicalOperation('&&', first_operand, second_operand);
-            break;
         case LOGICAL_OPTYPES.ELEMOROP:
             ans = applyBinaryLogicalOperation('|', first_operand, second_operand);
-            break;
-        case LOGICAL_OPTYPES.OROP:
-            ans = applyBinaryLogicalOperation('||', first_operand, second_operand);
             break;
         case LOGICAL_OPTYPES.XOROP:
             ans = applyBinaryLogicalOperation('xor', first_operand, second_operand);
             break;
         }
+    }
+
+    return ans;
+};
+
+// Separate function to enable conditional evaluation
+export const do_logic2 : R.PrimOp = (call, op, args, env) => {
+    let ans: R.RValue = RNull;
+
+    const first_operand = head(args);
+    const second_operand = head(tail(args));
+
+    switch (op.variant) {
+    case LOGICAL_OPTYPES.ANDOP:
+        const first_operand_evaled_and: R.RValue = Reval(first_operand, env);
+        const first_operand_result_and: R.Logical | R.Nil =
+            applyBinaryLogicalOperation('&', first_operand_evaled_and, mkLogical(true));
+
+        if (first_operand_result_and.tag === 'logical' && first_operand_result_and.data[0]) {
+            const second_operand_evaled_and: R.RValue = Reval(second_operand, env);
+            const second_operand_result_and: R.Logical | R.Nil =
+                applyBinaryLogicalOperation('&', second_operand_evaled_and, mkLogical(true));
+            if (second_operand_result_and.tag === 'logical' && second_operand_result_and.data[0]) {
+                ans = mkLogical(true);
+            } else {
+                ans = mkLogical(false);
+            }
+        } else {
+            ans = mkLogical(false);
+        }
+        break;
+    case LOGICAL_OPTYPES.OROP:
+        const first_operand_evaled_or: R.RValue = Reval(first_operand, env);
+        const first_operand_result_or: R.Logical | R.Nil =
+            applyBinaryLogicalOperation('|', first_operand_evaled_or, mkLogical(false));
+
+        if (first_operand_result_or.tag === 'logical' && first_operand_result_or.data[0]) {
+            ans = mkLogical(true);
+        } else {
+            const second_operand_evaled_or: R.RValue = Reval(second_operand, env);
+            const second_operand_result_or: R.Logical | R.Nil =
+                applyBinaryLogicalOperation('|', second_operand_evaled_or, mkLogical(false));
+            if (second_operand_result_or.tag === 'logical' && second_operand_result_or.data[0]) {
+                ans = mkLogical(true);
+            } else {
+                ans = mkLogical(false);
+            }
+        }
+        break;
     }
 
     return ans;
@@ -74,7 +118,6 @@ function applyUnaryLogicalOperation(
         operand: operand as R.Logical | R.Int | R.Real,
     };
 
-    const logical_result_type = 'logical';
     let logical_result;
 
     // 1. Check if the operator is 'isTRUE' or 'isFALSE'
@@ -91,19 +134,20 @@ function applyUnaryLogicalOperation(
         logical_result = unary_logical_functions[operator](operands.operand.data);
     }
 
-    return createVectorOfType(logical_result, logical_result_type);
+    return mkLogicals(logical_result);
 }
 
 function applyBinaryLogicalOperation(
     operator: any,
     first_operand: R.RValue,
     second_operand: R.RValue,
-) {
+): R.Logical | R.Nil {
     if (
         type_hierarchy.indexOf(first_operand.tag) === -1 ||
         type_hierarchy.indexOf(second_operand.tag) === -1
     ) {
         error(`Error: logical operations are possible only for logical, integer or numeric types`);
+        return RNull;
     }
 
     let operands = {
@@ -124,13 +168,12 @@ function applyBinaryLogicalOperation(
     }
 
     // 3. Carry out operation
-    const logical_result_type = 'logical';
     const logical_result = binary_logical_functions[operator](
         operands.first_operand.data,
         operands.second_operand.data,
     );
 
-    return createVectorOfType(logical_result, logical_result_type);
+    return mkLogicals(logical_result);
 }
 
 function recycle(
@@ -166,32 +209,6 @@ function recycle(
         first_operand: longer_operand,
         second_operand: shorter_operand,
     };
-}
-
-function createVectorOfType(data: [boolean | number], type: string) {
-    switch (type) {
-    case 'logical':
-        return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'logical',
-            data: data,
-        } as R.Logical;
-    case 'integer':
-        return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'integer',
-            data: data,
-        } as R.Int;
-    default:
-        return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'numeric',
-            data: data,
-        } as R.Real;
-    }
 }
 
 function coerceOperandToLogical(operand: R.Logical | R.Int | R.Real) {
