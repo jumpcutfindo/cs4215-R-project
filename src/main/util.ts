@@ -186,19 +186,6 @@ const falsenames = ['F', 'False', 'FALSE', 'false'];
  * Other utils
  ********************************************************/
 
-export function isVector(x: RValue): boolean {
-    switch (x.tag) {
-    case 'logical':
-    case 'integer':
-    case 'numeric':
-    case 'character':
-    case 'expression':
-        return x.attributes === RNull;
-    default:
-        return false;
-    }
-}
-
 export function getNames(x: RValue): Character | Nil {
     let ans: Character | Nil = RNull;
     switch (x.tag) {

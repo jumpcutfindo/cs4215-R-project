@@ -70,7 +70,7 @@ function setAttributes(vec: R.RValue, list: R.RValue) {
     vector.attributes = list as R.PairList;
 }
 
-function getAttribute(vec: R.RValue, which: string, match: boolean = false) {
+export function getAttribute(vec: R.RValue, which: string, match: boolean = false) : R.RValue {
     if (vec.tag === RNull.tag) {
         return RNull;
     }
@@ -87,7 +87,7 @@ function getAttribute(vec: R.RValue, which: string, match: boolean = false) {
 
         while (attribute.tag !== RNull.tag) {
             if (attribute.key === which) {
-                return attribute;
+                return attribute.value;
             }
             attribute = attribute.next;
         }

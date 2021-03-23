@@ -11,11 +11,15 @@ export function errorcall(call: Language, msg: string) : never {
 }
 
 export function warn(msg: string) {
-    console.warn(msg);
+    // console.warn(msg);
 }
 
 export function warncall(call: Language, msg: string) {
-    console.warn(msg);
+    // console.warn(msg);
+}
+
+export function unimplementedType(fun: string, type: string) {
+    error(`unimplemented type '${type}' in '${fun}'`);
 }
 
 export class ErrorOptions {

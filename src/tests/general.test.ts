@@ -31,6 +31,7 @@ describe('simple programs tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [15]);
         expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
     });
 
     it('function declaration and application', () => {
@@ -43,6 +44,7 @@ describe('simple programs tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [16]);
         expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
     });
 
     it('conditional expression', () => {
@@ -53,6 +55,7 @@ describe('simple programs tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [50]);
         expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
     });
 });
 
@@ -73,6 +76,7 @@ describe('complex programs tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [417]);
         expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
     });
 
     it('recursive function #1', () => {
@@ -89,6 +93,7 @@ describe('complex programs tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [24]);
         expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
     });
 
     it('recursive function #2', () => {
@@ -107,5 +112,26 @@ describe('complex programs tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [8]);
         expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
     });
+
+    it('vectorized operations', () => {
+        const prog = `
+            triangle <- function(x, output="") {
+                y <- x * (x - 1)
+                if (output != "") {
+                    output <<- y / 2
+                }
+                return y / 2
+            }
+            values <- 1:10
+            out <- NULL
+            triangle(values, out="out")
+            out
+        `;
+        const result = testInterpret(prog, testEnvironment);
+        expect(result).toHaveProperty('data', [0,1,3,6,10,15,21,28,36,45]);
+        expect(result).toHaveProperty('tag', 'numeric');
+        resetEnvironment();
+    })
 });

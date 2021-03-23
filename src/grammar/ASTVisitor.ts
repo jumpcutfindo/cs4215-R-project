@@ -57,8 +57,10 @@ export class ASTVisitor extends AbstractParseTreeVisitor<RValue>
         const str = lit.text;
         if (lit.BOOL()) {
             return mkLogical(str.startsWith('T') ? true : false);
-        } else if (lit.FLOAT() || lit.INF() || lit.NAN()) {
+        } else if (lit.FLOAT() || lit.NAN()) {
             return mkReal(parseFloat(str));
+        } else if (lit.INF()) {
+            return mkReal(Infinity);
         } else if (lit.HEX()) {
             return mkReal(parseInt(str)); // Hex literals are numeric 
         } else if (lit.INT()) {

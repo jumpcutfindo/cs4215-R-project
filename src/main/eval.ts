@@ -1,7 +1,8 @@
 /* eslint-disable new-cap */
-import {logicalFromString} from './coerce';
+import {asCharacterFactor, logicalFromString} from './coerce';
 import {ddFind, defineVar, findFun, findVar, closureEnv, setVar, findVarInFrame} from './envir';
 import {error, errorcall, warncall} from './error';
+import { inherits } from './generics';
 import {EvalContext} from './globals';
 import {matchArgs} from './match';
 import {forcePromise, promiseArgs} from './promise';
@@ -85,6 +86,7 @@ export function Reval(e: R.RValue, env: R.Env) : R.RValue {
     return result;
 }
 
+// Used to evaluate all arguments of builtin function before calling the builtin in Reval
 export function RevalList(el: R.PairList|R.Nil, env: R.Env, call: R.Language, n: number): R.PairList|R.Nil {
     let headPtr: R.PairList|R.Nil = RNull;
     let tailPtr: R.PairList|R.Nil = RNull;
@@ -273,41 +275,45 @@ export const do_for : R.PrimOp = (call, op, args, env) => {
 
     if (sym.tag !== 'name') {
         errorcall(call, 'non-symbol loop variable');
-    } else {
-        for (let i = 0; i < length(val); i++) {
-            switch (val.tag) {
-            case 'expression':
-            case 'list':
-                defineVar(sym, val.data[i], env);
-                break;
-            case 'pairlist':
-                defineVar(sym, head(val), env);
-                val = tail(val);
-                break;
-            case 'logical':
-                defineVar(sym, mkLogical(val.data[i]), env);
-                break;
-            case 'integer':
-                defineVar(sym, mkInt(val.data[i]), env);
-                break;
-            case 'numeric':
-                defineVar(sym, mkReal(val.data[i]), env);
-                break;
-            case 'character':
-                defineVar(sym, mkChar(val.data[i]), env);
-                break;
-            default:
-                errorcall(call, 'invalid for() loop sequence');
-            }
-            const result = Reval(body, env);
-            if (isBreak(result)) {
-                break;
-            }
-            if (isReturn(result)) {
-                return result;
-            }
+    } 
+    if (inherits(val, "factor")) {
+        val = asCharacterFactor(val);
+    }
+    defineVar(sym, RNull, env);
+    for (let i = 0; i < length(val); i++) {
+        switch (val.tag) {
+        case 'expression':
+        case 'list':
+            defineVar(sym, val.data[i], env);
+            break;
+        case 'pairlist':
+            defineVar(sym, head(val), env);
+            val = tail(val);
+            break;
+        case 'logical':
+            defineVar(sym, mkLogical(val.data[i]), env);
+            break;
+        case 'integer':
+            defineVar(sym, mkInt(val.data[i]), env);
+            break;
+        case 'numeric':
+            defineVar(sym, mkReal(val.data[i]), env);
+            break;
+        case 'character':
+            defineVar(sym, mkChar(val.data[i]), env);
+            break;
+        default:
+            errorcall(call, 'invalid for() loop sequence');
+        }
+        const result = Reval(body, env);
+        if (isBreak(result)) {
+            break;
+        }
+        if (isReturn(result)) {
+            return result;
         }
     }
+
     return RNull;
 };
 

@@ -7,6 +7,7 @@ import {do_logic, LOGICAL_OPTYPES} from './logic';
 import { do_relop, RELATIONAL_OPTYPES } from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
 import {installSymbol, RNull, R_UnboundValue} from './values';
+import { do_colon } from './seq';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -16,8 +17,6 @@ export class EvalContext {
 }
 
 export function initPrimitives() {
-    const do_something : PrimOp = (call, op, args, env) => RNull;
-
     const primitives = [
         /* Language construct primitives */
         primitiveSymbol('if',       do_if,      'special',  {visibility: Vis.OnMut, arity: 2}),
@@ -40,7 +39,7 @@ export function initPrimitives() {
         primitiveSymbol('%%',       do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.MODOP}),
         primitiveSymbol('%/%',      do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.IDIVOP}),
 
-        /* Logical operators, all primitive */
+        /* Logical operators, all primitive. && and || are special since they do short-circuit evaluation */
         primitiveSymbol('!',        do_logic,   'builtin',  {visibility: Vis.On, arity: 1, variant: LOGICAL_OPTYPES.NOTOP}),
         primitiveSymbol('&',        do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ELEMANDOP}),
         primitiveSymbol('&&',       do_logic,   'builtin',  {visibility: Vis.On, arity: 2, variant: LOGICAL_OPTYPES.ANDOP}),
@@ -57,13 +56,12 @@ export function initPrimitives() {
 
         /* Combination, built-in*/
         primitiveSymbol('c',        do_c,       'builtin',  {visibility: Vis.On, arity: 0}),
+
+        /* Sequencing, builtin */
+        primitiveSymbol(':',        do_colon,   'builtin',  {visibility: Vis.On, arity: 2}),
     ];
 
-    const internals = [
-        internalSymbol('something',         do_something,   'builtin',  {visibility: Vis.On, arity: 1, variant: 1}),
-        internalSymbol('something.else',    do_something,   'builtin',  {visibility: Vis.On, arity: 1, variant: 2}),
-        internalSymbol('something.more',    do_something,   'builtin',  {visibility: Vis.On, arity: 1, variant: 3}),
-    ];
+    const internals: Name[] = [];
     primitives.forEach((p) => installSymbol(p));
     internals.forEach((i) => installSymbol(i));
 }
