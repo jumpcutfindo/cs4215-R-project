@@ -6,12 +6,12 @@ import {mkChar, mkChars, mkInt, mkInts, mkPairlist, mkReals, RNull} from './valu
 
 // Get a specific attribute's value
 export const do_attr: R.PrimOp = (call, op, args, env) => {
-    const vec = head(args);
+    const vec = copy(head(args));
     const attribute = head(tail(args));
 
     if (attribute.tag !== 'character') {
         error(`'which' must be of mode character`);
-    } else if (attribute.data.length > 1) {
+    } else if (attribute.data.length !== 1) {
         error(`'exactly one attribute 'which' must be given`);
     } else if (attribute.data[0] === null) {
         return RNull;
@@ -27,7 +27,7 @@ export const do_attributes: R.PrimOp = (call, op, args, env) => {
 };
 
 export const do_attributesgets: R.PrimOp = (call, op, args, env) => {
-    const vec = head(args);
+    const vec = copy(head(args));
     const attributes = head(tail(args));
 
     if (attributes.tag !== 'list') {
@@ -44,39 +44,46 @@ export const do_attributesgets: R.PrimOp = (call, op, args, env) => {
 };
 
 // Set a specific attribute
-function do_attrgets() {
+export const do_attrgets: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+    const attribute = head(tail(args));
+    const value = head(tail(tail(args)));
 
-}
+    if (attribute.tag !== 'character') {
+        error(`'which' must be of mode character`);
+    } else if (attribute.data.length !== 1) {
+        error(`'exactly one attribute 'which' must be given`);
+    } else if ((attribute.data[0] as string).length === 0) {
+        error(`attempt to use zero-length variable name`);
+    }
 
-function setAttribute(vec: R.RValue, key: string, val: R.RValue) {
+    return setAttribute(vec, (attribute.data[0] as string), value);
+};
+
+function setAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue {
     if (vec.tag === RNull.tag) {
         error('attempt to set an attribute on NULL');
     }
 
     if (val.tag === RNull.tag) {
         removeAttribute(vec, key);
-    }
-
-    // Ignoring special cases of 'row.names' and 'tsp'
-    switch (key) {
-    case 'class':
-        setClass(vec, val);
-        break;
-    case 'comment':
-        setComment(vec, val);
-        break;
-    case 'dim':
-        setDim(vec, val);
-        break;
-    case 'dimnames':
-        setDimNames(vec, val);
-        break;
-    case 'names':
-        setNames(vec, val);
-        break;
-    default:
-        setNormalAttribute(vec, key, val);
-        break;
+        return vec;
+    } else {
+        // Ignoring special cases of 'row.names' and 'tsp'
+        switch (key) {
+        case 'class':
+            return setClass(vec, val);
+        case 'comment':
+            return setComment(vec, val);
+        case 'dim':
+            return setDim(vec, val);
+        case 'dimnames':
+            return setDimNames(vec, val);
+        case 'names':
+            return setNames(vec, val);
+        default:
+            return setNormalAttribute(vec, key, val);
+        }
     }
 }
 
@@ -184,44 +191,37 @@ function removeAttribute(vec: R.RValue, key: string) {
     (vec as R.Logical).attributes = start;
 }
 
-function setNormalAttribute(vec: R.RValue, key: string, val: R.RValue) {
+function setNormalAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue {
     const dimAttribute: R.RValue = getAttribute(vec, 'dim', true);
 
     let is_key_set = false;
 
     // If the dimensions have been specified, we copy that first before moving
     // on to the rest of the attributes
+    let curr;
+    let start;
     if (dimAttribute.tag !== RNull.tag) {
         removeAttribute(vec, 'dim');
-        let curr: R.PairList | R.Nil = copy((vec as R.Logical).attributes) as R.PairList;
-        const start: R.PairList = mkPairlist([dimAttribute, 'dim']) as R.PairList;
+        curr = copy((vec as R.Logical).attributes) as R.PairList;
+        start = mkPairlist([dimAttribute, 'dim']) as R.PairList;
         start.next = curr;
-
-        while (curr.tag !== RNull.tag) {
-            if (curr.key === key) {
-                curr.value = val;
-                is_key_set = true;
-            }
-            curr = curr.next;
-        }
-
-        (vec as R.Logical).attributes = start;
     } else {
-        let curr: R.PairList | R.Nil = copy((vec as R.Logical).attributes) as R.PairList;
-        const start: R.PairList | R.Nil = curr;
-
-        while (curr.tag !== RNull.tag) {
-            if (curr.key === key) {
-                curr.value = val;
-                is_key_set = true;
-            }
-            curr = curr.next;
-        }
-
-        (vec as R.Logical).attributes = start;
+        curr = copy((vec as R.Logical).attributes) as R.PairList;
+        start = curr;
     }
 
-    // Checks whether the key has been set
+    while (curr.tag !== RNull.tag) {
+        if (curr.key === key) {
+            curr.value = val;
+            is_key_set = true;
+        }
+        curr = curr.next;
+    }
+
+    (vec as R.Logical).attributes = start;
+
+    // Checks whether the key has been set: if not, it's a new key and we append it
+    // to the end of the attributes
     if (!is_key_set) {
         if ((vec as R.Logical).attributes.tag === RNull.tag) {
             (vec as R.Logical).attributes = mkPairlist([val, key]);
@@ -233,6 +233,8 @@ function setNormalAttribute(vec: R.RValue, key: string, val: R.RValue) {
             curr.next = mkPairlist([val, key]);
         }
     }
+
+    return vec;
 }
 
 function setClass(vec: R.RValue, val: R.RValue) {
@@ -240,7 +242,7 @@ function setClass(vec: R.RValue, val: R.RValue) {
         error(`attempt to set invalid 'class' attribute`);
     }
 
-    setNormalAttribute(vec, 'class', val);
+    return setNormalAttribute(vec, 'class', val);
 }
 
 function setComment(vec: R.RValue, val: R.RValue) {
@@ -248,7 +250,7 @@ function setComment(vec: R.RValue, val: R.RValue) {
         error(`attempt to set invalid 'comment' attribute`);
     }
 
-    setNormalAttribute(vec, 'comment', val);
+    return setNormalAttribute(vec, 'comment', val);
 }
 
 function setDim(vec: R.RValue, val: R.RValue) {
@@ -289,6 +291,8 @@ function setDim(vec: R.RValue, val: R.RValue) {
     start.next = curr;
 
     (vec as R.Logical).attributes = start;
+
+    return vec;
 }
 
 function setDimNames(vec: R.RValue, val: R.RValue) {
@@ -307,7 +311,7 @@ function setDimNames(vec: R.RValue, val: R.RValue) {
         }
     }
 
-    setNormalAttribute(vec, 'dimnames', val);
+    return setNormalAttribute(vec, 'dimnames', val);
 }
 
 function setNames(vec: R.RValue, val: R.RValue) {
@@ -318,19 +322,21 @@ function setNames(vec: R.RValue, val: R.RValue) {
         let curr: R.PairList | R.Nil = vec;
         let index = 0;
         while (curr.tag !== RNull.tag) {
-            curr.value = mkChar(new_val.data[index]);
+            curr.key = (new_val.data[index] === null) ? '' : new_val.data[index] as string;
             curr = curr.next;
             index ++;
         }
+
+        return vec;
     } else {
-        setNormalAttribute(vec, 'names', new_val);
+        return setNormalAttribute(vec, 'names', new_val);
     }
 }
 
-function attributesToList(vec: R.RValue): R.List {
+function attributesToList(attributes: R.PairList | R.Nil): R.List {
     const keys = [];
     const values = [];
-    let attribute = (vec as R.PairList).attributes;
+    let attribute: R.PairList | R.Nil = attributes;
 
     while (attribute.tag !== RNull.tag) {
         keys.push(attribute.key);

@@ -2,7 +2,7 @@ import {hasAttributes} from './attrib';
 import { asReal } from './coerce';
 import {copy} from './copy';
 import * as R from './types';
-import {getNames} from './util';
+import {getNames, length} from './util';
 import {mkChar, mkChars, mkInt, mkInts, mkLang, mkList,
     mkLogical, mkLogicals, mkPairlist, mkReal,
     mkReals, RNull} from './values';
@@ -11,6 +11,7 @@ const type_hierarchy = ['NULL', 'logical', 'integer', 'numeric', 'character', 'p
 
 export const do_c: R.PrimOp = (call, op, args, env) => {
     const values: R.RValue[] = [];
+
     let isRecursive = false;
     let isUseNames = true;
     let curr = args;
@@ -20,13 +21,32 @@ export const do_c: R.PrimOp = (call, op, args, env) => {
         } else if (curr.key === 'use.names' && curr.value.tag === 'logical') {
             isUseNames = curr.value.data[0] as boolean;
         } else {
+            // Two places for the names:
+            // 1. The key in the argument pairlist is already named
+            // 2. The data itself holds the names
             if (hasAttributes(curr.value)) {
-                (curr.value as R.Logical).attributes = mkPairlist([mkChar(curr.key), 'names']);
+                let names: (string | null)[] = (getNames(curr.value) as R.Character).data;
+                if (!names) {
+                    names = [curr.key];
+                }
+
+                if (names.length != length(curr.value)) {
+                    const object_length = length(curr.value);
+                    names = [];
+                    for (let i = 0; i < object_length; i ++) names.push('');
+                }
+
+                (curr.value as R.Logical).attributes = mkPairlist([mkChars(names), 'names']);
             }
             values.push(curr.value);
         }
         curr = curr.next;
     }
+
+    const res = combineValues(values, isRecursive, isUseNames);
+
+    console.log(getNames(res));
+
     return combineValues(values, isRecursive, isUseNames);
 };
 
@@ -158,14 +178,19 @@ function combineValues(values: R.RValue[], recursive: boolean, preserveNames: bo
         (output as R.Logical).attributes = RNull;
     } else {
         let hasNames: boolean = false;
-        const names = [];
+        let names: (string | null)[] = [];
 
         for (const value of values) {
             const name = getNames(value);
 
             if (name.tag !== RNull.tag) {
-                if (name.data[0] !== '') hasNames = true;
-                names.push(name.data[0]);
+                if (name.data.length !== 1) {
+                    for (const n of name.data) if (n !== '') hasNames = true;
+                    names = names.concat(name.data);
+                } else {
+                    if (name.data[0] !== '') hasNames = true;
+                    names.push(name.data[0]);
+                }
             }
         }
 

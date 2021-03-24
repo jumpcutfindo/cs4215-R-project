@@ -8,7 +8,7 @@ import { do_relop, RELATIONAL_OPTYPES } from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
 import {installSymbol, RNull, R_UnboundValue} from './values';
 import { do_colon } from './seq';
-import { do_attr, do_attributes, do_attributesgets } from './attrib';
+import { do_attr, do_attrgets, do_attributes, do_attributesgets } from './attrib';
 import { do_length } from './array';
 
 // Global variable that can be set by various primitive functions and is checked
@@ -62,7 +62,9 @@ export function initPrimitives() {
         primitiveSymbol('length',           do_length,              'builtin',  {visibility: Vis.On, arity: 1}),
         primitiveSymbol('c',                do_c,                   'builtin',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('attr',             do_attr,                'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('attr<-',           do_attrgets,            'builtin',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('attributes',       do_attributes,          'builtin',  {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('attributes<-',     do_attributesgets,      'builtin',  {visibility: Vis.On, arity: -1}),
 
         /* Sequencing, builtin */
         primitiveSymbol(':',        do_colon,   'builtin',  {visibility: Vis.On, arity: 2}),

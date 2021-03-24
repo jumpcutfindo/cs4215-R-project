@@ -98,7 +98,8 @@ const printWarnings = () => {};
 initPrimitives();
 
 const sampleProg = `
-    x <- c(1, g=2, 3);
+    x <- c(4, c(g=5), c(g=6, 7));
+    x;
 `;
 
-console.log('output', interpret(sampleProg, R_GlobalEnv));
+interpret(sampleProg, R_GlobalEnv);

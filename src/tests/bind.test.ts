@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 import {testInterpret} from '../index';
 import * as R from '../main/types';
-import {RNull, R_BaseEnv} from '../main/values';
+import {RNull, R_BaseEnv, mkPairlist, mkChars} from '../main/values';
 
 let testEnvironment: R.Env = {
     tag: 'environment',
@@ -38,7 +38,57 @@ describe('simple c() tests', () => {
 });
 
 
-describe('simple c() tests', () => {
+describe('complex c() tests', () => {
+    it(`with named objects`, () => {
+        const prog = `
+            x <- c(a=1, 2, 3);
+        `;
+
+        const result = testInterpret(prog, testEnvironment);
+        expect(result).toHaveProperty('attributes', mkPairlist([mkChars(['a', '', '']), 'names']));
+        expect(result).toHaveProperty('data', [1, 2, 3]);
+        expect(result).toHaveProperty('tag', 'numeric');
+
+        resetEnvironment();
+    });
+
+    it(`with coercion`, () => {
+        const prog = `
+            x <- c(a=1, "2", 3);
+        `;
+
+        const result = testInterpret(prog, testEnvironment);
+        expect(result).toHaveProperty('attributes', mkPairlist([mkChars(['a', '', '']), 'names']));
+        expect(result).toHaveProperty('data', ['1', '2', '3']);
+        expect(result).toHaveProperty('tag', 'character');
+
+        resetEnvironment();
+    });
+
+    it(`with flattening`, () => {
+        const prog = `
+            x <- c(c(2, 3), c(4, c(5,6)));
+        `;
+
+        const result = testInterpret(prog, testEnvironment);
+        expect(result).toHaveProperty('data', [2, 3, 4, 5, 6]);
+        expect(result).toHaveProperty('tag', 'numeric');
+
+        resetEnvironment();
+    });
+
+    it(`with preservation of names`, () => {
+        const prog = `
+            x <- c(c(2, 3), c(a=4, c(5,6)));
+        `;
+
+        const result = testInterpret(prog, testEnvironment);
+        expect(result).toHaveProperty('attributes', mkPairlist([mkChars(['', '', 'a', '', '']), 'names']));
+        expect(result).toHaveProperty('data', [2, 3, 4, 5, 6]);
+        expect(result).toHaveProperty('tag', 'numeric');
+
+        resetEnvironment();
+    });
     // TODO: Add tests for copying and preservation of attributes
     // TODO: Add tests for recursive setting
     // TODO: Add tests for attribute copying
