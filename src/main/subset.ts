@@ -33,6 +33,21 @@ const do_subset3: R.PrimOp = (call, op, args, env) => {
     return RNull;
 };
 
+// Implementation for assignment via '['
+const do_subassign: R.PrimOp = (call, op, args, env) => {
+    return RNull;
+};
+
+// Implementation for assignment via '[['
+const do_subassign2: R.PrimOp = (call, op, args, env) => {
+    return RNull;
+};
+
+// Implementation for assignment via '$'
+const do_subassign3: R.PrimOp = (call, op, args, env) => {
+    return RNull;
+};
+
 function extractSingleAtIndex(x: R.RValue, index: number) {
     if (!isSubsettable(x)) {
         error('not a subsettable type');

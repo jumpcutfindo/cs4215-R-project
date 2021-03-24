@@ -1,5 +1,5 @@
 import {hasAttributes} from './attrib';
-import { asReal } from './coerce';
+import {asReal} from './coerce';
 import {copy} from './copy';
 import * as R from './types';
 import {getNames, length} from './util';

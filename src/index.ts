@@ -98,7 +98,11 @@ const printWarnings = () => {};
 initPrimitives();
 
 const sampleProg = `
-    x <- c(4, c(g=5), c(g=6, 7));
+    x <- c(1, 2, 3);
+    class(x);
+    class(x) <- c("a", "b", "c");
+    class(x);
+    class(x) <- "character";
     x;
 `;
 

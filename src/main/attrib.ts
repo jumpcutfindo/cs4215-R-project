@@ -61,6 +61,60 @@ export const do_attributesgets: R.PrimOp = (call, op, args, env) => {
     return vec;
 };
 
+export const do_names: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+
+    return getAttribute(vec, 'names', true);
+};
+
+export const do_namesgets: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+    const names = head(tail(args));
+
+    return setAttribute(vec, 'names', names);
+};
+
+export const do_class: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+
+    return getAttribute(vec, 'class', true);
+};
+
+export const do_classgets: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+    const class_name = head(tail(args));
+
+    return setAttribute(vec, 'class', class_name);
+};
+
+export const do_dim: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+
+    return getAttribute(vec, 'dim', true);
+};
+
+export const do_dimgets: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+    const dim = head(tail(args));
+
+    return setAttribute(vec, 'dim', dim);
+};
+
+export const do_comment: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+
+    return getAttribute(vec, 'comment', true);
+};
+
+export const do_commentgets: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+    const comment = head(tail(args));
+
+    return setAttribute(vec, 'comment', comment);
+};
+
+// TODO: Implement dimnames when lists are implemented
+
 function setAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue {
     if (vec.tag === RNull.tag) {
         error('attempt to set an attribute on NULL');
