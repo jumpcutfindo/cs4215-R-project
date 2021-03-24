@@ -1,3 +1,4 @@
+import { asChar, asInt, coerceTo } from './coerce';
 import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
@@ -18,6 +19,23 @@ export const do_attr: R.PrimOp = (call, op, args, env) => {
     }
 
     return getAttribute(vec, attribute.data[0]);
+};
+
+// Set a specific attribute
+export const do_attrgets: R.PrimOp = (call, op, args, env) => {
+    const vec = copy(head(args));
+    const attribute = head(tail(args));
+    const value = head(tail(tail(args)));
+
+    if (attribute.tag !== 'character') {
+        error(`'which' must be of mode character`);
+    } else if (attribute.data.length !== 1) {
+        error(`'exactly one attribute 'which' must be given`);
+    } else if ((attribute.data[0] as string).length === 0) {
+        error(`attempt to use zero-length variable name`);
+    }
+
+    return setAttribute(vec, (attribute.data[0] as string), value);
 };
 
 export const do_attributes: R.PrimOp = (call, op, args, env) => {
@@ -41,23 +59,6 @@ export const do_attributesgets: R.PrimOp = (call, op, args, env) => {
     setAttributes(vec, attributes);
 
     return vec;
-};
-
-// Set a specific attribute
-export const do_attrgets: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
-    const attribute = head(tail(args));
-    const value = head(tail(tail(args)));
-
-    if (attribute.tag !== 'character') {
-        error(`'which' must be of mode character`);
-    } else if (attribute.data.length !== 1) {
-        error(`'exactly one attribute 'which' must be given`);
-    } else if ((attribute.data[0] as string).length === 0) {
-        error(`attempt to use zero-length variable name`);
-    }
-
-    return setAttribute(vec, (attribute.data[0] as string), value);
 };
 
 function setAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue {
@@ -242,7 +243,26 @@ function setClass(vec: R.RValue, val: R.RValue) {
         error(`attempt to set invalid 'class' attribute`);
     }
 
-    return setNormalAttribute(vec, 'class', val);
+    const new_type = val.data[0];
+
+    let ans;
+
+    switch (new_type) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+        removeAttribute(vec, 'class');
+        const attributes_copy: R.PairList | R.Nil = copy((vec as R.Logical).attributes) as R.PairList | R.Nil;
+        ans = coerceTo(vec, new_type);
+        (ans as R.Logical).attributes = attributes_copy;
+        break;
+    default:
+        ans = setNormalAttribute(vec, 'class', val);
+        break;
+    }
+
+    return ans;
 }
 
 function setComment(vec: R.RValue, val: R.RValue) {
@@ -261,7 +281,7 @@ function setDim(vec: R.RValue, val: R.RValue) {
     }
 
     // Attempt to coerce values to integer, take first value regardless
-    new_val = coerceToInt(val);
+    new_val = asInt(val);
 
     // Must not be null or negative
     if (new_val.tag !== RNull.tag && new_val.data[0] === null) {
@@ -316,7 +336,7 @@ function setDimNames(vec: R.RValue, val: R.RValue) {
 
 function setNames(vec: R.RValue, val: R.RValue) {
     // Values provided coerced to character vector
-    const new_val = coerceToChar(val) as R.Character;
+    const new_val = asChar(val) as R.Character;
 
     if (vec.tag === 'pairlist') {
         let curr: R.PairList | R.Nil = vec;
@@ -369,70 +389,6 @@ function isVector(vec: R.RValue): boolean {
     default:
         return false;
     }
-}
-
-function coerceToInt(vec: R.RValue): R.Int | R.Nil {
-    let ans: R.Int | R.Nil = RNull;
-
-    switch (vec.tag) {
-    case 'logical':
-        ans = mkInts(vec.data.map((x) => {
-            if (x === null) return null;
-            else return x ? 1 : 0;
-        }));
-        break;
-    case 'integer':
-        ans = mkInts(vec.data);
-        break;
-    case 'numeric':
-        ans = mkInts(vec.data.map((x)=> x === null ? null : Math.floor(x)));
-        break;
-    case 'character':
-        ans = mkInts(vec.data.map((x)=> x === null ? null : Number(x) === NaN ? null : Number(x)));
-    }
-
-    return ans;
-}
-
-function coerceToChar(vec: R.RValue): R.Character | R.Nil {
-    let ans: R.Character | R.Nil = RNull;
-
-    switch (vec.tag) {
-    case 'logical':
-        ans = mkChars(vec.data.map((x) => {
-            return x !== null ? (x ? 'TRUE' : 'FALSE') : null;
-        }));
-        break;
-    case 'integer':
-    case 'numeric':
-        ans = mkChars(vec.data.map((x) => {
-            return x !== null ? x.toString() : null;
-        }));
-        break;
-    case 'character':
-        ans = copy(vec) as R.Character;
-        break;
-    case 'list':
-        // TODO: List to string
-        ans = mkChars(vec.data.map((x) => {
-            return x !== null ? x.toString() : null;
-        }));
-        break;
-    case 'pairlist':
-        // TODO: pairlist to string
-        const temp = [];
-        let curr: R.PairList | R.Nil = vec;
-        while (curr.tag !== RNull.tag) {
-            temp.push(curr.value);
-            curr = curr.next;
-        }
-        ans = mkChars(temp.map((x) => {
-            return x !== null ? x.toString() : null;
-        }));
-        break;
-    }
-
-    return ans;
 }
 
 export function hasAttributes(vec: R.RValue): boolean {

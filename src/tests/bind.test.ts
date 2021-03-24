@@ -89,7 +89,6 @@ describe('complex c() tests', () => {
 
         resetEnvironment();
     });
-    // TODO: Add tests for copying and preservation of attributes
-    // TODO: Add tests for recursive setting
-    // TODO: Add tests for attribute copying
+
+    // TODO: Add tests for recursive setting (needs lists)
 });

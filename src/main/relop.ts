@@ -1,6 +1,6 @@
 import {error, warn} from './error';
 import * as R from './types';
-import { checkArity, head, tail } from './util';
+import {checkArity, head, tail} from './util';
 import {mkChars, mkLogicals, mkReals, RNull} from './values';
 
 const stringToSum = (str: string) => [...str||'A'].reduce((a, x) => a += x.codePointAt(0) ?? 0, 0);
