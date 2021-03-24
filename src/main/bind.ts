@@ -43,10 +43,6 @@ export const do_c: R.PrimOp = (call, op, args, env) => {
         curr = curr.next;
     }
 
-    const res = combineValues(values, isRecursive, isUseNames);
-
-    console.log(getNames(res));
-
     return combineValues(values, isRecursive, isUseNames);
 };
 
