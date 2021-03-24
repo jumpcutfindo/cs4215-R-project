@@ -1,6 +1,6 @@
-import { hasAttributes } from './attrib';
+import {hasAttributes} from './attrib';
+import { asReal } from './coerce';
 import {copy} from './copy';
-import {error} from './error';
 import * as R from './types';
 import {getNames} from './util';
 import {mkChar, mkChars, mkInt, mkInts, mkLang, mkList,
@@ -156,6 +156,22 @@ function combineValues(values: R.RValue[], recursive: boolean, preserveNames: bo
 
     if (!preserveNames) {
         (output as R.Logical).attributes = RNull;
+    } else {
+        let hasNames: boolean = false;
+        const names = [];
+
+        for (const value of values) {
+            const name = getNames(value);
+
+            if (name.tag !== RNull.tag) {
+                if (name.data[0] !== '') hasNames = true;
+                names.push(name.data[0]);
+            }
+        }
+
+        if (hasNames) {
+            (output as R.Logical).attributes = mkPairlist([mkChars(names), 'names']);
+        }
     }
 
     return output;

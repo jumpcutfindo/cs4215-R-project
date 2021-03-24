@@ -21,14 +21,12 @@ export const do_attr: R.PrimOp = (call, op, args, env) => {
 };
 
 export const do_attributes: R.PrimOp = (call, op, args, env) => {
-    console.log('attributes');
     const vec = head(args);
 
     return getAttributes(vec);
 };
 
 export const do_attributesgets: R.PrimOp = (call, op, args, env) => {
-    console.log('attributegets');
     const vec = head(args);
     const attributes = head(tail(args));
 
@@ -150,6 +148,10 @@ function getAttributes(vec: R.RValue) {
 
     if (!hasAttributes(vec)) {
         error('attributes are not allowed on the given type');
+    }
+
+    if ((vec as R.Logical).attributes.tag === RNull.tag) {
+        return RNull;
     }
 
     if (vec.tag === 'pairlist') {

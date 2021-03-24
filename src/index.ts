@@ -96,4 +96,9 @@ const printValueEnv = (r: R.RValue, e: R.Env) => console.log(r);
 const printWarnings = () => {};
 
 initPrimitives();
-// console.log('output', interpret(sampleProg5, R_GlobalEnv));
+
+const sampleProg = `
+    x <- c(1, g=2, 3);
+`;
+
+console.log('output', interpret(sampleProg, R_GlobalEnv));
