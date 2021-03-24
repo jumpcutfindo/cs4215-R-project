@@ -20,34 +20,34 @@ prog:   (   expr eoe
         EOF?
     ;
 
-expr :  literal # Lit
-     |  ID # Symbol
-     |  op='(' expr ')' # Call
-     |  expr '(' arglist ')' # FunCall
-     |  'function' '(' formallist ')' expr # Function
-     |  op='{' (expr eoe)* '}' # Call
-     |  name '::' name # Namespace
-     |  expr '$' name # ComponentExtraction
-     |  expr '[' arglist ']' # Subset
-     |  expr '[[' arglist ']]' # Indexing
-     |  <assoc=right> expr op='^' expr # Call
-     |  op=('-'|'+') expr # Call
-     |  expr op=':' expr # Call
-     |  expr op=USER_OP expr # Call
-     |  expr op=('*'|'/') expr # Call
-     |  expr op=('+'|'-') expr # Call
-     |  expr op=('>'|'>='|'<'|'<='|'=='|'!=') expr # Call
-     |  op='!' expr # Call
-     |  expr op=('&'|'&&') expr # Call
-     |  expr op=('|'|'||') expr # Call
-     |  val=expr arrow=('->'|'->>') sym=(ID|STRING) # Assign
-     |  sym=(ID|STRING) arrow=('<-'|'<<-') val=expr # Assign
-     |  op='if' '(' expr ')' expr ('else' expr)? # Call
-     |  'for' '(' ID 'in' seq=expr ')' body=expr # For
-     |  op='while' '(' expr ')' expr # Call
-     |  op='repeat' expr # Call
-     |  op='break' # Call
-     |  op='next'  # Call
+expr :  literal                                     # Lit
+     |  ID                                          # Symbol
+     |  op='(' expr ')'                             # Call
+     |  expr '(' arglist ')'                        # FunCall
+     |  'function' '(' formallist ')' expr          # Function
+     |  op='{' (expr eoe)* '}'                      # Call
+     |  name '::' name                              # Namespace
+     |  expr '$' name                               # ComponentExtraction
+     |  expr '[' arglist ']'                        # Subset
+     |  expr '[[' arglist ']]'                      # Indexing
+     |  <assoc=right> expr op='^' expr              # Call
+     |  op=('-'|'+') expr                           # Call
+     |  expr op=':' expr                            # Call
+     |  expr op=USER_OP expr                        # Call
+     |  expr op=('*'|'/') expr                      # Call
+     |  expr op=('+'|'-') expr                      # Call
+     |  expr op=('>'|'>='|'<'|'<='|'=='|'!=') expr  # Call
+     |  op='!' expr                                 # Call
+     |  expr op=('&'|'&&') expr                     # Call
+     |  expr op=('|'|'||') expr                     # Call
+     |  val=expr arrow=('->'|'->>') assignee=expr   # Assign
+     |  assignee=expr arrow=('<-'|'<<-') val=expr   # Assign
+     |  op='if' '(' expr ')' expr ('else' expr)?    # Call
+     |  'for' '(' ID 'in' seq=expr ')' body=expr    # For
+     |  op='while' '(' expr ')' expr                # Call
+     |  op='repeat' expr                            # Call
+     |  op='break'                                  # Call
+     |  op='next'                                   # Call
      ;
 
 // exprlist
@@ -56,8 +56,8 @@ expr :  literal # Lit
 
 // Represents end of expressions
 eoe :    ';'
-        | {this.lineTerminatorAhead()}?
-        | {this._input.LT(1).type == RParser.RBRACE}?
+//        | {this.lineTerminatorAhead()}?
+//        | {this._input.LT(1).type == RParser.RBRACE}?
         ;
 
 literal :  INT 

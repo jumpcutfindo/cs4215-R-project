@@ -276,6 +276,7 @@ export const do_for : R.PrimOp = (call, op, args, env) => {
     if (sym.tag !== 'name') {
         errorcall(call, 'non-symbol loop variable');
     } 
+    val = Reval(val, env);
     if (inherits(val, "factor")) {
         val = asCharacterFactor(val);
     }
@@ -316,6 +317,26 @@ export const do_for : R.PrimOp = (call, op, args, env) => {
 
     return RNull;
 };
+
+export const do_while : R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
+    const cond = head(args);
+    const body = head(tail(args));
+    while (true) {
+        const condres = Reval(cond, env);
+        if (!asLogicalNoNA(condres, call)) {
+            break;
+        }
+        const result = Reval(body, env);
+        if (isBreak(result)) {
+            break;
+        }
+        if (isReturn(result)) {
+            return result;
+        }
+    }
+    return RNull;
+}
 
 /** ********************************************************
  *
@@ -435,7 +456,7 @@ function applydefine(
             error('invalid function in complex assignment');
         }
         const restArgs = tail(tail(lhs));
-        rhs = replaceCall(repFun, partialEval, restArgs, rhs);
+        rhs = replaceCall(repFun, partialEval.value, restArgs, rhs);
         rhs = Reval(rhs, env);
         lhs = head(tail(lhs)) as R.Language; // Should by theory be guaranteed not to fail, since length(partialEvals) == number of nested calls
     }

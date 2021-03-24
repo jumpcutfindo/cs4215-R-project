@@ -1,13 +1,10 @@
-import {RNull} from './values';
-import {Character, Int, List, Logical, Real, RValue} from './types';
+import {mkInt, RNull} from './values';
+import * as R from './types';
+import { checkArity, head, length } from './util';
 
 const valid_objects = ['list', 'logical', 'integer', 'numeric', 'character'];
 
-function length(x: RValue) {
-    if (valid_objects.indexOf(x.tag) !== -1) {
-        const data = (x as List | Logical | Int | Real | Character).data;
-        return data.length;
-    } else {
-        return RNull;
-    }
+export const do_length : R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
+    return mkInt(length(head(args)));
 }

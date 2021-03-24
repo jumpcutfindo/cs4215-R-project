@@ -22,8 +22,8 @@ function resetEnvironment() {
 
 describe('simple c() tests', () => {
     const tests = [
-        {testName: 'c() test (same type)', program: 'c(1, 2, 3)', expectedData: [1, 2, 3], expectedType: 'numeric'},
-        {testName: 'c() test (different types)', program: 'c(TRUE, 1, "abc")', expectedData: ['TRUE', '1', 'abc'], expectedType: 'character'},
+        {testName: 'c() test (same type)', program: 'c(1, 2, 3);', expectedData: [1, 2, 3], expectedType: 'numeric'},
+        {testName: 'c() test (different types)', program: 'c(TRUE, 1, "abc");', expectedData: ['TRUE', '1', 'abc'], expectedType: 'character'},
     ];
 
     for (const test of tests) {

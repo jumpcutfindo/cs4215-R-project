@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable no-multi-spaces */
 import {do_arith, ARITH_OPTYPES} from './arithmetic';
-import {do_begin, do_break, do_for, do_function, do_if, do_paren, do_return, do_set} from './eval';
+import {do_begin, do_break, do_for, do_function, do_if, do_paren, do_return, do_set, do_while} from './eval';
 import { do_c } from './bind';
 import {do_logic, do_logic2, LOGICAL_OPTYPES} from './logic';
 import { do_relop, RELATIONAL_OPTYPES } from './relop';
@@ -9,6 +9,7 @@ import {Name, PrimOp, Prom, Vis} from './types';
 import {installSymbol, RNull, R_UnboundValue} from './values';
 import { do_colon } from './seq';
 import { do_attr, do_attributes, do_attributesgets } from './attrib';
+import { do_length } from './array';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -22,6 +23,7 @@ export function initPrimitives() {
         /* Language construct primitives */
         primitiveSymbol('if',       do_if,          'special',  {visibility: Vis.OnMut, arity: 2}),
         primitiveSymbol('for',      do_for,         'special',  {visibility: Vis.Off, arity: 3}),
+        primitiveSymbol('while',    do_while,       'special',  {visibility: Vis.Off, arity: 2}),
         primitiveSymbol('break',    do_break,       'special',  {visibility: Vis.On, arity: 0, variant: 2}),
         primitiveSymbol('next',     do_break,       'special',  {visibility: Vis.On, arity: 0, variant: 1}),
         primitiveSymbol('return',   do_return,      'special',  {visibility: Vis.On, arity: 0}),
@@ -57,7 +59,8 @@ export function initPrimitives() {
         primitiveSymbol('!=',       do_relop,   'builtin',  {visibility: Vis.On, arity: 2, variant: RELATIONAL_OPTYPES.NEQOP}),
 
         /* Vectors, Matrices and Arrays*/
-        primitiveSymbol('c',                do_c,                   'builtin',  {visibility: Vis.On, arity: 0}),
+        primitiveSymbol('length',           do_length,              'builtin',  {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('c',                do_c,                   'builtin',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('attr',             do_attr,                'builtin',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('attributes',       do_attributes,          'builtin',  {visibility: Vis.On, arity: 1}),
 

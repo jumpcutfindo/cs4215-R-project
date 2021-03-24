@@ -176,10 +176,8 @@ export class ASTVisitor extends AbstractParseTreeVisitor<RValue>
         let arr = context._arrow.text!;
         let call = arr === '->' || arr === '<-' ? 
             install('<-') : install('<<-');
-        let lhs = context.STRING() ? 
-            mkChar(formatString(context.STRING()!.text)) :
-            install(formatId(context.ID()!.text));
-        return mkLang([call], [lhs], [context.expr().accept(this)]);
+        let lhs = context._assignee.accept(this);
+        return mkLang([call], [lhs], [context._val.accept(this)]);
     }
 
     visitCall(context: CallContext) : RValue {
