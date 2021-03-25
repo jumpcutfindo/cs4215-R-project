@@ -403,6 +403,11 @@ function setNames(vec: R.RValue, val: R.RValue) {
 
         return vec;
     } else {
+        if (new_val.data.length !== (vec as R.Logical).data.length) {
+            for (let i = new_val.data.length; i < (vec as R.Logical).data.length; i ++) {
+                new_val.data.push(null);
+            }
+        }
         return setNormalAttribute(vec, 'names', new_val);
     }
 }
