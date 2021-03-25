@@ -115,7 +115,7 @@ export const do_commentgets: R.PrimOp = (call, op, args, env) => {
 
 // TODO: Implement dimnames when lists are implemented
 
-function setAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue {
+export function setAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue {
     if (vec.tag === RNull.tag) {
         error('attempt to set an attribute on NULL');
     }

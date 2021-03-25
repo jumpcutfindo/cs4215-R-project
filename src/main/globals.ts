@@ -10,7 +10,7 @@ import {installSymbol, RNull, R_UnboundValue} from './values';
 import {do_colon} from './seq';
 import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_dim, do_dimgets, do_names, do_namesgets} from './attrib';
 import {do_length} from './array';
-import { do_subset, do_subset2, do_subset3 } from './subset';
+import { do_subassign, do_subassign2, do_subassign3, do_subset, do_subset2, do_subset3 } from './subset';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -68,6 +68,9 @@ export function initPrimitives() {
         primitiveSymbol('[',                do_subset,              'builtin',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('[[',               do_subset2,             'builtin',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('$',                do_subset3,             'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('[<-',              do_subassign,           'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('[[<-',             do_subassign2,          'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('$<-',              do_subassign3,          'builtin',  {visibility: Vis.On, arity: -1}),
 
         /* Attribute-related functions */
         primitiveSymbol('attr',             do_attr,                'builtin',  {visibility: Vis.On, arity: -1}),

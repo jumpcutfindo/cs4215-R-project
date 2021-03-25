@@ -100,7 +100,8 @@ initPrimitives();
 const sampleProg = `
     x <- c(1:10);
     names(x) <- c("a", "b", "c", "test");
-    x$"a";
+    x[c("a", "b")] <- c("test_val1", "test_val2");
+    x;
 `;
 
 interpret(sampleProg, R_GlobalEnv);
