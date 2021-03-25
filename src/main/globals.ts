@@ -2,14 +2,15 @@
 /* eslint-disable no-multi-spaces */
 import {do_arith, ARITH_OPTYPES} from './arithmetic';
 import {do_begin, do_break, do_for, do_function, do_if, do_paren, do_return, do_set, do_while} from './eval';
-import { do_c } from './bind';
+import {do_c} from './bind';
 import {do_logic, do_logic2, LOGICAL_OPTYPES} from './logic';
-import { do_relop, RELATIONAL_OPTYPES } from './relop';
+import {do_relop, RELATIONAL_OPTYPES} from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
 import {installSymbol, RNull, R_UnboundValue} from './values';
-import { do_colon } from './seq';
-import { do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_dim, do_dimgets, do_names, do_namesgets } from './attrib';
-import { do_length } from './array';
+import {do_colon} from './seq';
+import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_dim, do_dimgets, do_names, do_namesgets} from './attrib';
+import {do_length} from './array';
+import { do_subset } from './subset';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -61,6 +62,10 @@ export function initPrimitives() {
         /* Vectors, Matrices and Arrays*/
         primitiveSymbol('length',           do_length,              'builtin',  {visibility: Vis.On, arity: 1}),
         primitiveSymbol('c',                do_c,                   'builtin',  {visibility: Vis.On, arity: -1}),
+
+        /* Subsetting extraction and assignment */
+        /* Note that these are supposed to be specials (for method dispatching), but we leave them as builtin first */
+        primitiveSymbol('[',                do_subset,              'builtin',  {visibility: Vis.On, arity: -1}),
 
         /* Attribute-related functions */
         primitiveSymbol('attr',             do_attr,                'builtin',  {visibility: Vis.On, arity: -1}),
@@ -132,3 +137,4 @@ export function primitiveSymbol(
         },
     };
 }
+
