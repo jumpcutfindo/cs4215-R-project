@@ -32,18 +32,50 @@ export const do_subset: R.PrimOp = (call, op, args, env) => {
  */
 
 export const do_subset2: R.PrimOp = (call, op, args, env) => {
-    // Extract a single value at a specific index (note that R indexing begins from 1)
-    return RNull;
+    // Extract a single value at a specific index (note that R indexing begins from 1),
+    // or a single value with a specific name
+    const object = copy(head(args));
+    let params = head(tail(args));
+    const exact = tail(tail(args)).tag === RNull.tag ? RNull : head(tail(tail(args)));
+
+    if (length(params) !== 1) {
+        error('attempt to select more than one element in vectorIndex');
+    }
+
+    if (params.tag === 'character') {
+        const exactValue = exact.tag !== 'logical' ? false : exact.data[0] ? true : false;
+        return extractSingleByName(object, params.data[0], exactValue);
+    } else {
+        params = coerceTo(params, 'integer');
+        if (params.tag !== 'integer') {
+            error('NA / NaN argument');
+        }
+
+        return extractSingleAtIndex(object, params.data[0]);
+    }
 };
 
 /**
  * Implementation for '$' subsetting
  */
 export const do_subset3: R.PrimOp = (call, op, args, env) => {
-    if (!isSubsettableList) {
+    // Extract a single value with a specific name (partial matching always)
+    const object = copy(head(args));
+    let params = head(tail(args));
+
+    if (!isSubsettableList(object)) {
         error('$ operator is invalid for atomic vectors');
     }
-    return RNull;
+
+    if (length(params) !== 1) {
+        error('attempt to select more than one element in vectorIndex');
+    }
+
+    if (params.tag !== 'character') {
+        error(`unexpected ${params.tag} in arguments`);
+    } else {
+        return extractSingleByName(object, params.data[0], false);
+    }
 };
 
 // Implementation for assignment via '['
@@ -61,7 +93,8 @@ export const do_subassign3: R.PrimOp = (call, op, args, env) => {
     return RNull;
 };
 
-function extractSingleAtIndex(vec: R.RValue, index: number): R.RValue {
+function extractSingleAtIndex(vec: R.RValue, index: number | null): R.RValue {
+    if (index === null || (index - 1) >= length(vec)) error('subscript out of bounds');
     const actual_index = index - 1;
 
     if (!isSubsettable(vec)) {
@@ -107,10 +140,12 @@ function extractSingleAtIndex(vec: R.RValue, index: number): R.RValue {
     return ans;
 }
 
-function extractSingleByName(vec: R.RValue, name: string, exact: boolean = true): R.RValue {
+function extractSingleByName(vec: R.RValue, name: string | null, exact: boolean = true): R.RValue {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
     }
+
+    if (name === null) error('subscript out of bounds');
 
     let ans;
 
@@ -138,11 +173,11 @@ function extractSingleByName(vec: R.RValue, name: string, exact: boolean = true)
             if (matches.length !== 1) {
                 error('subscript out of bounds');
             } else {
-                ans = extractSingleAtIndex(vec, nameValues.data.indexOf(matches[0]));
+                ans = extractSingleAtIndex(vec, nameValues.data.indexOf(matches[0]) + 1);
             }
         } else {
             if (nameValues.data.indexOf(name) !== -1) {
-                ans = extractSingleAtIndex(vec, nameValues.data.indexOf(name));
+                ans = extractSingleAtIndex(vec, nameValues.data.indexOf(name) + 1);
             } else {
                 error('subscript out of bounds');
             }
@@ -211,7 +246,7 @@ function extractMultipleAtIndexes(vec: R.RValue, indexes: (number | null)[]): R.
     if (allNegative) {
         const unincluded_values = indexes.map((x)=> x === null ? null : -x);
         const possible_indexes = [];
-        for (let i = 1; i <= (vec as R.Logical).data.length; i ++) possible_indexes.push(i);
+        for (let i = 1; i <= length(vec); i ++) possible_indexes.push(i);
         actual_indexes = possible_indexes.filter((x) => !unincluded_values.includes(x))
             .map((x) => x === null ? null : x - 1);
     } else {
@@ -224,22 +259,22 @@ function extractMultipleAtIndexes(vec: R.RValue, indexes: (number | null)[]): R.
     switch (vec.tag) {
     case 'logical':
         ans = mkLogicals(actual_indexes.map((index) => {
-            return index !== null && index < vec.data.length ? vec.data[index] : null;
+            return index !== null && index < length(vec) ? vec.data[index] : null;
         }));
         break;
     case 'integer':
         ans = mkInts(actual_indexes.map((index) => {
-            return index !== null && index < vec.data.length ? vec.data[index] : null;
+            return index !== null && index < length(vec) ? vec.data[index] : null;
         }));
         break;
     case 'numeric':
         ans = mkReals(actual_indexes.map((index) => {
-            return index !== null && index < vec.data.length ? vec.data[index] : null;
+            return index !== null && index < length(vec) ? vec.data[index] : null;
         }));
         break;
     case 'character':
         ans = mkChars(actual_indexes.map((index) => {
-            return index !== null && index < vec.data.length ? vec.data[index] : null;
+            return index !== null && index < length(vec) ? vec.data[index] : null;
         }));
         break;
     case 'expression':
@@ -248,13 +283,13 @@ function extractMultipleAtIndexes(vec: R.RValue, indexes: (number | null)[]): R.
             refcount: 0,
             tag: 'expression',
             data: actual_indexes.map((index) => {
-                return index !== null && index < vec.data.length ? copy(vec.data[index]) : RNull;
+                return index !== null && index < length(vec) ? copy(vec.data[index]) : RNull;
             }),
         } as R.Expression;
         break;
     case 'list':
         const temp = actual_indexes.map((index) => {
-            return index !== null && index < vec.data.length ? copy(vec.data[index]) : RNull;
+            return index !== null && index < length(vec) ? copy(vec.data[index]) : RNull;
         });
 
         ans = {
@@ -306,7 +341,7 @@ function extractMultipleAtIndexes(vec: R.RValue, indexes: (number | null)[]): R.
 
         if (names.tag !== RNull.tag) {
             const newNames: (string | null)[] = actual_indexes.map(
-                (index) => index !== null && index < names.data.length ? names.data[index] : null,
+                (index) => index !== null && index < length(names) ? names.data[index] : null,
             );
             ans.attributes = mkPairlist([mkChars(newNames), 'names']);
         }
@@ -386,7 +421,7 @@ function isIndexOutOfBounds(x: R.RValue, index: number) {
     case 'character':
     case 'expression':
     case 'list':
-        return index >= x.data.length;
+        return index >= length(x);
     case 'pairlist':
         return index >= length(x as R.PairList);
     case 'NULL':
@@ -457,7 +492,7 @@ function getIndexesOfNames(
     }
 
     ans = names.map((name) => {
-        const index = namesOfVector.indexOf(name);
+        const index = namesOfVector.indexOf(name) + 1; // Note: return as 1-indexed
         if (index === -1) return null;
         else return index;
     });
