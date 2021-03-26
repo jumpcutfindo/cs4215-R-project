@@ -599,10 +599,12 @@ function assignMultipleAtIndexes(vec: R.RValue, indexes: number[], values: R.RVa
     }
 
     let new_vec = coerceTo(vec, expected_type);
-    const new_value = coerceTo(values, expected_type);
+    let new_value = coerceTo(values, expected_type);
 
+    // Recycling of values
     if (actual_indexes.length !== length(new_value)) {
         warn('number of items to replace is not a multiple of replacement length');
+        new_value = recycleToLength(new_value, actual_indexes.length);
     }
 
     switch (new_vec.tag) {
@@ -648,8 +650,6 @@ function assignMultipleAtIndexes(vec: R.RValue, indexes: number[], values: R.RVa
             pl_index ++;
         }
     }
-
-    new_vec = copyAttributesAfterAssignment(vec, new_vec);
 
     return new_vec;
 }
@@ -884,4 +884,23 @@ function hasNAs(vec: R.RValue): boolean {
     }
 
     return false;
+}
+
+function recycleToLength(vec: R.RValue, l: number) {
+    if (length(vec) >= l) return vec;
+
+    switch (vec.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+    case 'list':
+        const vecLength = length(vec);
+        const data: any[] = vec.data;
+        for (let i = vecLength; i < l; i ++) {
+            data.push(vec.data[i % vecLength]);
+        }
+        return vec;
+    }
+    return vec;
 }

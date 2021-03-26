@@ -97,11 +97,11 @@ const printWarnings = () => {};
 
 initPrimitives();
 
-const sampleProg = `
-    x <- c(1:10);
-    names(x) <- c("a", "b", "c", "test");
-    x[c("a", "b")] <- c("test_val1", "test_val2");
-    x;
-`;
+// const sampleProg = `
+//     x <- c(a=1, b=2, c=3);
+//     x[1:5] <- 5;
+//     x;
+//     names(x);
+// `;
 
-interpret(sampleProg, R_GlobalEnv);
+// interpret(sampleProg, R_GlobalEnv);
