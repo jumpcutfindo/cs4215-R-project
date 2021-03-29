@@ -11,6 +11,7 @@ import {do_colon} from './seq';
 import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_dim, do_dimgets, do_names, do_namesgets} from './attrib';
 import {do_length} from './array';
 import { do_subassign, do_subassign2, do_subassign3, do_subset, do_subset2, do_subset3 } from './subset';
+import { do_makelist } from './builtin';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -88,6 +89,9 @@ export function initPrimitives() {
 
         /* Sequencing, builtin */
         primitiveSymbol(':',        do_colon,   'builtin',  {visibility: Vis.On, arity: 2}),
+
+        /* Miscellaneous */
+        primitiveSymbol('list',             do_makelist,            'builtin',  {visibility: Vis.On, arity: -1}),
     ];
 
     const internals: Name[] = [];
