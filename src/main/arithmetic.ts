@@ -1,8 +1,9 @@
 import {error, warn} from './error';
 import * as R from './types';
 import {mkChar, mkPairlist, mkReal, mkReals, RNull} from './values';
-import * as Coerce from './coerce';
 import {head, tail, length, checkArity, getAttributeOfName} from './util';
+import {asInt, asReal, asRealVector} from './coerce';
+import {copy} from './copy';
 
 /**
  * We define the supported unary and binary operators here.
@@ -32,7 +33,43 @@ export const ARITH_OPTYPES = {
     IDIVOP: 7,
 };
 
-export const do_arith : R.PrimOp = (call, op, args, env) => {
+export const MATH_OPTYPES = {
+    FLOOR: 0,
+    CEILING: 1,
+    SQRT: 2,
+    SIGN: 3,
+    TRUNC: 4,
+    ROUND: 5,
+    SIGNIF: 6,
+
+    EXP: 10,
+    EXPM1: 11,
+    LOG: 12,
+    // LOGB: 13,
+    LOG10: 14,
+    LOG2: 15,
+    LOG1P: 16,
+
+    COS: 20,
+    SIN: 21,
+    TAN: 22,
+    ACOS: 23,
+    ASIN: 24,
+    ATAN: 25,
+    ATAN2: 26,
+
+    COSH: 30,
+    SINH: 31,
+    TANH: 32,
+    ACOSH: 33,
+    ASINH: 34,
+    ATANH: 35,
+    COSPI: 36,
+    SINPI: 37,
+    TANPI: 38,
+};
+
+export const do_arith: R.PrimOp = (call, op, args, env) => {
     let ans: R.RValue = RNull;
 
     if (length(args) === 1) {
@@ -75,6 +112,189 @@ export const do_arith : R.PrimOp = (call, op, args, env) => {
 
     return ans;
 };
+
+export const do_math1: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
+
+    let operand = head(args);
+    if (!isNumeric(operand)) error('non-numeric argument to mathematical function');
+
+    operand = asRealVector(copy(operand)) as R.Real;
+
+    return applyMathFunction(operand, op.variant);
+};
+
+export const do_math2: R.PrimOp = (call, op, args, env) => {
+    let operand = head(args);
+    if (!isNumeric(operand)) error('non-numeric argument to mathematical function');
+
+    let arg;
+    operand = asRealVector(copy(operand)) as R.Real;
+
+    switch (op.variant) {
+    case MATH_OPTYPES.ATAN2:
+        if (tail(args).tag === RNull.tag) return applyMathFunction(operand, op.variant);
+        else {
+            if (!isNumeric(head(tail(args)))) error('non-numeric argument to mathematical function');
+
+            if (tail(args).tag === RNull.tag) return applyMathFunction(operand, op.variant);
+
+            const temp = asRealVector((tail(args) as R.PairList).value) as R.Real;
+            arg = {x: temp.data[0]};
+            return applyMathFunction(operand, op.variant, arg);
+        }
+    case MATH_OPTYPES.ROUND:
+    case MATH_OPTYPES.SIGNIF:
+        if (tail(args).tag === RNull.tag) return applyMathFunction(operand, op.variant);
+        else {
+            if (!isNumeric(head(tail(args)))) error('non-numeric argument to mathematical function');
+
+            if (tail(args).tag === RNull.tag) return applyMathFunction(operand, op.variant);
+
+            const temp = asInt((tail(args) as R.PairList).value) as R.Int;
+            arg = {digits: temp.data[length(temp) - 1]};
+            return applyMathFunction(operand, op.variant, arg);
+        }
+    default:
+        return operand;
+    }
+};
+
+export const do_log: R.PrimOp = (call, op, args, env) => {
+    let operand = head(args);
+    if (!isNumeric(operand)) error('non-numeric argument to mathematical function');
+
+    operand = asRealVector(copy(operand)) as R.Real;
+
+    let log_args;
+    if (tail(args).tag === RNull.tag) return applyMathFunction(operand, op.variant);
+    else {
+        if (!isNumeric(head(tail(args)))) error('non-numeric argument to mathematical function');
+
+        if (tail(args).tag === RNull.tag) return applyMathFunction(operand, op.variant);
+
+        const temp = asRealVector((tail(args) as R.PairList).value) as R.Real;
+        log_args = {base: temp.data[0]};
+        return applyMathFunction(operand, op.variant, log_args);
+    }
+};
+
+function applyMathFunction(operand: R.Real, operation: number, args: any = null ) {
+    switch (operation) {
+    case (MATH_OPTYPES.FLOOR):
+        applyMathNoArgs(operand, Math.floor);
+        break;
+    case (MATH_OPTYPES.CEILING):
+        applyMathNoArgs(operand, Math.ceil);
+        break;
+    case (MATH_OPTYPES.SQRT):
+        applyMathNoArgs(operand, Math.sqrt);
+        break;
+    case (MATH_OPTYPES.SIGN):
+        applyMathNoArgs(operand, Math.sign);
+        break;
+    case (MATH_OPTYPES.TRUNC):
+        applyMathNoArgs(operand, Math.trunc);
+        break;
+    case (MATH_OPTYPES.ROUND):
+        // Does not handle negative values, like R does
+        if (!args || !args.digits) args = {digits: 0};
+        operand.data = operand.data.map((x: (number | null)) => x === null ? null : Number(x.toFixed(args.digits)));
+        break;
+    case (MATH_OPTYPES.SIGNIF):
+        // Does not handle negative values, like R does
+        if (!args || !args.digits) args = {digits: 6};
+        operand.data = operand.data.map((x: (number | null)) => x === null ? null : Number(x.toPrecision(args.digits)));
+        break;
+
+    case (MATH_OPTYPES.EXP):
+        applyMathNoArgs(operand, Math.exp);
+        break;
+    case (MATH_OPTYPES.EXPM1):
+        applyMathNoArgs(operand, Math.expm1);
+        break;
+    case (MATH_OPTYPES.LOG):
+        if (!args || !args.base) args = {base: Math.exp(1)};
+        operand.data = operand.data.map((x: (number | null)) => x === null ? null : Math.log(x) / Math.log(args.base));
+        break;
+    case (MATH_OPTYPES.LOG10):
+        applyMathNoArgs(operand, Math.log10);
+        break;
+    case (MATH_OPTYPES.LOG2):
+        applyMathNoArgs(operand, Math.log2);
+        break;
+    case (MATH_OPTYPES.LOG1P):
+        applyMathNoArgs(operand, Math.log1p);
+        break;
+
+    case (MATH_OPTYPES.COS):
+        applyMathNoArgs(operand, Math.cos);
+        break;
+    case (MATH_OPTYPES.SIN):
+        applyMathNoArgs(operand, Math.sin);
+        break;
+    case (MATH_OPTYPES.TAN):
+        applyMathNoArgs(operand, Math.tan);
+        break;
+
+    case (MATH_OPTYPES.ACOS):
+        applyMathNoArgs(operand, Math.acos);
+        break;
+    case (MATH_OPTYPES.ASIN):
+        applyMathNoArgs(operand, Math.asin);
+        break;
+    case (MATH_OPTYPES.ATAN):
+        applyMathNoArgs(operand, Math.atan);
+        break;
+    case (MATH_OPTYPES.ATAN2):
+        if (!args || !args.x) error('argument x is missing, with no default');
+        operand.data = operand.data.map((x: (number | null)) => x === null ? null : Math.atan2(x, args.x));
+        break;
+
+    case (MATH_OPTYPES.COSH):
+        applyMathNoArgs(operand, Math.cosh);
+        break;
+    case (MATH_OPTYPES.SINH):
+        applyMathNoArgs(operand, Math.sinh);
+        break;
+    case (MATH_OPTYPES.TANH):
+        applyMathNoArgs(operand, Math.tanh);
+        break;
+
+    case (MATH_OPTYPES.ACOSH):
+        applyMathNoArgs(operand, Math.acosh);
+        break;
+    case (MATH_OPTYPES.ASINH):
+        applyMathNoArgs(operand, Math.asinh);
+        break;
+    case (MATH_OPTYPES.ATANH):
+        applyMathNoArgs(operand, Math.atanh);
+        break;
+
+    case (MATH_OPTYPES.COSPI):
+        operand.data = operand.data.map((x: (number | null)) => x === null ? null : x * Math.PI);
+        applyMathNoArgs(operand, Math.cos);
+        break;
+    case (MATH_OPTYPES.SINPI):
+        operand.data = operand.data.map((x: (number | null)) => x === null ? null : x * Math.PI);
+        applyMathNoArgs(operand, Math.sin);
+        break;
+    case (MATH_OPTYPES.TANPI):
+        operand.data = operand.data.map((x: (number | null)) => x === null ? null : x * Math.PI);
+        applyMathNoArgs(operand, Math.tan);
+        break;
+    }
+
+    return operand;
+}
+
+function applyMathNoArgs(operand: R.Real, func: (x: number) => number): R.Real {
+    operand.data = operand.data.map((x: (number | null)) => {
+        return x === null ? null : func(x);
+    });
+
+    return operand;
+}
 
 function applyUnaryArithmeticOperation(
     operator: string,
@@ -527,5 +747,16 @@ function integerDivision(
         return (num !== null && other_num !== null) ?
             Math.floor(num / other_num) : null;
     });
+}
+
+function isNumeric(vec: R.RValue) {
+    switch (vec.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+        return true;
+    default:
+        return false;
+    }
 }
 
