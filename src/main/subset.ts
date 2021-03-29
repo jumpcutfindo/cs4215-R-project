@@ -3,6 +3,7 @@ import {getAttribute, setAttribute} from './attrib';
 import {coerceTo} from './coerce';
 import {copy} from './copy';
 import {error, warn} from './error';
+import { Reval } from './eval';
 import * as R from './types';
 import {getAtLinkedListIndex, getNames, head, length, tail} from './util';
 import {mkChar, mkChars, mkInt, mkInts,
@@ -13,10 +14,19 @@ import {mkChar, mkChars, mkInt, mkInts,
 
 // Implementation for '[' subsetting
 export const do_subset: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
+    const object = copy(Reval(head(args), env));
     let params = head(tail(args));
 
-    if (params.tag === 'logical') {
+    // Checking for empty parameters
+    try {
+        params = Reval(params, env);
+    } catch (e) {
+        params = RNull;
+    }
+
+    if (params.tag === RNull.tag || (params as R.PairList).value && (params as R.PairList).value.tag === RNull.tag) {
+        return object;
+    } else if (params.tag === 'logical') {
         // Logical indexing has special rules
         return extractMultipleByLogicals(object, params.data);
     } else if (params.tag === 'character') {
@@ -34,8 +44,16 @@ export const do_subset: R.PrimOp = (call, op, args, env) => {
 export const do_subset2: R.PrimOp = (call, op, args, env) => {
     // Extract a single value at a specific index (note that R indexing begins from 1),
     // or a single value with a specific name
-    const object = copy(head(args));
+    const object = Reval(copy(head(args)), env);
     let params = head(tail(args));
+
+    // Checking for empty parameters
+    try {
+        params = Reval(params, env);
+    } catch (e) {
+        error('subscript out of bounds');
+    }
+
     const exact = tail(tail(args)).tag === RNull.tag ? RNull : head(tail(tail(args)));
 
     if (length(params) !== 1) {
@@ -58,33 +76,48 @@ export const do_subset2: R.PrimOp = (call, op, args, env) => {
 // Implementation for '$' subsetting
 export const do_subset3: R.PrimOp = (call, op, args, env) => {
     // Extract a single value with a specific name (partial matching always)
-    const object = copy(head(args));
-    const params = head(tail(args));
+    const object = copy(Reval(head(args), env));
+    let params = head(tail(args));
+    let name = null;
+
+    if (params.tag !== 'name') {
+        params = Reval(params, env);
+    }
 
     if (!isSubsettableList(object)) {
         error('$ operator is invalid for atomic vectors');
     }
 
-    if (length(params) !== 1) {
-        error('attempt to select more than one element');
-    }
-
-    if (params.tag !== 'character') {
+    if (params.tag !== 'name') {
         error(`unexpected ${params.tag} in arguments`);
     } else {
-        return extractSingleByName(object, params.data[0], false);
+        name = params.pname;
+        return extractSingleByName(object, name, false);
     }
 };
 
 // Implementation for assignment via '['
 export const do_subassign: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
+    const object = copy(Reval(head(args), env));
     let params = head(tail(args));
-    const replacements = head(tail(tail(args)));
+    const replacements = Reval(head(tail(tail(args))), env);
+
+    console.log(replacements);
 
     if (hasNAs(object)) error('NAs are not allowed in subscripted assignments');
 
-    if (params.tag === 'logical') {
+    // Checking for empty parameters
+    try {
+        params = Reval(params, env);
+    } catch (e) {
+        params = RNull;
+    }
+
+    if (params.tag === RNull.tag || (params as R.PairList).value && (params as R.PairList).value.tag === RNull.tag) {
+        const temp = [];
+        for (let i = 1; i <= length(object); i ++) temp.push(i);
+        return assignMultipleAtIndexes(object, temp, replacements);
+    } else if (params.tag === 'logical') {
         return assignMultipleByLogicals(object, params.data as boolean[], replacements);
     } else if (params.tag === 'character') {
         return assignMultipleByNames(object, params.data as string[], replacements);
@@ -100,9 +133,16 @@ export const do_subassign: R.PrimOp = (call, op, args, env) => {
 
 // Implementation for assignment via '[['
 export const do_subassign2: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
+    const object = copy(Reval(head(args), env));
     let params = head(tail(args));
-    const replacement = head(tail(tail(args)));
+    const replacement = Reval(head(tail(tail(args))), env);
+
+    // Checking for empty parameters
+    try {
+        params = Reval(params, env);
+    } catch (e) {
+        error('subscript out of bounds');
+    }
 
     if (length(params) !== 1) {
         error('attempt to select more than one element');
@@ -124,9 +164,14 @@ export const do_subassign2: R.PrimOp = (call, op, args, env) => {
 
 // Implementation for assignment via '$'
 export const do_subassign3: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
-    const params = head(tail(args));
-    const replacement = head(tail(tail(args)));
+    const object = copy(Reval(head(args), env));
+    let params = head(tail(args));
+    const replacement = Reval(head(tail(tail(args))), env);
+    let name = '';
+
+    if (params.tag !== 'name') {
+        params = Reval(params, env);
+    }
 
     if (hasNAs(object)) error('NAs are not allowed in subscripted assignments');
 
@@ -134,10 +179,11 @@ export const do_subassign3: R.PrimOp = (call, op, args, env) => {
         warn('coercing LHS to a list');
     }
 
-    if (params.tag !== 'character') {
+    if (params.tag !== 'name') {
         error(`unexpected ${params.tag} in arguments`);
     } else {
-        return assignSingleByName(object, (params.data as string[])[0], replacement);
+        name = params.pname;
+        return assignSingleByName(object, name, replacement);
     }
 };
 
@@ -226,7 +272,7 @@ function extractSingleByName(vec: R.RValue, name: string | null, exact: boolean 
         if (!exact) {
             const matches = nameValues.data.filter((n) => n?.includes(name));
             if (matches.length !== 1) {
-                error('subscript out of bounds');
+                ans = RNull;
             } else {
                 ans = extractSingleAtIndex(vec, nameValues.data.indexOf(matches[0]) + 1);
             }
@@ -234,7 +280,7 @@ function extractSingleByName(vec: R.RValue, name: string | null, exact: boolean 
             if (nameValues.data.indexOf(name) !== -1) {
                 ans = extractSingleAtIndex(vec, nameValues.data.indexOf(name) + 1);
             } else {
-                error('subscript out of bounds');
+                ans = RNull;
             }
         }
         break;
@@ -457,21 +503,20 @@ function assignSingleAtIndex(vec: R.RValue, index: number, value: R.RValue): R.R
 
     const actual_index = index - 1;
 
-    let expected_type;
-    if (vec.tag !== value.tag) {
-        expected_type = getExpectedType(vec, value);
-    } else {
-        expected_type = vec.tag;
-    }
-
-    let new_vec = coerceTo(vec, expected_type);
-    const new_value = coerceTo(value, expected_type);
-
-    switch (new_vec.tag) {
+    switch (vec.tag) {
     case 'logical':
     case 'integer':
     case 'numeric':
     case 'character':
+        let expected_type;
+        if (vec.tag !== value.tag) {
+            expected_type = getExpectedType(vec, value);
+        } else {
+            expected_type = vec.tag;
+        }
+
+        let new_vec = coerceTo(vec, expected_type) as R.Logical;
+        const new_value = coerceTo(value, expected_type);
         // Consider two cases: when index is within vector / list,
         // and when index is outside of vector / list
         if (actual_index < length(new_vec)) {
@@ -483,39 +528,41 @@ function assignSingleAtIndex(vec: R.RValue, index: number, value: R.RValue): R.R
             // Handle names
             const names = getNames(vec);
             if (names.tag !== RNull.tag) for (let i = length(new_vec); i < actual_index; i ++) names.data.push('');
-            new_vec = setAttribute(new_vec, 'names', names);
+            new_vec = setAttribute(new_vec, 'names', names) as R.Logical;
         }
+        new_vec = copyAttributesAfterAssignment(vec, new_vec) as R.Logical;
 
-        break;
+        return new_vec;
     case 'expression':
     case 'list':
-        if (actual_index < length(new_vec)) {
-            new_vec.data[actual_index] = (new_value as R.List).data[0];
+        if (actual_index < length(vec)) {
+            vec.data[actual_index] = value;
         } else {
-            for (let i = length(new_vec); i < actual_index; i ++) new_vec.data.push(RNull);
-            (new_vec.data as (R.RValue | null)[]).push((new_value as R.List).data[0]);
+            for (let i = length(vec); i < actual_index; i ++) vec.data.push(RNull);
+            (vec.data as (R.RValue | null)[]).push(value);
 
             // Handle names
             const names = getNames(vec);
-            if (names.tag !== RNull.tag) for (let i = length(new_vec); i < actual_index; i ++) names.data.push('');
-            new_vec = setAttribute(new_vec, 'names', names);
+            if (names.tag !== RNull.tag) for (let i = length(vec); i < actual_index; i ++) names.data.push('');
+            vec = setAttribute(vec, 'names', names);
         }
-        break;
+
+        return vec;
     case 'pairlist':
         // new_value has been coerced to a pairlist
-        if (actual_index < length(new_vec)) {
-            let curr: R.PairList | R.Nil = new_vec;
+        if (actual_index < length(vec)) {
+            let curr: R.PairList | R.Nil = vec;
             let pl_index = 0;
             while (curr.tag !== RNull.tag) {
                 if (pl_index === actual_index) {
-                    curr.value = (new_value as R.PairList).value;
+                    curr.value = value;
                     break;
                 }
                 curr = curr.next;
                 pl_index ++;
             }
         } else {
-            let curr: R.PairList | R.Nil = new_vec;
+            let curr: R.PairList | R.Nil = vec;
             let pl_index = 0;
             while (curr.next.tag !== RNull.tag) {
                 curr = curr.next;
@@ -527,20 +574,20 @@ function assignSingleAtIndex(vec: R.RValue, index: number, value: R.RValue): R.R
                 curr = (curr as R.PairList).next;
             }
 
-            (curr as R.PairList).next = (new_value as R.PairList);
+            (curr as R.PairList).next = mkPairlist([value, '']);
         }
-        break;
+        return vec;
     }
 
-    new_vec = copyAttributesAfterAssignment(vec, new_vec);
-
-    return new_vec;
+    return vec;
 }
 
 function assignSingleByName(vec: R.RValue, name: string, value: R.RValue): R.RValue {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
     }
+
+    if (name.length <= 0) error('attempt to use zero-length variable name');
 
     let expected_type;
     if (vec.tag !== value.tag) {
@@ -555,6 +602,12 @@ function assignSingleByName(vec: R.RValue, name: string, value: R.RValue): R.RVa
 
     if (name_index === null) {
         // Append to the end of the object
+        let names: R.Character | R.Nil = getNames(vec);
+        if (names.tag !== RNull.tag) names.data.push(name);
+        else names = mkChar(name);
+
+        vec = setAttribute(vec, 'names', names);
+
         return assignSingleAtIndex(new_vec, length(new_vec) + 1, new_value);
     } else {
         return assignSingleAtIndex(new_vec, name_index, new_value);
@@ -636,10 +689,29 @@ function assignMultipleAtIndexes(vec: R.RValue, indexes: number[], values: R.RVa
     case 'list':
         for (let i = 0; i < actual_indexes.length; i ++ ) {
             const index = actual_indexes[i];
-            new_vec = assignSingleAtIndex(new_vec, index, (new_value as R.List).data[i]);
+            let value;
+            switch (new_value.tag) {
+            case 'logical':
+                value = mkLogical(new_value.data[i]);
+                break;
+            case 'integer':
+                value = mkInt(new_value.data[i]);
+                break;
+            case 'numeric':
+                value = mkReal(new_value.data[i]);
+                break;
+            case 'character':
+                value = mkChar(new_value.data[i]);
+                break;
+            default:
+                value = (new_value as R.List).data[i];
+                break;
+            }
+            new_vec = assignSingleAtIndex(new_vec, index, value);
         }
         break;
     case 'pairlist':
+        // Assuming that new_value has been coerced to a pairlist
         let curr: R.PairList | R.Nil = new_value as R.PairList;
         let pl_index = 1;
         while (curr.tag !== RNull.tag) {
@@ -831,7 +903,7 @@ function copyAttributesAfterExtraction(old_vec: R.RValue, new_vec: R.RValue, ind
             (index) => index !== null && index < length(names) ? names.data[index] : null,
         );
 
-        new_vec = setAttribute(new_vec, 'names', mkChars(newNames));
+        if (new_vec.tag !== RNull.tag) new_vec = setAttribute(new_vec, 'names', mkChars(newNames));
 
         return new_vec;
     }

@@ -66,12 +66,12 @@ export function initPrimitives() {
 
         /* Subsetting extraction and assignment */
         /* Note that these are supposed to be specials (for method dispatching), but we leave them as builtin first */
-        primitiveSymbol('[',                do_subset,              'builtin',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('[[',               do_subset2,             'builtin',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('$',                do_subset3,             'builtin',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('[<-',              do_subassign,           'builtin',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('[[<-',             do_subassign2,          'builtin',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('$<-',              do_subassign3,          'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('[',                do_subset,              'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('[[',               do_subset2,             'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('$',                do_subset3,             'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('[<-',              do_subassign,           'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('[[<-',             do_subassign2,          'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('$<-',              do_subassign3,          'special',  {visibility: Vis.On, arity: -1}),
 
         /* Attribute-related functions */
         primitiveSymbol('attr',             do_attr,                'builtin',  {visibility: Vis.On, arity: -1}),
@@ -125,7 +125,7 @@ export function initPrimitives() {
         primitiveSymbol('tanpi',        do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.TANPI}),
 
         /* Miscellaneous */
-        primitiveSymbol('list',             do_makelist,            'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('list',         do_makelist,            'builtin',  {visibility: Vis.On, arity: -1}),
     ];
 
     const internals: Name[] = [];

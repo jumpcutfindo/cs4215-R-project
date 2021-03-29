@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 import {testInterpret} from '../index';
 import * as R from '../main/types';
-import {mkChars, mkInts, mkLogicals, mkPairlist, RNull, R_BaseEnv} from '../main/values';
+import {mkChars, mkInts, mkLogicals, mkPairlist, mkReals, RNull, R_BaseEnv} from '../main/values';
 
 let testEnvironment: R.Env = {
     tag: 'environment',
@@ -159,7 +159,7 @@ describe('multiple extraction tests', () => {
 });
 
 describe('single assignment tests', () => {
-    it('single assignment w/ index', () => {
+    it('single vector assignment w/ index', () => {
         const result = testInterpret(`
             x <- c(1, 2, 3);
             x[[1]] <- c(5);
@@ -167,6 +167,48 @@ describe('single assignment tests', () => {
         expect(result).toHaveProperty('tag', 'numeric');
         expect(result).toHaveProperty('data', [5, 2, 3]);
         resetEnvironment();
+    });
+
+    it('single list assignment w/ index', () => {
+        const result = testInterpret(`
+            x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+            x[[2]] <- c(1, 2, 3);
+            x[["nul"]];
+        `, testEnvironment);
+
+        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('data', [1, 2, 3]);
+    });
+
+    it('single list assignment w/ name (existing)', () => {
+        const result = testInterpret(`
+            x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+            x$nul <- c(1, 2, 3);
+            x[["nul"]];
+        `, testEnvironment);
+
+        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('data', [1, 2, 3]);
+
+        const result2 = testInterpret(`
+            x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+            x[["nul"]] <- c(1, 2, 3);
+            x$nul;
+        `, testEnvironment);
+
+        expect(result2).toHaveProperty('tag', 'numeric');
+        expect(result2).toHaveProperty('data', [1, 2, 3]);
+    });
+
+    it('single list assignment w/ name (not existing)', () => {
+        const result = testInterpret(`
+            x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+            x$blahblah <- c(1, 2, 3);
+            x[["blahblah"]];
+        `, testEnvironment);
+
+        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('data', [1, 2, 3]);
     });
 });
 
@@ -262,5 +304,36 @@ describe('multiple assignment tests', () => {
         resetEnvironment();
     });
 
-    // TODO: List deletion with NULL
+    it('list assignment w/ positive integers', () => {
+        const result = testInterpret(`
+            x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+            x[1:2] <- list(c("a", "b", "c"), c(1, 2, 3));
+            x[1:2];
+        `, testEnvironment);
+        expect(result).toHaveProperty('tag', 'list');
+        expect(result).toHaveProperty('data', [mkChars(['a', 'b', 'c']), mkReals([1, 2, 3])]);
+        resetEnvironment();
+    });
+
+    it('list assignment w/ names', () => {
+        const result = testInterpret(`
+            x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+            x[c("num", "nul")] <- list(c("a", "b", "c"), c(1, 2, 3));
+            x[1:2];
+        `, testEnvironment);
+        expect(result).toHaveProperty('tag', 'list');
+        expect(result).toHaveProperty('data', [mkChars(['a', 'b', 'c']), mkReals([1, 2, 3])]);
+        resetEnvironment();
+    });
+
+    it('list assignment w/ indices exceeding', () => {
+        const result = testInterpret(`
+            x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+            x[5:6] <- list(c("a", "b", "c"), c(1, 2, 3));
+            x[5:6];
+        `, testEnvironment);
+        expect(result).toHaveProperty('tag', 'list');
+        expect(result).toHaveProperty('data', [mkChars(['a', 'b', 'c']), mkReals([1, 2, 3])]);
+        resetEnvironment();
+    });
 });
