@@ -98,10 +98,10 @@ const printWarnings = () => {};
 initPrimitives();
 
 // const sampleProg = `
-//     x <- c(a=1, b=2, c=3);
-//     x[1:5] <- 5;
+//     x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+//     x[1:2] <- c(c("a", "b", "c"), c(1, 2, 3));
 //     x;
-//     names(x);
+//     x[1:2];
 // `;
 
 // interpret(sampleProg, R_GlobalEnv);
