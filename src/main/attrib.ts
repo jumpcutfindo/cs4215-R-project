@@ -1,4 +1,4 @@
-import { asChar, asInt, coerceTo } from './coerce';
+import { asCharVector, asIntVector, coerceTo } from './coerce';
 import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
@@ -335,7 +335,7 @@ function setDim(vec: R.RValue, val: R.RValue) {
     }
 
     // Attempt to coerce values to integer, take first value regardless
-    new_val = asInt(val);
+    new_val = asIntVector(val);
 
     // Must not be null or negative
     if (new_val.tag !== RNull.tag && new_val.data[0] === null) {
@@ -390,7 +390,7 @@ function setDimNames(vec: R.RValue, val: R.RValue) {
 
 function setNames(vec: R.RValue, val: R.RValue) {
     // Values provided coerced to character vector
-    const new_val = asChar(val) as R.Character;
+    const new_val = asCharVector(val) as R.Character;
 
     if (vec.tag === 'pairlist') {
         let curr: R.PairList | R.Nil = vec;

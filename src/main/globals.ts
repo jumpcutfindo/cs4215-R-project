@@ -12,6 +12,7 @@ import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_cla
 import {do_length} from './array';
 import { do_subassign, do_subassign2, do_subassign3, do_subset, do_subset2, do_subset3 } from './subset';
 import { do_makelist } from './builtin';
+import { CHAR_OPTYPES, do_grep, do_gsub, do_nchar, do_startsWith, do_strrep, do_substr, do_tolower } from './character';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -94,7 +95,20 @@ export function initPrimitives() {
         primitiveSymbol('list',             do_makelist,            'builtin',  {visibility: Vis.On, arity: -1}),
     ];
 
-    const internals: Name[] = [];
+    const internals = [
+        /* String manipulation facilities */
+        internalSymbol('sub',       do_gsub,        'builtin',  {visibility: Vis.On, arity: 5, variant: CHAR_OPTYPES.SUB}),
+        internalSymbol('gsub',      do_gsub,        'builtin',  {visibility: Vis.On, arity: 5, variant: CHAR_OPTYPES.GSUB}),
+        internalSymbol('tolower',   do_tolower,     'builtin',  {visibility: Vis.On, arity: 1, variant: CHAR_OPTYPES.LOWER}),
+        internalSymbol('toupper',   do_tolower,     'builtin',  {visibility: Vis.On, arity: 1, variant: CHAR_OPTYPES.UPPER}),
+        internalSymbol('grep',      do_grep,        'builtin',  {visibility: Vis.On, arity: 6, variant: CHAR_OPTYPES.GREP}),
+        internalSymbol('grepl',     do_grep,        'builtin',  {visibility: Vis.On, arity: 6, variant: CHAR_OPTYPES.GREPL}),
+        internalSymbol('startsWith',do_startsWith,  'builtin',  {visibility: Vis.On, arity: 2, variant: CHAR_OPTYPES.STARTS}),
+        internalSymbol('endsWith',  do_startsWith,  'builtin',  {visibility: Vis.On, arity: 2, variant: CHAR_OPTYPES.ENDS}),
+        internalSymbol('nchar',     do_nchar,       'builtin',  {visibility: Vis.On, arity: 2}),
+        internalSymbol('substr',    do_substr,      'builtin',  {visibility: Vis.On, arity: 3}),
+        internalSymbol('strrep',    do_strrep,      'builtin',  {visibility: Vis.On, arity: 2}),
+    ];
     primitives.forEach((p) => installSymbol(p));
     internals.forEach((i) => installSymbol(i));
 }

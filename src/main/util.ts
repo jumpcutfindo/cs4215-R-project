@@ -1,4 +1,3 @@
-import {copy} from './copy';
 import {error, errorcall} from './error';
 import {
     Builtin,
@@ -43,6 +42,25 @@ export function length(s: RValue): number {
         return 1;
     }
 }
+
+/*********************************************************
+ * Recycling utilities
+ *********************************************************/
+
+export function modIterate<A,B,C>(arr1 : A[], arr2 : B[], fun : (arg1: A, arg2: B) => C) : C[] {
+    const n1 = arr1.length;
+    const n2 = arr2.length;
+    if (n1 === 0 || n2 === 0) {
+        return [];
+    }
+    const n = Math.max(n1, n2);
+    const result : C[] = Array(n);
+    for (let i = 0; i < n; i++) {
+        result[i] = fun(arr1[i % n1], arr2[i % n2]);
+    }
+    return result;
+}
+
 
 /** ******************************************************
  * RValue manipulation facilities

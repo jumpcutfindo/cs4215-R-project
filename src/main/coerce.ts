@@ -30,20 +30,20 @@ export function coerceTo(vec: R.RValue, type: string) {
     if (vec.tag === RNull.tag) return RNull;
     switch (type) {
     case 'logical':
-        return asLogical(vec);
+        return asLogicalVector(vec);
     case 'integer':
-        return asInt(vec);
+        return asIntVector(vec);
     case 'numeric':
         return asRealVector(vec);
     case 'character':
-        return asChar(vec);
+        return asCharVector(vec);
     default:
         // Default case just don't do anything
         return vec;
     }
 }
 
-export function asLogical(vec: R.RValue): R.Logical | R.Nil {
+export function asLogicalVector(vec: R.RValue): R.Logical | R.Nil {
     let ans: R.Logical | R.Nil = RNull;
     switch (vec.tag) {
     case 'logical':
@@ -70,7 +70,7 @@ export function asLogical(vec: R.RValue): R.Logical | R.Nil {
     // TODO: Add all the other coercion cases
 }
 
-export function asInt(vec: R.RValue): R.Int | R.Nil {
+export function asIntVector(vec: R.RValue): R.Int | R.Nil {
     let ans: R.Int | R.Nil = RNull;
 
     switch (vec.tag) {
@@ -94,7 +94,7 @@ export function asInt(vec: R.RValue): R.Int | R.Nil {
     // TODO: Add all the other coercion cases
 }
 
-export function asChar(vec: R.RValue): R.Character | R.Nil {
+export function asCharVector(vec: R.RValue): R.Character | R.Nil {
     let ans: R.Character | R.Nil = RNull;
 
     switch (vec.tag) {
@@ -185,4 +185,20 @@ export function asReal(x: R.RValue) : number|null {
     default:
         return null;
     }
+}
+
+export function asLogical(s: R.RValue) : boolean|null {
+    let result : boolean|null = null;
+    switch (s.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+    case 'character':
+        if (s.data.length > 0) {
+            result = s.tag === 'character' ?
+                logicalFromString(s.data[0]) : // strings are checked against truenames/falsenames in util.ts
+                (s.data[0] === null? null : !!s.data[0]);
+        } 
+    }
+    return result;
 }
