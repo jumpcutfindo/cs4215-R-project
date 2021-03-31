@@ -2,7 +2,7 @@ import {error, warn} from './error';
 import * as R from './types';
 import {mkChar, mkPairlist, mkReal, mkReals, RNull} from './values';
 import {head, tail, length, checkArity, getAttributeOfName} from './util';
-import {asInt, asReal, asRealVector} from './coerce';
+import {asIntVector, asReal, asRealVector} from './coerce';
 import {copy} from './copy';
 
 /**
@@ -151,7 +151,7 @@ export const do_math2: R.PrimOp = (call, op, args, env) => {
 
             if (tail(args).tag === RNull.tag) return applyMathFunction(operand, op.variant);
 
-            const temp = asInt((tail(args) as R.PairList).value) as R.Int;
+            const temp = asIntVector((tail(args) as R.PairList).value) as R.Int;
             arg = {digits: temp.data[length(temp) - 1]};
             return applyMathFunction(operand, op.variant, arg);
         }

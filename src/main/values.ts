@@ -1,5 +1,6 @@
 import * as R from './types';
 import {ddval} from './dotdotdot';
+import { error } from './error';
 
 const R_SymbolTable: Map<string, R.Name> = new Map();
 
@@ -70,7 +71,7 @@ export function install(symbolname: string): R.Name {
     } else {
         // TODO: Check with Daniel error handling
         if (symbolname.length === 0) {
-            throw new Error('attempt to use zero-length variable name');
+            error('attempt to use zero-length variable name');
         }
         result = mkName(symbolname);
         R_SymbolTable.set(symbolname, result);

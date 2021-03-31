@@ -1,18 +1,20 @@
 /* eslint-disable max-len */
 /* eslint-disable no-multi-spaces */
 import {do_arith, ARITH_OPTYPES, do_math1, MATH_OPTYPES, do_math2, do_log} from './arithmetic';
-import {do_begin, do_break, do_for, do_function, do_if, do_paren, do_return, do_set, do_while} from './eval';
+import {do_begin, do_break, do_for, do_function, do_if, do_paren, do_repeat, do_return, do_set, do_while, RevalList} from './eval';
 import {do_c} from './bind';
 import {do_logic, do_logic2, LOGICAL_OPTYPES} from './logic';
 import {do_relop, RELATIONAL_OPTYPES} from './relop';
 import {Name, PrimOp, Prom, Vis} from './types';
-import {installSymbol, RNull, R_UnboundValue} from './values';
+import {install, installSymbol, RNull, R_UnboundValue} from './values';
 import {do_colon} from './seq';
 import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_dim, do_dimgets, do_names, do_namesgets} from './attrib';
 import {do_length} from './array';
 import { do_subassign, do_subassign2, do_subassign3, do_subset, do_subset2, do_subset3 } from './subset';
 import { do_makelist } from './builtin';
 import { CHAR_OPTYPES, do_grep, do_gsub, do_nchar, do_startsWith, do_strrep, do_substr, do_tolower } from './character';
+import { checkArity, head, tail } from './util';
+import { errorcall } from './error';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -24,17 +26,20 @@ export class EvalContext {
 export function initPrimitives() {
     const primitives = [
         /* Language construct primitives */
-        primitiveSymbol('if',       do_if,          'special',  {visibility: Vis.OnMut, arity: 2}),
-        primitiveSymbol('for',      do_for,         'special',  {visibility: Vis.Off, arity: 3}),
-        primitiveSymbol('while',    do_while,       'special',  {visibility: Vis.Off, arity: 2}),
-        primitiveSymbol('break',    do_break,       'special',  {visibility: Vis.On, arity: 0, variant: 2}),
-        primitiveSymbol('next',     do_break,       'special',  {visibility: Vis.On, arity: 0, variant: 1}),
-        primitiveSymbol('return',   do_return,      'special',  {visibility: Vis.On, arity: 0}),
-        primitiveSymbol('function', do_function,    'special',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('{',        do_begin,       'special',  {visibility: Vis.OnMut, arity: -1}),
-        primitiveSymbol('(',        do_paren,       'builtin',  {visibility: Vis.On, arity: 1}),
-        primitiveSymbol('<-',       do_set,         'special',  {visibility: Vis.Off, arity: -1, variant: 0}),
-        primitiveSymbol('<<-',      do_set,         'special',  {visibility: Vis.Off, arity: -1, variant: 1}),
+        primitiveSymbol('if',           do_if,          'special',  {visibility: Vis.OnMut, arity: 2}),
+        primitiveSymbol('for',          do_for,         'special',  {visibility: Vis.Off, arity: 3}),
+        primitiveSymbol('while',        do_while,       'special',  {visibility: Vis.Off, arity: 2}),
+        primitiveSymbol('repeat',       do_repeat,      'special',  {visibility: Vis.Off, arity: 1}),
+        primitiveSymbol('break',        do_break,       'special',  {visibility: Vis.On, arity: 0, variant: 2}),
+        primitiveSymbol('next',         do_break,       'special',  {visibility: Vis.On, arity: 0, variant: 1}),
+        primitiveSymbol('return',       do_return,      'special',  {visibility: Vis.On, arity: 0}),
+        primitiveSymbol('function',     do_function,    'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('{',            do_begin,       'special',  {visibility: Vis.OnMut, arity: -1}),
+        primitiveSymbol('(',            do_paren,       'builtin',  {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('<-',           do_set,         'special',  {visibility: Vis.Off, arity: -1, variant: 0}),
+        primitiveSymbol('<<-',          do_set,         'special',  {visibility: Vis.Off, arity: -1, variant: 1}),
+        primitiveSymbol('.Internal',    do_internal,    'special',  {visibility: Vis.OnMut, arity: 1}),
+        primitiveSymbol('.Primitive',   do_primitive,   'builtin',  {visibility: Vis.On, arity: 1}),
 
         /* Arithmetic operators, all primitve */
         primitiveSymbol('+',        do_arith,   'builtin',  {visibility: Vis.On, arity: 2, variant: ARITH_OPTYPES.PLUSOP}),
@@ -143,6 +148,7 @@ export function initPrimitives() {
         internalSymbol('substr',    do_substr,      'builtin',  {visibility: Vis.On, arity: 3}),
         internalSymbol('strrep',    do_strrep,      'builtin',  {visibility: Vis.On, arity: 2}),
     ];
+
     primitives.forEach((p) => installSymbol(p));
     internals.forEach((i) => installSymbol(i));
 }
@@ -195,3 +201,45 @@ export function primitiveSymbol(
     };
 }
 
+export const do_internal : PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
+    const internalCall = head(args);
+    if (internalCall.tag !== 'language') {
+        errorcall(call, 'invalid .Internal() argument');
+    }
+    const fun = head(internalCall);
+    if (fun.tag !== 'name') {
+        errorcall(call, 'invalid .Internal() argument');
+    }
+    if (fun.internal === R_UnboundValue) {
+        errorcall(call, `there is no .Internal function '${fun.pname}'`);
+    }
+    args = tail(internalCall);
+    // Sanity check
+    if (fun.internal.tag !== 'special' && fun.internal.tag !== 'builtin') {
+        errorcall(call, 'invalid .Internal function');
+    }
+    if (fun.internal.tag === 'builtin') {
+        args = RevalList(args, env, call, 0);
+    }
+    
+    EvalContext.R_Visible = fun.internal.visibility;
+    let result = (fun.internal.jsFunc)(internalCall, fun.internal, args, env);
+    if (fun.internal.visibility !== Vis.OnMut) {
+        EvalContext.R_Visible = op.visibility;
+    }
+    return result;
+}
+
+export const do_primitive : PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
+    const arg = head(args);
+    if (arg.tag !== 'character' || arg.data.length !== 1 || arg.data[0] === null) {
+        errorcall(call, 'string argument required');
+    }
+    const res = install(arg.data[0]).value;
+    if (res === R_UnboundValue) {
+        errorcall(call, 'no such primitive function');
+    }
+    return res;
+}

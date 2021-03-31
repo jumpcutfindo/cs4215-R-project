@@ -25,10 +25,10 @@ export function closureEnv(pl: R.PairList|R.Nil, vals: R.PairList|R.Nil, parent:
     return result;
 }
 
-
+// Change base to permit regular bindings as well.
 export function findVarInFrame(symbol: R.Name, env: R.Env): R.RValue {
     if (env === R_BaseEnv) {
-        return symbol.value;
+        return env.frame.get(symbol) ?? symbol.value;
     }
     return env.frame.get(symbol) ?? R_UnboundValue;
 }
@@ -108,23 +108,22 @@ export function defineVar(sym: R.Name, val: R.RValue, env: R.Env) {
         error('cannot assign values in the empty environment');
     }
     // not implementing environment/binding locking
-    if (env == R_BaseEnv) {
-        sym.value = val;
-    }
+    // updating BaseEnv to accept regular frame bindings as well
+    // if (env == R_BaseEnv) {
+    //     sym.value = val;
+    // }
     env.frame.set(sym, val);
 }
 
 export function setVar(sym: R.Name, val: R.RValue, env: R.Env) {
     let vl: R.RValue = RNull;
     while (env !== R_EmptyEnv) {
-        if (env === R_BaseEnv) {
+        if (env.frame.has(sym)) {
+            env.frame.set(sym, val);
+            vl = sym;
+        } else if (env === R_BaseEnv) {
             if (sym.value !== R_UnboundValue) {
                 sym.value = val;
-                vl = sym;
-            }
-        } else {
-            if (env.frame.has(sym)) {
-                env.frame.set(sym, val);
                 vl = sym;
             }
         }

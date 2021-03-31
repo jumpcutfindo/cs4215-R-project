@@ -210,7 +210,7 @@ function asLogicalNoNA(s: R.RValue, call: R.Language) : boolean {
 
 /** ********************************************************
  *
- *               RETURN, BREAK, NEXT
+ *               RETURN, BREAK, NEXT, LOOPS
  *
  **********************************************************/
 
@@ -333,6 +333,21 @@ export const do_while : R.PrimOp = (call, op, args, env) => {
         }
         if (isReturn(result)) {
             return result;
+        }
+    }
+    return RNull;
+}
+
+export const do_repeat : R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
+    const body = head(args);
+    while (true) {
+        const result = Reval(body, env);
+        if (isBreak(result)) {
+            break;
+        }
+        if (isReturn(result)) {
+            return result);
         }
     }
     return RNull;

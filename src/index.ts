@@ -3,7 +3,7 @@ import {isBreak, isNext, isReturn, Reval} from './main/eval';
 import {EvalContext, initPrimitives} from './main/globals';
 import * as R from './main/types';
 import {head, LinkedListIter, tail} from './main/util';
-import {RNull, R_GlobalEnv, R_LastValueSymbol} from './main/values';
+import {RNull, R_BaseEnv, R_GlobalEnv, R_LastValueSymbol} from './main/values';
 import {parse} from './parser';
 
 const sampleProg1 : string = `
@@ -52,7 +52,7 @@ function printAST(call: R.Language) {
 }
 
 
-function interpret(prog: string, env: R.Env) {
+export function interpret(prog: string, env: R.Env) {
     const ast = parse(prog); // should wrap in try-catch
     let result;
     for (const expr of (<R.Expression>ast).data) {
@@ -95,7 +95,13 @@ export function testInterpret(prog: string, env: R.Env) {
 const printValueEnv = (r: R.RValue, e: R.Env) => console.log(r);
 const printWarnings = () => {};
 
-initPrimitives();
+export function setupR() {
+    initPrimitives();
+    const base : string = require('./library/base.R').default;
+    interpret(base, R_BaseEnv);
+}
+
+setupR();
 
 // const sampleProg = `
 //     x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
