@@ -15,6 +15,7 @@ import { do_makelist } from './builtin';
 import { CHAR_OPTYPES, do_grep, do_gsub, do_nchar, do_startsWith, do_strrep, do_substr, do_tolower } from './character';
 import { checkArity, head, tail } from './util';
 import { errorcall } from './error';
+import { IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isvector, AS_OPTYPES, do_asatomic } from './coerce';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -130,6 +131,33 @@ export function initPrimitives() {
         primitiveSymbol('cospi',        do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.COSPI}),
         primitiveSymbol('tanpi',        do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.TANPI}),
 
+        /* Type checking */
+        primitiveSymbol('is.null',              do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.NULL}),
+        primitiveSymbol('is.logical',           do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.LOGICAL}),
+        primitiveSymbol('is.integer',           do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.INTEGER}),
+        primitiveSymbol('is.numeric',           do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.NUMERIC}),
+        primitiveSymbol('is.character',         do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.CHARACTER}),
+        primitiveSymbol('is.symbol',            do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.SYMBOL}),
+        primitiveSymbol('is.name',              do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.NAME}),
+        primitiveSymbol('is.environment',       do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.ENVIRONMENT}),
+        primitiveSymbol('is.list',              do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.LIST}),
+        primitiveSymbol('is.pairlist',          do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.PAIRLIST}),
+        primitiveSymbol('is.expression',        do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.EXPRESSION}),
+
+        primitiveSymbol('is.na',                do_isna,            'builtin',          {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('is.nan',               do_isnan,           'builtin',          {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('is.finite',            do_isfinite,        'builtin',          {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('is.infinite',          do_isinfinite,      'builtin',          {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('is.vector',            do_isvector,        'builtin',          {visibility: Vis.On, arity: 1}),
+
+        /* Type coercion */
+        primitiveSymbol('as.logical',           do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.LOGICAL}),
+        primitiveSymbol('as.integer',           do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.INTEGER}),
+        primitiveSymbol('as.numeric',           do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.NUMERIC}),
+        primitiveSymbol('as.character',         do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.CHARACTER}),
+        primitiveSymbol('as.list',              do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.LIST}),
+        primitiveSymbol('as.pairlist',          do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.PAIRLIST}),
+
         /* Miscellaneous */
         primitiveSymbol('list',         do_makelist,            'builtin',  {visibility: Vis.On, arity: -1}),
     ];
@@ -243,3 +271,4 @@ export const do_primitive : PrimOp = (call, op, args, env) => {
     }
     return res;
 }
+
