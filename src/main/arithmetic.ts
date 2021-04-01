@@ -1,12 +1,17 @@
+/*
+*   This module handles the arithmetic and mathematical functions of JORDAN.
+*/
+
 import {error, warn} from './error';
 import * as R from './types';
-import {mkChar, mkPairlist, mkReal, mkReals, RNull} from './values';
+import {mkInts, mkReals, RNull} from './values';
 import {head, tail, length, checkArity, getAttributeOfName} from './util';
-import {asIntVector, asReal, asRealVector} from './coerce';
+import {asIntVector, asLogicalVector, asRealVector} from './coerce';
 import {copy} from './copy';
 
 /**
- * We define the supported unary and binary operators here.
+ *  We define the supported unary and binary operators here, as well as the mathematical
+ *  functions.
  */
 const unary_arithmetic_functions: any = {
     '+': positive,
@@ -69,11 +74,16 @@ export const MATH_OPTYPES = {
     TANPI: 38,
 };
 
+/*
+*   do_arith handles the unary / binary arithmetic functions of JORDAN.
+*   It determines the arity of the arguments provided, then determines the appropriate
+*   function to be used based off the op.variant provided.
+*/
 export const do_arith: R.PrimOp = (call, op, args, env) => {
     let ans: R.RValue = RNull;
 
     if (length(args) === 1) {
-        const operand = head(args);
+        const operand = copy(head(args));
         switch (op.variant) {
         case ARITH_OPTYPES.PLUSOP:
             ans = applyUnaryArithmeticOperation('+', operand);
@@ -113,6 +123,10 @@ export const do_arith: R.PrimOp = (call, op, args, env) => {
     return ans;
 };
 
+/*
+*   do_math1 handles basic mathematical functions (e.g. sin, cos).
+*   It determines the appropriate function to apply based off the op.variant provided.
+*/
 export const do_math1: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
 
@@ -124,6 +138,10 @@ export const do_math1: R.PrimOp = (call, op, args, env) => {
     return applyMathFunction(operand, op.variant);
 };
 
+/*
+*   do_math2 handles specific mathematical functions, notably those that take in various arguments.
+*   It determines the appropriate function to apply based off the op.variant provided.
+*/
 export const do_math2: R.PrimOp = (call, op, args, env) => {
     let operand = head(args);
     if (!isNumeric(operand)) error('non-numeric argument to mathematical function');
@@ -160,6 +178,9 @@ export const do_math2: R.PrimOp = (call, op, args, env) => {
     }
 };
 
+/*
+*   do_log handles the logarithmic mathematical function (specifically log(x, base=...))
+*/
 export const do_log: R.PrimOp = (call, op, args, env) => {
     let operand = head(args);
     if (!isNumeric(operand)) error('non-numeric argument to mathematical function');
@@ -179,6 +200,11 @@ export const do_log: R.PrimOp = (call, op, args, env) => {
     }
 };
 
+/*
+*   Applies the appropriate math function to the operand provided, according to the operation provided to it,
+*   using provided arguments.
+*   If the provided arguments are null, each specific operation will determine the default arguments (if required).
+*/
 function applyMathFunction(operand: R.Real, operation: number, args: any = null ) {
     switch (operation) {
     case (MATH_OPTYPES.FLOOR):
@@ -288,6 +314,9 @@ function applyMathFunction(operand: R.Real, operation: number, args: any = null 
     return operand;
 }
 
+/*
+*   Applies a mathematical function provided to an operand.
+*/
 function applyMathNoArgs(operand: R.Real, func: (x: number) => number): R.Real {
     operand.data = operand.data.map((x: (number | null)) => {
         return x === null ? null : func(x);
@@ -296,13 +325,15 @@ function applyMathNoArgs(operand: R.Real, func: (x: number) => number): R.Real {
     return operand;
 }
 
+/*
+*   Applies the unary arithmetic operation provided to the operand provided.
+*   This particular function has many checks to ensure the correctness of the final output.
+*/
 function applyUnaryArithmeticOperation(
     operator: string,
     operand: R.RValue,
 ) : R.Logical | R.Real | R.Int {
-    if (
-        !isAllowedOperand(operand)
-    ) {
+    if (!isAllowedOperand(operand)) {
         error(`Error: non-numeric argument to unary operator`);
     }
 
@@ -312,17 +343,25 @@ function applyUnaryArithmeticOperation(
 
     let arithmetic_result_type = operands.operand.tag;
     let was_coerced = false;
+
     // 1. If type logical, coerce to integer
     if (operands.operand.tag === 'logical') {
-        operands.operand = coerceOperandToType(operands.operand, 'integer');
+        operands.operand = asIntVector(operands.operand) as R.Int;
         arithmetic_result_type = 'integer';
         was_coerced = true;
     }
 
     // 2. Carry out operation
-    const arithmetic_result = unary_arithmetic_functions[operator](operands.operand.data);
+    const arithmetic_result: [number | null] = unary_arithmetic_functions[operator](operands.operand.data);
 
-    const ans = createVectorOfType(arithmetic_result, arithmetic_result_type);
+    let ans: R.Int | R.Real;
+    switch (arithmetic_result_type) {
+    case 'integer':
+        ans = mkInts(arithmetic_result);
+        break;
+    default:
+        ans = mkReals(arithmetic_result);
+    }
 
     // If coerced, no attributes other than names, dims and dimnames should be copied
     if (was_coerced) {
@@ -352,9 +391,13 @@ function applyUnaryArithmeticOperation(
         ans.attributes = orig;
     } else ans.attributes = operands.operand.attributes;
 
-    return createVectorOfType(arithmetic_result, arithmetic_result_type);
+    return ans;
 }
 
+/*
+*   Applies the binary arithmetic operation provided to the operands provided.
+*   This particular function has many checks to ensure the correctness of the final output.
+*/
 function applyBinaryArithmeticOperation(
     operator: string,
     first_operand: R.RValue,
@@ -394,20 +437,14 @@ function applyBinaryArithmeticOperation(
 
     // 4. If both are logical types, convert to integer types
     if (arithmetic_result_type === 'logical') {
-        operands.first_operand =
-            coerceOperandToType(
-                first_operand as R.Logical | R.Int | R.Real,
-                'integer',
-            );
-        operands.second_operand =
-            coerceOperandToType(second_operand as R.Logical | R.Int | R.Real,
-                'integer',
-            );
+        operands.first_operand = asIntVector(first_operand) as R.Int;
+        operands.second_operand = asIntVector(first_operand) as R.Int;
 
         arithmetic_result_type = 'integer';
     }
 
     // 5. Check vector lengths and do recycling
+    // Note: specifically for ^, %%, %/%, we cannot swap the values provided
     if (operands.first_operand.data.length !==
         operands.second_operand.data.length) {
         operands = recycle(operands.first_operand, operands.second_operand);
@@ -420,11 +457,24 @@ function applyBinaryArithmeticOperation(
     );
 
     // 7. Return result as a newly created vector
-    const ans = createVectorOfType(arithmetic_result, arithmetic_result_type);
+    let ans;
+    switch (arithmetic_result_type) {
+    case 'integer':
+        ans = mkInts(arithmetic_result);
+        break;
+    default:
+        ans = mkReals(arithmetic_result);
+        break;
+    }
+
     ans.attributes = resultant_attributes;
     return ans;
 }
 
+/*
+*   Copies the attributes of the two operands of a binary arithmetic operation (if required) to the
+*   new result.
+*/
 function binaryArithCopyAttributes(
     first_operand: R.Logical | R.Int | R.Real,
     second_operand: R.Logical | R.Int | R.Real,
@@ -481,6 +531,9 @@ function binaryArithCopyAttributes(
     return orig;
 }
 
+/*
+*   Checks if the operand provided is a numerical vector.
+*/
 function isAllowedOperand(operand: R.RValue) {
     switch (operand.tag) {
     case ('logical'):
@@ -492,6 +545,10 @@ function isAllowedOperand(operand: R.RValue) {
     }
 }
 
+/*
+*   Recycles the values of the smaller operand to the length of the longer one.
+*   A warning is shown if the smaller operand is not a factor size of the longer operand.
+*/
 function recycle(
     first_operand: R.Logical | R.Int | R.Real,
     second_operand: R.Logical | R.Int | R.Real,
@@ -499,12 +556,16 @@ function recycle(
     let shorter_operand: R.Logical | R.Int | R.Real;
     let longer_operand: R.Logical | R.Int | R.Real;
 
+    let is_longer_first;
+
     if (first_operand.data.length > second_operand.data.length) {
         longer_operand = first_operand;
         shorter_operand = second_operand;
+        is_longer_first = true;
     } else {
         longer_operand = second_operand;
         shorter_operand = first_operand;
+        is_longer_first = false;
     }
 
     if (longer_operand.data.length % shorter_operand.data.length != 0) {
@@ -521,76 +582,38 @@ function recycle(
         },
     );
 
-    return {
-        first_operand: longer_operand,
-        second_operand: shorter_operand,
-    };
-}
-
-function createVectorOfType(data: [boolean | number], type: string) {
-    switch (type) {
-    case 'logical':
+    if (is_longer_first) {
         return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'logical',
-            data: data,
-        } as R.Logical;
-    case 'integer':
+            first_operand: longer_operand,
+            second_operand: shorter_operand,
+        };
+    } else {
         return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'integer',
-            data: data,
-        } as R.Int;
-    default:
-        return {
-            attributes: RNull,
-            refcount: 0,
-            tag: 'numeric',
-            data: data,
-        } as R.Real;
+            first_operand: shorter_operand,
+            second_operand: longer_operand,
+        };
     }
 }
 
+/*
+*   Coerces an operand to a specific type.
+*/
 function coerceOperandToType(operand: R.Logical | R.Int | R.Real, type: string) {
     switch (type) {
     case 'logical':
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'logical',
-            data: (operand.data as any).map((x: any) => x === 0 ? false : true),
-        } as R.Logical;
+        return asLogicalVector(operand);
     case 'integer':
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'integer',
-            data: (operand.data as any).map((x: any) => {
-                if (operand.tag === 'logical') {
-                    return x ? 1 : 0;
-                } else {
-                    return x;
-                }
-            }),
-        } as R.Int;
+        return asIntVector(operand);
     default:
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'numeric',
-            data: (operand.data as any).map((x: any) => {
-                if (operand.tag === 'logical') {
-                    return x ? 1 : 0;
-                } else {
-                    return x;
-                }
-            }),
-        } as R.Real;
+        return asRealVector(operand);
     }
 }
 
+/*
+*   Coerces the two provided operands to their appropriate type.
+*   The type to be coerced to is the 'higher' type of the two operands provided, according to
+*   the type hierarchy.
+*/
 function coerceTypes(
     first_operand: R.Logical | R.Int | R.Real,
     second_operand: R.Logical | R.Int | R.Real,
@@ -605,37 +628,16 @@ function coerceTypes(
     );
     switch (type_hierarchy[type_index]) {
     case 'logical':
-        first_operand_modified = coerceOperandToType(
-            first_operand,
-            'logical',
-        );
-
-        second_operand_modified = coerceOperandToType(
-            second_operand,
-            'logical',
-        );
+        first_operand_modified = coerceOperandToType(first_operand, 'logical') as R.Logical;
+        second_operand_modified = coerceOperandToType(second_operand, 'logical') as R.Logical;
         break;
     case 'integer':
-        first_operand_modified = coerceOperandToType(
-            first_operand,
-            'integer',
-        );
-
-        second_operand_modified = coerceOperandToType(
-            second_operand,
-            'integer',
-        );
+        first_operand_modified = coerceOperandToType(first_operand, 'integer') as R.Int;
+        second_operand_modified = coerceOperandToType(second_operand, 'integer') as R.Int;
         break;
     default:
-        first_operand_modified = coerceOperandToType(
-            first_operand,
-            'numeric',
-        );
-
-        second_operand_modified = coerceOperandToType(
-            second_operand,
-            'numeric',
-        );
+        first_operand_modified = coerceOperandToType(first_operand, 'numeric') as R.Real;
+        second_operand_modified = coerceOperandToType(second_operand, 'numeric') as R.Real;
         break;
     }
 
@@ -645,6 +647,16 @@ function coerceTypes(
     };
 }
 
+function isNumeric(vec: R.RValue) {
+    switch (vec.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+        return true;
+    default:
+        return false;
+    }
+}
 
 // Unary arithmetic functions include +, -
 function positive(
@@ -747,16 +759,5 @@ function integerDivision(
         return (num !== null && other_num !== null) ?
             Math.floor(num / other_num) : null;
     });
-}
-
-function isNumeric(vec: R.RValue) {
-    switch (vec.tag) {
-    case 'logical':
-    case 'integer':
-    case 'numeric':
-        return true;
-    default:
-        return false;
-    }
 }
 

@@ -1,14 +1,21 @@
+/*
+*   This module handles binding in JORDAN (specifically the c(...) function).
+*/
+
 import {hasAttributes} from './attrib';
-import {asReal} from './coerce';
-import {copy} from './copy';
+import {coerceTo} from './coerce';
 import * as R from './types';
 import {getNames, length} from './util';
-import {mkChar, mkChars, mkInt, mkInts, mkLang, mkList,
-    mkLogical, mkLogicals, mkPairlist, mkReal,
-    mkReals, RNull} from './values';
+import {mkChars, mkInts, mkLogicals, mkPairlist, mkReals, RNull} from './values';
 
 const type_hierarchy = ['NULL', 'logical', 'integer', 'numeric', 'character', 'pairlist', 'list', 'expression'];
 
+/*
+*   do_c handles the combination of values into a vector or a list.
+*
+*   All arguments provided a coerced to a common type, which is the type of the returned value.
+*   All attributes except 'names' are removed.
+*/
 export const do_c: R.PrimOp = (call, op, args, env) => {
     const values: R.RValue[] = [];
 
@@ -46,6 +53,13 @@ export const do_c: R.PrimOp = (call, op, args, env) => {
     return combineValues(values, isRecursive, isUseNames);
 };
 
+/*
+*   Combines the values provided into a vector / list.
+*
+*   If 'recursive' argument is specified, any lists / pairlists within the arguments are flattened
+*   and will end up as part of the result. The 'preserveNames' argument determines whether names are
+*   to be preserved in the final result.
+*/
 function combineValues(values: R.RValue[], recursive: boolean, preserveNames: boolean): R.RValue {
     // 1. Check for expected output type, handle NULL type
     let outputType = getOutputType(values);
@@ -67,11 +81,9 @@ function combineValues(values: R.RValue[], recursive: boolean, preserveNames: bo
 
     for (const value of actual_values) {
         if (value.tag === RNull.tag) continue;
-        coercedValues.push(
-            coerceToType(
-                value as R.Logical | R.Int | R.Real | R.Character | R.PairList | R.List | R.Expression, outputType,
-            ),
-        );
+        const temp = coerceTo(value, outputType) as R.Logical | R.Int | R.Real | R.Character | R.List | R.Expression;
+        transferNames(value as R.Logical | R.Int | R.Real | R.Character | R.List | R.Expression, temp);
+        coercedValues.push(coerceTo(value, outputType));
     }
 
     // 3. Combine the data and create the new value
@@ -199,208 +211,8 @@ function combineValues(values: R.RValue[], recursive: boolean, preserveNames: bo
 }
 
 /*
-    coerceToType makes the assumption that coercion will follow the type hierarchy
-    i.e. if the expected type is some type, then the operand supplied will be
-    assumed to be below that particular type in the type hierarchy.
+*   Transfers names (if existing) from one operand to another.
 */
-function coerceToType(
-    operand: R.Logical | R.Int | R.Real | R.Character | R.PairList | R.List | R.Expression,
-    type: string,
-) {
-    let ans;
-
-    switch (type) {
-    case 'logical':
-        operand = operand as R.Logical;
-        ans = mkLogicals(operand.data);
-        transferNames(operand, ans);
-        break;
-    case 'integer':
-        operand = operand as R.Logical | R.Int;
-        if (operand.tag === 'logical') {
-            ans = mkInts(operand.data.map((x) => {
-                return x !== null ? (x ? 1 : 0) : null;
-            }));
-        } else ans = mkInts(operand.data);
-        transferNames(operand, ans);
-        break;
-    case 'numeric':
-        operand = operand as R.Logical | R.Int | R.Real;
-        if (operand.tag === 'logical') {
-            ans = mkReals(operand.data.map((x) => {
-                return x !== null ? (x ? 1 : 0) : null;
-            }));
-        } else ans = mkReals(operand.data);
-        transferNames(operand, ans);
-        break;
-    case 'character':
-        operand = operand as R.Logical | R.Int | R.Real | R.Character;
-        if (operand.tag === 'logical') {
-            ans = mkChars(operand.data.map((x) => {
-                return x !== null ? (x ? 'TRUE' : 'FALSE') : null;
-            }));
-        } else if (operand.tag === 'integer' || operand.tag === 'numeric') {
-            ans = mkChars(operand.data.map((x) => {
-                return x !== null ? x.toString() : null;
-            }));
-        } else ans = mkChars(operand.data);
-        transferNames(operand, ans);
-        break;
-    case 'list':
-        operand = operand as R.Logical | R.Int | R.Real | R.Character | R.PairList | R.List | R.Expression;
-        if (operand.tag === 'list') {
-            ans = copy(operand) as R.List;
-            transferNames(operand, ans);
-        } else if (operand.tag === 'pairlist') {
-            const data: R.RValue[] = [];
-            let curr: R.PairList | R.Nil = operand;
-            while (curr.tag !== RNull.tag) {
-                if (curr.tag === 'pairlist') data.push(curr.value);
-                curr = curr.next;
-            }
-
-            const namesList: R.Character | R.Nil = getNames(operand);
-            let names;
-            if (namesList.tag === RNull.tag) {
-                names = data.map(() => '');
-            } else {
-                names = namesList.data;
-            }
-
-            const namesObject: R.Character = mkChars(names);
-
-            ans = {
-                attributes: mkPairlist([namesObject, 'names']),
-                refcount: 0,
-                tag: 'list',
-                data: data,
-            };
-        } else {
-            const namesList: R.Character | R.Nil = getNames(operand);
-            let names = [];
-            if (namesList.tag === RNull.tag) {
-                for (const item of operand.data) {
-                    names.push('');
-                }
-            } else {
-                names = namesList.data;
-            }
-
-            const data: R.RValue[] = [];
-
-            for (const item of operand.data) {
-                switch (operand.tag) {
-                case 'logical':
-                    data.push(mkLogical(item as (boolean | null)));
-                    break;
-                case 'integer':
-                    data.push(mkInt(item as (number | null)));
-                    break;
-                case 'numeric':
-                    data.push(mkReal(item as (number | null)));
-                    break;
-                case 'character':
-                    data.push(mkChar(item as (string | null)));
-                    break;
-                case 'expression':
-                    data.push((item as R.RValue));
-                    break;
-                }
-            }
-
-            const namesObject: R.Character = mkChars(names);
-            ans = {
-                attributes: mkPairlist([namesObject, 'names']),
-                refcount: 0,
-                tag: 'list',
-                data: data,
-            };
-        }
-        break;
-    case 'expression':
-        operand = operand as R.Logical | R.Int | R.Real | R.Character | R.PairList | R.List | R.Expression;
-
-        if (operand.tag === 'expression') {
-            ans = copy(operand) as R.Expression;
-            transferNames(operand, ans);
-        } else if (operand.tag === 'list') {
-            ans = {
-                attributes: mkPairlist([getNames(operand), 'names']),
-                refcount: 0,
-                tag: 'expression',
-                data: operand.data,
-            } as R.Expression;
-        } else if (operand.tag === 'pairlist') {
-            const data: R.RValue[] = [];
-            let curr: R.PairList | R.Nil = operand;
-            while (curr.tag !== RNull.tag) {
-                if (curr.tag === 'pairlist') data.push(curr.value);
-                curr = curr.next;
-            }
-
-            const namesList: R.Character | R.Nil = getNames(operand);
-            let names;
-            if (namesList.tag === RNull.tag) {
-                names = data.map(() => '');
-            } else {
-                names = namesList.data;
-            }
-
-            const namesObject: R.Character = mkChars(names);
-
-            ans = {
-                attributes: mkPairlist([namesObject, 'names']),
-                refcount: 0,
-                tag: 'expression',
-                data: data,
-            } as R.Expression;
-        } else {
-            const namesList: R.Character | R.Nil = getNames(operand);
-            let names = [];
-            if (namesList.tag === RNull.tag) {
-                for (const item of operand.data) {
-                    names.push('');
-                }
-            } else {
-                names = namesList.data;
-            }
-
-            const data: R.RValue[] = [];
-
-            for (const item of operand.data) {
-                switch (operand.tag) {
-                case 'logical':
-                    data.push(mkLogical(item as (boolean | null)));
-                    break;
-                case 'integer':
-                    data.push(mkInt(item as (number | null)));
-                    break;
-                case 'numeric':
-                    data.push(mkReal(item as (number | null)));
-                    break;
-                case 'character':
-                    data.push(mkChar(item as (string | null)));
-                    break;
-                }
-            }
-
-            const namesObject: R.Character = mkChars(names);
-            ans = {
-                attributes: mkPairlist([namesObject, 'names']),
-                refcount: 0,
-                tag: 'expression',
-                data: data,
-            } as R.Expression;
-        }
-        break;
-    default:
-        ans = RNull;
-    }
-
-    return ans;
-}
-
-// This function will add the 'names' attribute to the vector / list if it exists
 function transferNames(
     from_operand: R.Logical | R.Int | R.Real | R.Character | R.List | R.Expression,
     to_operand: R.Logical | R.Int | R.Real | R.Character | R.List | R.Expression,
@@ -414,6 +226,10 @@ function transferNames(
     }
 }
 
+/*
+*   Determines the output type using the type hierarchy.
+*   It takes the type of the value with the highest level in the type hierarchy.
+*/
 function getOutputType(values: R.RValue[]): string {
     let ans: string = 'NULL';
     let val = -1;
@@ -432,6 +248,9 @@ function getOutputType(values: R.RValue[]): string {
     return ans;
 }
 
+/*
+*   Recursively flattens lists and pairlists.
+*/
 function recursivelyExtractValues(values: R.RValue[]) {
     let output: R.RValue[] = [];
     for (const value of values) {
@@ -462,6 +281,9 @@ function recursivelyExtractValues(values: R.RValue[]) {
     return output;
 }
 
+/*
+*   Recursively retrieves the names of lists and pairlists.
+*/
 function recursivelyExtractNames(values: R.RValue[]) {
     let output: (string | null)[] = [];
     for (const value of values) {

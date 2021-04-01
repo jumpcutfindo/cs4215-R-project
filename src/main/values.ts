@@ -192,6 +192,15 @@ export function mkClosure(formals: R.PairList, body: R.RValue, env: R.Env): R.Cl
         refcount: 0,
         formals: formals,
         body: body,
-        environment: env
-    }
+        environment: env,
+    };
+}
+
+export function mkListPlus(attributes: R.PairList | R.Nil, data: R.RValue[]) {
+    return {
+        tag: 'list',
+        attributes: attributes,
+        refcount: 0,
+        data: data,
+    } as R.List;
 }

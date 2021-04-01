@@ -1,9 +1,9 @@
-import { asReal } from './coerce';
-import { errorcall, warncall } from './error';
-import { inherits } from './generics';
+import {asReal} from './coerce';
+import {errorcall, warncall} from './error';
+import {inherits} from './generics';
 import * as R from './types';
-import { checkArity, head, length, tail } from './util';
-import { mkInts, RNull } from './values';
+import {checkArity, head, length, tail} from './util';
+import {mkInts, RNull} from './values';
 
 function seq_colon(call: R.Language, start: number, end: number): R.RValue {
     // Since JS numbers are very different from R numbers, we implement our own sensible version
@@ -14,10 +14,10 @@ function seq_colon(call: R.Language, start: number, end: number): R.RValue {
         tag: resType,
         attributes: RNull,
         refcount: 0,
-        data: start <= end
-            ? Array(resLen).fill(start).map((x, ix) => x + ix)
-            : Array(resLen).fill(start).map((x, ix) => x - ix)
-    }
+        data: start <= end ?
+            Array(resLen).fill(start).map((x, ix) => x + ix) :
+            Array(resLen).fill(start).map((x, ix) => x - ix),
+    };
 }
 
 function crossColon(call: R.Language, factor1: R.Int, factor2: R.Int): R.Int {
@@ -49,4 +49,4 @@ export const do_colon : R.PrimOp = (call, op, args, env) => {
         errorcall(call, 'NA/NaN argument');
     }
     return seq_colon(call, startNum, endNum);
-}
+};

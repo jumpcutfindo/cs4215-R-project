@@ -1,18 +1,29 @@
+/* eslint-disable new-cap */
 /* eslint-disable valid-jsdoc */
-import {getAttribute, setAttribute} from './attrib';
+
+/*
+*   This module handles the subsetting and subset assignment of JORDAN.
+*/
+import {setAttribute} from './attrib';
 import {coerceTo} from './coerce';
 import {copy} from './copy';
 import {error, warn} from './error';
-import { Reval } from './eval';
+import {Reval} from './eval';
 import * as R from './types';
 import {getAtLinkedListIndex, getNames, head, length, tail} from './util';
 import {mkChar, mkChars, mkInt, mkInts,
     mkLogical, mkLogicals, mkPairlist,
     mkReal, mkReals, RNull} from './values';
 
-// TODO: Check correctness of pairlists
-
-// Implementation for '[' subsetting
+/*
+*   do_subset handles the implementation for '[' subsetting.
+*   '[' subsetting is able to select multiple values, based on the arguments provided.
+*   Depending on the type of the arguments, the function dispatches the handling of the
+*   subsetting to the different functions.
+*   - Specific cases include logical subsetting, and subsetting using names provided.
+*   - The default case will be coercion to an integer vector, and subsetting using
+*     the resultant indexes.
+*/
 export const do_subset: R.PrimOp = (call, op, args, env) => {
     const object = copy(Reval(head(args), env));
     let params = head(tail(args));
@@ -40,7 +51,15 @@ export const do_subset: R.PrimOp = (call, op, args, env) => {
     }
 };
 
-// Implementation for '[[' subsetting
+/*
+*   do_subset2 handles the implementation for '[[' subsetting.
+*   '[' subsetting is able to only select one value, based on the arguments provided.
+*   Depending on the type of the arguments, the function dispatches the handling of the
+*   subsetting to the different functions.
+*   - Specific cases include subsetting using a name provided.
+*   - The default case will involve coercion to an integer vector, and subsetting using
+*     the resultant index.
+*/
 export const do_subset2: R.PrimOp = (call, op, args, env) => {
     // Extract a single value at a specific index (note that R indexing begins from 1),
     // or a single value with a specific name
@@ -73,7 +92,11 @@ export const do_subset2: R.PrimOp = (call, op, args, env) => {
     }
 };
 
-// Implementation for '$' subsetting
+/*
+*   do_subset3 handles the implementation for '$' subsetting.
+*   '[' subsetting is able to only select one value, based on the name provided.
+*   This form of subsetting also only works on list / pairlist objects.
+*/
 export const do_subset3: R.PrimOp = (call, op, args, env) => {
     // Extract a single value with a specific name (partial matching always)
     const object = copy(Reval(head(args), env));
@@ -96,7 +119,15 @@ export const do_subset3: R.PrimOp = (call, op, args, env) => {
     }
 };
 
-// Implementation for assignment via '['
+/*
+*   do_subassign handles the implementation for '[' subset assignment.
+*   '[' subset assignment is able to assign to multiple values, based on the arguments provided.
+*   Depending on the type of the arguments, the function dispatches the handling of the
+*   subset assignment to the different functions.
+*   - Specific cases include logical subsetting, and subsetting using names provided.
+*   - The default case will be coercion to an integer vector, and subsetting using
+*     the resultant indexes.
+*/
 export const do_subassign: R.PrimOp = (call, op, args, env) => {
     const object = copy(Reval(head(args), env));
     let params = head(tail(args));
@@ -131,7 +162,15 @@ export const do_subassign: R.PrimOp = (call, op, args, env) => {
     }
 };
 
-// Implementation for assignment via '[['
+/*
+*   do_subassign2 handles the implementation for '[[' subset assignment.
+*   '[[' subset assignment is able to assign to a specific value, based on the arguments provided.
+*   Depending on the type of the argument, the function dispatches the handling of the
+*   subset assignment to the different functions.
+*   - Specific cases include subsetting using the name provided.
+*   - The default case will be coercion to an integer vector, and subsetting using
+*     the resultant index.
+*/
 export const do_subassign2: R.PrimOp = (call, op, args, env) => {
     const object = copy(Reval(head(args), env));
     let params = head(tail(args));
@@ -162,7 +201,11 @@ export const do_subassign2: R.PrimOp = (call, op, args, env) => {
     }
 };
 
-// Implementation for assignment via '$'
+/*
+*   do_subassign3 handles the implementation for '$' subset assignment.
+*   '$' subsetting is able to only select one value, based on the name provided.
+*   This form of subset assignment also only works on list / pairlist objects.
+*/
 export const do_subassign3: R.PrimOp = (call, op, args, env) => {
     const object = copy(Reval(head(args), env));
     let params = head(tail(args));
@@ -192,6 +235,11 @@ export const do_subassign3: R.PrimOp = (call, op, args, env) => {
  *               EXTRACTION FUNCTIONS
  *
  **********************************************************/
+
+/*
+*   Extracts a single value at a given index.
+*   Does copying of the attributes after extraction.
+*/
 function extractSingleAtIndex(vec: R.RValue, index: number | null): R.RValue {
     if (index === null || (index - 1) >= length(vec)) error('subscript out of bounds');
     const actual_index = index - 1;
@@ -241,6 +289,13 @@ function extractSingleAtIndex(vec: R.RValue, index: number | null): R.RValue {
     return ans;
 }
 
+/*
+*   Extracts a single value with a given name in the object.
+*   Determines the index of the value to be extracted, then sends it to extractSingleAtIndex
+*   for extraction.
+*   If the 'exact' argument is not provided, partial matching of names will not be done (must be the
+*  exact name)
+*/
 function extractSingleByName(vec: R.RValue, name: string | null, exact: boolean = true): R.RValue {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
@@ -326,6 +381,13 @@ function extractSingleByName(vec: R.RValue, name: string | null, exact: boolean 
     return ans;
 }
 
+/*
+*   Extracts multiple values with the given indexes in the object.
+*   Does copying of the attributes after extraction.
+*
+*   If only negative values are provided, the values of the object at the absolute value of those negative
+*   values will be ignored.
+*/
 function extractMultipleAtIndexes(vec: R.RValue, indexes: (number | null)[]): R.RValue {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
@@ -441,6 +503,11 @@ function extractMultipleAtIndexes(vec: R.RValue, indexes: (number | null)[]): R.
     return ans;
 }
 
+/*
+*   Extracts multiple values with the given names in the object.
+*   Determines the indexes of the values to be extracted, then sends it to extractMultipleAtIndexes
+*   for extraction.
+*/
 function extractMultipleByNames(vec: R.RValue, names: (string | null)[]) {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
@@ -467,6 +534,15 @@ function extractMultipleByNames(vec: R.RValue, names: (string | null)[]) {
     return ans;
 }
 
+/*
+*   Extracts multiple values according to the logical vector provided.
+*   The indexes of the values to be extracted are determined and sent to extractMultipleAtIndexes to be handled.
+*
+*   Indexes corresponding to TRUE in the logical vector provided will be extracted, and those with
+*   FALSE will be ignored.
+*   Recycling will be done if the logical vector provided is not the same length as the object to be
+*   subsetted.
+*/
 function extractMultipleByLogicals(vec: R.RValue, logicals: (boolean | null)[]) {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
@@ -492,6 +568,11 @@ function extractMultipleByLogicals(vec: R.RValue, logicals: (boolean | null)[]) 
  *                  ASSIGNMENT FUNCTIONS
  *
  **********************************************************/
+
+/*
+*   Assigns a single value at a given index.
+*   Does copying of the attributes after assignment.
+*/
 function assignSingleAtIndex(vec: R.RValue, index: number, value: R.RValue): R.RValue {
     if (index === null || index <= 0) {
         error('attempt to select less than one element');
@@ -582,6 +663,11 @@ function assignSingleAtIndex(vec: R.RValue, index: number, value: R.RValue): R.R
     return vec;
 }
 
+/*
+*   Assigns a single value at a given name.
+*   Determines the index of the name to be assigned to, then sends it to assignSingleByIndex
+*   to be assigned.
+*/
 function assignSingleByName(vec: R.RValue, name: string, value: R.RValue): R.RValue {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
@@ -596,8 +682,15 @@ function assignSingleByName(vec: R.RValue, name: string, value: R.RValue): R.RVa
         expected_type = vec.tag;
     }
 
-    const new_vec = coerceTo(vec, expected_type);
-    const new_value = coerceTo(value, expected_type);
+    let new_vec = vec;
+    let new_value = value;
+
+    // We don't do anything if it's a list or pairlist
+    if (vec.tag !== 'list' && vec.tag !== 'pairlist') {
+        new_vec = coerceTo(vec, expected_type);
+        new_value = coerceTo(value, expected_type);
+    }
+
     const name_index = getIndexesOfNames((vec as R.Logical), [name])[0];
 
     if (name_index === null) {
@@ -614,6 +707,13 @@ function assignSingleByName(vec: R.RValue, name: string, value: R.RValue): R.RVa
     }
 }
 
+/*
+*   Assigns multiple values with the given indexes in the object.
+*   Determines the indexes to be assigned to and passes it to assignSingleAtIndex to be assigned.
+*
+*   If only negative values are provided, the values of the object at the absolute value of those negative
+*   values will be ignored.
+*/
 function assignMultipleAtIndexes(vec: R.RValue, indexes: number[], values: R.RValue): R.RValue {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
@@ -726,6 +826,11 @@ function assignMultipleAtIndexes(vec: R.RValue, indexes: number[], values: R.RVa
     return new_vec;
 }
 
+/*
+*   Assigns multiple values with the given names in the object.
+*   Determines the indexes of the values to be extracted, then sends it to assignMultipleAtIndexes
+*   for extraction.
+*/
 function assignMultipleByNames(vec: R.RValue, names: string[], values: R.RValue): R.RValue {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');
@@ -758,6 +863,15 @@ function assignMultipleByNames(vec: R.RValue, names: string[], values: R.RValue)
     return ans;
 }
 
+/*
+*   Assigns multiple values according to the logical vector provided.
+*   The indexes to be assigned to are determined and sent to assignMultipleAtIndexes for assignment.
+*
+*   Indexes corresponding to TRUE in the logical vector provided will be extracted, and those with
+*   FALSE will be ignored.
+*   Recycling will be done if the logical vector provided is not the same length as the object to be
+*   subsetted.
+*/
 function assignMultipleByLogicals(vec: R.RValue, logicals: boolean[], values: R.RValue): R.RValue {
     if (!isSubsettable(vec)) {
         error('not a subsettable type');

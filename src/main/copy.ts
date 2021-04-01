@@ -1,9 +1,11 @@
 import * as R from './types';
 import {RNull} from './values';
 
-// Copies RValues with correct semantics. Loses type information since it seems
-// impossible to indicate that the return type is the same as the argument type
-// which is a union.
+/*
+*   Copies RValues with correct semantics. Loses type information since it seems
+*   impossible to indicate that the return type is the same as the argument type
+*   which is a union.
+*/
 export function copy(val: R.RValue) : R.RValue {
     let result: R.RValue = RNull;
     switch (val.tag) {

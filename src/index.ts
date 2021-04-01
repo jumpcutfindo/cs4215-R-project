@@ -108,10 +108,10 @@ export function simpleInterpret(prog: string) {
 }
 
 // const sampleProg = `
-//     x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
-//     x[1:2] <- c(c("a", "b", "c"), c(1, 2, 3));
-//     x;
-//     x[1:2];
+//     x <- c(1, 2, 3);
+//     attr(x, "test") <- "testvalue";
+//     attr(x, "dim") <- 3;
+//     attributes(x);
 // `;
 
 // interpret(sampleProg, R_GlobalEnv);

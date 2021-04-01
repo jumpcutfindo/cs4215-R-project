@@ -1,13 +1,20 @@
-import { asCharVector, asIntVector, coerceTo } from './coerce';
+/*
+*   This module handles the retrieval and setting of attributes in JORDAN.
+*   JORDAN does not handle the special attributes 'row.names' and 'tsp'.
+*/
+
+import {asCharVector, asIntVector, asListObject, coerceTo} from './coerce';
 import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
 import {getNames, head, length, tail} from './util';
-import {mkChar, mkChars, mkInt, mkInts, mkPairlist, mkReals, RNull} from './values';
+import {mkPairlist, RNull} from './values';
 
-// Get a specific attribute's value
+/*
+*   Retrieves a single specified attribute of the object provided.
+*/
 export const do_attr: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
     const attribute = head(tail(args));
 
     if (attribute.tag !== 'character') {
@@ -18,12 +25,14 @@ export const do_attr: R.PrimOp = (call, op, args, env) => {
         return RNull;
     }
 
-    return getAttribute(vec, attribute.data[0]);
+    return getAttribute(object, attribute.data[0]);
 };
 
-// Set a specific attribute
+/*
+*   Sets a single specified attribute of the object provided.
+*/
 export const do_attrgets: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
     const attribute = head(tail(args));
     const value = head(tail(tail(args)));
 
@@ -35,115 +44,167 @@ export const do_attrgets: R.PrimOp = (call, op, args, env) => {
         error(`attempt to use zero-length variable name`);
     }
 
-    return setAttribute(vec, (attribute.data[0] as string), value);
+    return setAttribute(object, (attribute.data[0] as string), value);
 };
 
+/*
+*   Retrieves all the attributes of the object provided.
+*/
 export const do_attributes: R.PrimOp = (call, op, args, env) => {
-    const vec = head(args);
+    const object = head(args);
 
-    return getAttributes(vec);
+    return getAttributes(object);
 };
 
+/*
+*   Sets all the attributes of the object provided.
+*/
 export const do_attributesgets: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
     const attributes = head(tail(args));
 
     if (attributes.tag !== 'list') {
         error('attributes must be a list or NULL');
     }
 
-    if (!hasAttributes(vec)) {
+    if (!hasAttributes(object)) {
         error('attributes are not allowed on the given type');
     }
 
-    setAttributes(vec, attributes);
+    setAttributes(object, attributes);
 
-    return vec;
+    return object;
 };
 
+/*
+*   The 'do_..." functions below handle the attribute setting and extraction of
+*   the specific attributes 'names', 'class', 'dim', 'dimnames' and 'comment'.
+*
+*   These attributes only can take specific values and as such are segregated into
+*   their own special functions for handling of various cases.
+*/
+
+
+/*
+*   Retrieves the 'names' attribute of the object provided.
+*/
 export const do_names: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
 
-    return getAttribute(vec, 'names', true);
+    return getAttribute(object, 'names', true);
 };
 
+/*
+*   Sets the 'names' attribute of the object provided.
+*/
 export const do_namesgets: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
     const names = head(tail(args));
 
-    return setAttribute(vec, 'names', names);
+    return setAttribute(object, 'names', names);
 };
 
+/*
+*   Retrieves the 'class' attribute of the object provided.
+*/
 export const do_class: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
 
-    return getAttribute(vec, 'class', true);
+    return getAttribute(object, 'class', true);
 };
 
+/*
+*   Sets the 'class' attribute of the object provided.
+*/
 export const do_classgets: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
     const class_name = head(tail(args));
 
-    return setAttribute(vec, 'class', class_name);
+    return setAttribute(object, 'class', class_name);
 };
 
+/*
+*   Retrieves the 'dim' attribute of the object provided.
+*/
 export const do_dim: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
 
-    return getAttribute(vec, 'dim', true);
+    return getAttribute(object, 'dim', true);
 };
 
+/*
+*   Sets the 'dim' attribute of the object provided.
+*/
 export const do_dimgets: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
     const dim = head(tail(args));
 
-    return setAttribute(vec, 'dim', dim);
+    return setAttribute(object, 'dim', dim);
 };
 
+/*
+*   Retrieves the 'comment' attribute of the object provided.
+*/
 export const do_comment: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
 
-    return getAttribute(vec, 'comment', true);
+    return getAttribute(object, 'comment', true);
 };
 
+/*
+*   Sets the 'comment' attribute of the object provided.
+*/
 export const do_commentgets: R.PrimOp = (call, op, args, env) => {
-    const vec = copy(head(args));
+    const object = copy(head(args));
     const comment = head(tail(args));
 
-    return setAttribute(vec, 'comment', comment);
+    return setAttribute(object, 'comment', comment);
 };
 
-// TODO: Implement dimnames when lists are implemented
+/*
+*   Sets an attribute of the object provided. The attribute to be set is provided under 'key'.
+*
+*   For non-special attributes, we simply set the value of that particular attribute to the given
+*   value. If the attribute does not exist, we append it to the end of the attributes pairlist. If
+*   the intended value of the attribute is NULL, we consider this a deletion and remove that attribute
+*   entirely from the object.
+*
+*   For special attributes, we dispatch the setting of the values to functions that are meant to
+*   handle that specific case.
 
-export function setAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue {
-    if (vec.tag === RNull.tag) {
+*/
+export function setAttribute(object: R.RValue, key: string, val: R.RValue): R.RValue {
+    if (object.tag === RNull.tag) {
         error('attempt to set an attribute on NULL');
     }
 
     if (val.tag === RNull.tag) {
-        removeAttribute(vec, key);
-        return vec;
+        removeAttribute(object, key);
+        return object;
     } else {
         // Ignoring special cases of 'row.names' and 'tsp'
         switch (key) {
         case 'class':
-            return setClass(vec, val);
+            return setClass(object, val);
         case 'comment':
-            return setComment(vec, val);
+            return setComment(object, val);
         case 'dim':
-            return setDim(vec, val);
+            return setDim(object, val);
         case 'dimnames':
-            return setDimNames(vec, val);
+            return setDimNames(object, val);
         case 'names':
-            return setNames(vec, val);
+            return setNames(object, val);
         default:
-            return setNormalAttribute(vec, key, val);
+            return setNormalAttribute(object, key, val);
         }
     }
 }
 
-function setAttributes(vec: R.RValue, list: R.List) {
-    const names = getNames(vec);
+/*
+*   Sets all the attributes of an object with the provided list of attributes.
+*/
+function setAttributes(object: R.RValue, list: R.List) {
+    const names = getNames(object);
 
     if (names.tag === RNull.tag) {
         error('attributes must be named');
@@ -155,21 +216,27 @@ function setAttributes(vec: R.RValue, list: R.List) {
 
     for (let i = 0; i < list.data.length; i ++) {
         if (names.data[i] !== null) {
-            setAttribute(vec, names.data[i] as string, list.data[i]);
+            setAttribute(object, names.data[i] as string, list.data[i]);
         }
     }
 }
 
-export function getAttribute(vec: R.RValue, which: string, match: boolean = false) : R.RValue {
-    if (vec.tag === RNull.tag) {
+/*
+*   Retrieves a specified attribute of the object.
+*
+*   This uses partial matching to retrieve the attribute, unless 'match' has been specified to be true,
+*   in which case an exact match is required.
+*/
+export function getAttribute(object: R.RValue, which: string, match: boolean = false) : R.RValue {
+    if (object.tag === RNull.tag) {
         return RNull;
     }
 
-    if (!hasAttributes(vec)) {
+    if (!hasAttributes(object)) {
         error('attributes are not allowed on the given type');
     }
 
-    const vector = vec as R.PairList;
+    const vector = object as R.PairList;
 
     if (match) {
         let attribute: R.PairList | R.Nil = vector.attributes;
@@ -203,32 +270,38 @@ export function getAttribute(vec: R.RValue, which: string, match: boolean = fals
     }
 }
 
-function getAttributes(vec: R.RValue) {
-    if (vec.tag === RNull.tag) {
+/*
+*   Retrieves all the attributes of the object.
+*/
+function getAttributes(object: R.RValue) {
+    if (object.tag === RNull.tag) {
         return RNull;
     }
 
-    if (!hasAttributes(vec)) {
+    if (!hasAttributes(object)) {
         error('attributes are not allowed on the given type');
     }
 
-    if ((vec as R.Logical).attributes.tag === RNull.tag) {
+    if ((object as R.Logical).attributes.tag === RNull.tag) {
         return RNull;
     }
 
-    if (vec.tag === 'pairlist') {
-        const names = getNames(vec);
+    if (object.tag === 'pairlist') {
+        const names = getNames(object);
         const start = mkPairlist([names, 'names']) as R.PairList;
-        start.next = vec.attributes;
+        start.next = object.attributes;
 
         return attributesToList(start);
     } else {
-        return attributesToList((vec as R.Logical).attributes);
+        return attributesToList((object as R.Logical).attributes);
     }
 }
 
-function removeAttribute(vec: R.RValue, key: string) {
-    let curr: R.PairList | R.Nil = (vec as R.Logical).attributes;
+/*
+*   Removes a specified attribute from the object.
+*/
+function removeAttribute(object: R.RValue, key: string) {
+    let curr: R.PairList | R.Nil = (object as R.Logical).attributes;
     let start = curr;
 
     if (start.tag !== RNull.tag && start.key === key) {
@@ -243,11 +316,14 @@ function removeAttribute(vec: R.RValue, key: string) {
         curr = curr.next;
     }
 
-    (vec as R.Logical).attributes = start;
+    (object as R.Logical).attributes = start;
 }
 
-function setNormalAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue {
-    const dimAttribute: R.RValue = getAttribute(vec, 'dim', true);
+/*
+*   Sets a non-special attribute of the object, using the value provided.
+*/
+function setNormalAttribute(object: R.RValue, key: string, val: R.RValue): R.RValue {
+    const dimAttribute: R.RValue = getAttribute(object, 'dim', true);
 
     let is_key_set = false;
 
@@ -256,12 +332,12 @@ function setNormalAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue
     let curr;
     let start;
     if (dimAttribute.tag !== RNull.tag) {
-        removeAttribute(vec, 'dim');
-        curr = copy((vec as R.Logical).attributes) as R.PairList;
+        removeAttribute(object, 'dim');
+        curr = copy((object as R.Logical).attributes) as R.PairList;
         start = mkPairlist([dimAttribute, 'dim']) as R.PairList;
         start.next = curr;
     } else {
-        curr = copy((vec as R.Logical).attributes) as R.PairList;
+        curr = copy((object as R.Logical).attributes) as R.PairList;
         start = curr;
     }
 
@@ -273,15 +349,15 @@ function setNormalAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue
         curr = curr.next;
     }
 
-    (vec as R.Logical).attributes = start;
+    (object as R.Logical).attributes = start;
 
     // Checks whether the key has been set: if not, it's a new key and we append it
     // to the end of the attributes
     if (!is_key_set) {
-        if ((vec as R.Logical).attributes.tag === RNull.tag) {
-            (vec as R.Logical).attributes = mkPairlist([val, key]);
+        if ((object as R.Logical).attributes.tag === RNull.tag) {
+            (object as R.Logical).attributes = mkPairlist([val, key]);
         } else {
-            let curr = (vec as R.Logical).attributes as R.PairList;
+            let curr = (object as R.Logical).attributes as R.PairList;
             while (curr.next.tag !== RNull.tag) {
                 curr = curr.next;
             }
@@ -289,10 +365,10 @@ function setNormalAttribute(vec: R.RValue, key: string, val: R.RValue): R.RValue
         }
     }
 
-    return vec;
+    return object;
 }
 
-function setClass(vec: R.RValue, val: R.RValue) {
+function setClass(object: R.RValue, val: R.RValue) {
     if (val.tag !== 'character') {
         error(`attempt to set invalid 'class' attribute`);
     }
@@ -306,28 +382,28 @@ function setClass(vec: R.RValue, val: R.RValue) {
     case 'integer':
     case 'numeric':
     case 'character':
-        removeAttribute(vec, 'class');
-        const attributes_copy: R.PairList | R.Nil = copy((vec as R.Logical).attributes) as R.PairList | R.Nil;
-        ans = coerceTo(vec, new_type);
+        removeAttribute(object, 'class');
+        const attributes_copy: R.PairList | R.Nil = copy((object as R.Logical).attributes) as R.PairList | R.Nil;
+        ans = coerceTo(object, new_type);
         (ans as R.Logical).attributes = attributes_copy;
         break;
     default:
-        ans = setNormalAttribute(vec, 'class', val);
+        ans = setNormalAttribute(object, 'class', val);
         break;
     }
 
     return ans;
 }
 
-function setComment(vec: R.RValue, val: R.RValue) {
+function setComment(object: R.RValue, val: R.RValue) {
     if (val.tag !== 'character') {
         error(`attempt to set invalid 'comment' attribute`);
     }
 
-    return setNormalAttribute(vec, 'comment', val);
+    return setNormalAttribute(object, 'comment', val);
 }
 
-function setDim(vec: R.RValue, val: R.RValue) {
+function setDim(object: R.RValue, val: R.RValue) {
     let new_val = val;
     // Ensure value provided is either a vector or null
     if (val.tag === RNull.tag || !isVector(val)) {
@@ -350,32 +426,32 @@ function setDim(vec: R.RValue, val: R.RValue) {
 
     // Must match length of vector
     // TODO: Handle matrices and dataframes
-    if (new_val.tag !== RNull.tag && new_val.data[0] !== length(vec)) {
-        error(`dims [${new_val.data[0]}] do not match the length of the object [${length(vec)}]`);
+    if (new_val.tag !== RNull.tag && new_val.data[0] !== length(object)) {
+        error(`dims [${new_val.data[0]}] do not match the length of the object [${length(object)}]`);
     }
 
-    const dimAttribute: R.RValue = getAttribute(vec, 'dim', true);
+    const dimAttribute: R.RValue = getAttribute(object, 'dim', true);
 
     // If the dimensions have been specified, we delete it and replace with our new dims
     if (dimAttribute.tag !== RNull.tag) {
-        removeAttribute(vec, 'dim');
+        removeAttribute(object, 'dim');
     }
-    const curr: R.PairList | R.Nil = copy((vec as R.Logical).attributes) as R.PairList;
+    const curr: R.PairList | R.Nil = copy((object as R.Logical).attributes) as R.PairList;
     const start: R.PairList = mkPairlist([new_val, 'dim']) as R.PairList;
     start.next = curr;
 
-    (vec as R.Logical).attributes = start;
+    (object as R.Logical).attributes = start;
 
-    return vec;
+    return object;
 }
 
-function setDimNames(vec: R.RValue, val: R.RValue) {
+function setDimNames(object: R.RValue, val: R.RValue) {
     // Must be a list
     if (val.tag !== 'list') {
         error(`'dimnames' must be a list`);
     } else {
         // Value must be a list of length identical to the dimensions
-        const dims: R.Int | R.Nil = getAttribute(vec, 'dim', true) as R.Int | R.Nil;
+        const dims: R.Int | R.Nil = getAttribute(object, 'dim', true) as R.Int | R.Nil;
         if (dims.tag !== RNull.tag) {
             for (let i = 0; i < val.data.length; i++) {
                 if (length(val.data[i]) !== dims.data[i]) {
@@ -385,15 +461,15 @@ function setDimNames(vec: R.RValue, val: R.RValue) {
         }
     }
 
-    return setNormalAttribute(vec, 'dimnames', val);
+    return setNormalAttribute(object, 'dimnames', val);
 }
 
-function setNames(vec: R.RValue, val: R.RValue) {
+function setNames(object: R.RValue, val: R.RValue) {
     // Values provided coerced to character vector
     const new_val = asCharVector(val) as R.Character;
 
-    if (vec.tag === 'pairlist') {
-        let curr: R.PairList | R.Nil = vec;
+    if (object.tag === 'pairlist') {
+        let curr: R.PairList | R.Nil = object;
         let index = 0;
         while (curr.tag !== RNull.tag) {
             curr.key = (new_val.data[index] === null) ? '' : new_val.data[index] as string;
@@ -401,14 +477,14 @@ function setNames(vec: R.RValue, val: R.RValue) {
             index ++;
         }
 
-        return vec;
+        return object;
     } else {
-        if (new_val.data.length !== (vec as R.Logical).data.length) {
-            for (let i = new_val.data.length; i < (vec as R.Logical).data.length; i ++) {
+        if (new_val.data.length !== (object as R.Logical).data.length) {
+            for (let i = new_val.data.length; i < (object as R.Logical).data.length; i ++) {
                 new_val.data.push(null);
             }
         }
-        return setNormalAttribute(vec, 'names', new_val);
+        return setNormalAttribute(object, 'names', new_val);
     }
 }
 
@@ -438,8 +514,8 @@ function attributesToList(attributes: R.PairList | R.Nil): R.List {
     } as R.List;
 }
 
-function isVector(vec: R.RValue): boolean {
-    switch (vec.tag) {
+function isVector(object: R.RValue): boolean {
+    switch (object.tag) {
     case ('logical'):
     case ('integer'):
     case ('numeric'):
@@ -450,8 +526,8 @@ function isVector(vec: R.RValue): boolean {
     }
 }
 
-export function hasAttributes(vec: R.RValue): boolean {
-    switch (vec.tag) {
+export function hasAttributes(object: R.RValue): boolean {
+    switch (object.tag) {
     case ('list'):
     case ('pairlist'):
     case ('logical'):
