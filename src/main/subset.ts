@@ -1,9 +1,10 @@
+/* eslint-disable new-cap */
 /* eslint-disable valid-jsdoc */
-import {getAttribute, setAttribute} from './attrib';
+import {setAttribute} from './attrib';
 import {coerceTo} from './coerce';
 import {copy} from './copy';
 import {error, warn} from './error';
-import { Reval } from './eval';
+import {Reval} from './eval';
 import * as R from './types';
 import {getAtLinkedListIndex, getNames, head, length, tail} from './util';
 import {mkChar, mkChars, mkInt, mkInts,
@@ -596,8 +597,15 @@ function assignSingleByName(vec: R.RValue, name: string, value: R.RValue): R.RVa
         expected_type = vec.tag;
     }
 
-    const new_vec = coerceTo(vec, expected_type);
-    const new_value = coerceTo(value, expected_type);
+    let new_vec = vec;
+    let new_value = value;
+
+    // We don't do anything if it's a list or pairlist
+    if (vec.tag !== 'list' && vec.tag !== 'pairlist') {
+        new_vec = coerceTo(vec, expected_type);
+        new_value = coerceTo(value, expected_type);
+    }
+
     const name_index = getIndexesOfNames((vec as R.Logical), [name])[0];
 
     if (name_index === null) {

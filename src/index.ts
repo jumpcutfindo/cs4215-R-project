@@ -103,11 +103,10 @@ export function setupR() {
 
 setupR();
 
-// const sampleProg = `
-//     x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
-//     x[1:2] <- c(c("a", "b", "c"), c(1, 2, 3));
-//     x;
-//     x[1:2];
-// `;
+const sampleProg = `
+    x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));
+    x$nul <- c(1, 2, 3);
+    x$nul;
+`;
 
-// interpret(sampleProg, R_GlobalEnv);
+interpret(sampleProg, R_GlobalEnv);
