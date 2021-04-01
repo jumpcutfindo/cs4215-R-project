@@ -444,6 +444,7 @@ function applyBinaryArithmeticOperation(
     }
 
     // 5. Check vector lengths and do recycling
+    // Note: specifically for ^, %%, %/%, we cannot swap the values provided
     if (operands.first_operand.data.length !==
         operands.second_operand.data.length) {
         operands = recycle(operands.first_operand, operands.second_operand);
@@ -555,12 +556,16 @@ function recycle(
     let shorter_operand: R.Logical | R.Int | R.Real;
     let longer_operand: R.Logical | R.Int | R.Real;
 
+    let is_longer_first;
+
     if (first_operand.data.length > second_operand.data.length) {
         longer_operand = first_operand;
         shorter_operand = second_operand;
+        is_longer_first = true;
     } else {
         longer_operand = second_operand;
         shorter_operand = first_operand;
+        is_longer_first = false;
     }
 
     if (longer_operand.data.length % shorter_operand.data.length != 0) {
@@ -577,10 +582,17 @@ function recycle(
         },
     );
 
-    return {
-        first_operand: longer_operand,
-        second_operand: shorter_operand,
-    };
+    if (is_longer_first) {
+        return {
+            first_operand: longer_operand,
+            second_operand: shorter_operand,
+        };
+    } else {
+        return {
+            first_operand: shorter_operand,
+            second_operand: longer_operand,
+        };
+    }
 }
 
 /*

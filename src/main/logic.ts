@@ -187,7 +187,8 @@ function applyBinaryLogicalOperation(
 }
 
 /*
-*   Recycles the shorter operand of the two provided to the length of the longer operand.
+*   Recycles the values of the smaller operand to the length of the longer one.
+*   A warning is shown if the smaller operand is not a factor size of the longer operand.
 */
 function recycle(
     first_operand: R.Logical | R.Int | R.Real,
@@ -196,12 +197,16 @@ function recycle(
     let shorter_operand: R.Logical | R.Int | R.Real;
     let longer_operand: R.Logical | R.Int | R.Real;
 
+    let is_longer_first;
+
     if (first_operand.data.length > second_operand.data.length) {
         longer_operand = first_operand;
         shorter_operand = second_operand;
+        is_longer_first = true;
     } else {
         longer_operand = second_operand;
         shorter_operand = first_operand;
+        is_longer_first = false;
     }
 
     if (longer_operand.data.length % shorter_operand.data.length != 0) {
@@ -218,10 +223,17 @@ function recycle(
         },
     );
 
-    return {
-        first_operand: longer_operand,
-        second_operand: shorter_operand,
-    };
+    if (is_longer_first) {
+        return {
+            first_operand: longer_operand,
+            second_operand: shorter_operand,
+        };
+    } else {
+        return {
+            first_operand: shorter_operand,
+            second_operand: longer_operand,
+        };
+    }
 }
 
 /*

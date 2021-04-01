@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 import {testInterpret} from '../index';
 import * as R from '../main/types';
-import {mkChar, mkChars, mkPairlist, RNull, R_BaseEnv} from '../main/values';
+import {mkChar, mkChars, mkInt, mkPairlist, RNull, R_BaseEnv} from '../main/values';
 
 let testEnvironment: R.Env = {
     tag: 'environment',
@@ -104,10 +104,12 @@ describe('special case attribute tests', () => {
             x <- c(1, 2, 3);
             attr(x, "test") <- "testvalue";
             attr(x, "dim") <- 3;
+            attributes(x);
         `;
 
         const result = testInterpret(prog, testEnvironment);
-        expect(result).toHaveProperty('tag', 'character');
-        expect(result).toHaveProperty('data', ['testvalue']);
+        expect(result).toHaveProperty('tag', 'list');
+        expect(result).toHaveProperty('attributes', mkPairlist([mkChars(['dim', 'test']), 'names']));
+        expect(result).toHaveProperty('data', [mkInt(3), mkChar('testvalue')]);
     });
 });

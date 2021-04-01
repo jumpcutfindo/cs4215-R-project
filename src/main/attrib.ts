@@ -291,9 +291,9 @@ function getAttributes(object: R.RValue) {
         const start = mkPairlist([names, 'names']) as R.PairList;
         start.next = object.attributes;
 
-        return asListObject(start);
+        return attributesToList(start);
     } else {
-        return asListObject((object as R.Logical).attributes);
+        return attributesToList((object as R.Logical).attributes);
     }
 }
 
@@ -486,6 +486,32 @@ function setNames(object: R.RValue, val: R.RValue) {
         }
         return setNormalAttribute(object, 'names', new_val);
     }
+}
+
+function attributesToList(attributes: R.PairList | R.Nil): R.List {
+    const keys = [];
+    const values = [];
+    let attribute: R.PairList | R.Nil = attributes;
+
+    while (attribute.tag !== RNull.tag) {
+        keys.push(attribute.key);
+        values.push(attribute.value);
+        attribute = attribute.next;
+    }
+
+    const names = {
+        attributes: RNull,
+        refcount: 0,
+        tag: 'character',
+        data: keys,
+    } as R.Character;
+
+    return {
+        attributes: mkPairlist([names, 'names']),
+        refcount: 0,
+        tag: 'list',
+        data: values,
+    } as R.List;
 }
 
 function isVector(object: R.RValue): boolean {
