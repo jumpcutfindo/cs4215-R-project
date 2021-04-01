@@ -257,15 +257,19 @@ function extractSingleAtIndex(vec: R.RValue, index: number | null): R.RValue {
     switch (vec.tag) {
     case 'logical':
         ans = mkLogical(vec.data[actual_index]);
+        ans = copyAttributesAfterExtraction(vec, ans, [index - 1]);
         break;
     case 'integer':
         ans = mkInt(vec.data[actual_index]);
+        ans = copyAttributesAfterExtraction(vec, ans, [index - 1]);
         break;
     case 'numeric':
         ans = mkReal(vec.data[actual_index]);
+        ans = copyAttributesAfterExtraction(vec, ans, [index - 1]);
         break;
     case 'character':
         ans = mkChar(vec.data[actual_index]);
+        ans = copyAttributesAfterExtraction(vec, ans, [index - 1]);
         break;
     case 'expression':
         ans = copy(vec.data[actual_index]);
@@ -286,7 +290,6 @@ function extractSingleAtIndex(vec: R.RValue, index: number | null): R.RValue {
     }
 
     // Remember to deduct 1 from the index!
-    ans = copyAttributesAfterExtraction(vec, ans, [index - 1]);
 
     return ans;
 }

@@ -10,6 +10,8 @@
     html {
         font-family: monospace;
         white-space: pre-wrap;
+        background: #556271;
+        color: white;
     }
     textarea {
         margin: 5px;
@@ -26,16 +28,64 @@
         color: chocolate;
     }
     .input {
-        color: black;
+        color: white;
+    }
+
+    .main {
+        flex: auto;
+    }
+
+    .title {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+    
+    .subtitle {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: 100;
+        margin: 0;
+    }
+
+    .interpreter {
+        width: 50vw;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .repl-entry {
+        width: 100%;
+    }
+
+    .repl {
+        width: 100%;
+        margin: 5px;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px #757575;
+        font-family: monospace;
+        height: 50vh;
+        overflow-y: auto;
+        background: #282E35;
     }
 </style>
 </head>
 <body>
 <div id="app">
-    <div v-for="entry in history" :class="outputType(entry.type)">
-        {{ entry.text }}
+    <div class="main">
+        <div class="interpreter">
+            <div style="padding-bottom: 8px;">
+                <h1 class="title">joRdan interpreter!</h1>
+                <h4 class="subtitle">by Daniel Hoe and Joash Chin</h4>
+            </div>
+            <div id="container" ref="container" class="repl">
+                <div v-for="entry in history" :class="outputType(entry.type)">
+                    {{ entry.text }}
+                </div>
+            </div>
+            <textarea rows="5" v-model="program" @keyup.shift.enter='' @keyup.enter.exact='repl(program)' type="text" class="repl-entry"></textarea>
+        </div>
     </div>
-    <textarea rows="5" v-model="program" @keyup.shift.enter='repl(program)' type="text"></textarea>
 </div>
 <script src='./src/main.ts'></script>
 </body>
