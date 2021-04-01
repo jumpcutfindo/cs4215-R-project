@@ -1,9 +1,12 @@
+/*
+*   This module handles the relational operators that are supported by JORDAN.
+*/
+
+import {asIntVector, asLogicalVector, asRealVector} from './coerce';
 import {error, warn} from './error';
 import * as R from './types';
 import {checkArity, head, tail} from './util';
-import {mkChars, mkLogicals, mkReals, RNull} from './values';
-
-const stringToSum = (str: string) => [...str||'A'].reduce((a, x) => a += x.codePointAt(0) ?? 0, 0);
+import {mkLogicals, RNull} from './values';
 
 const relational_operators: any = {
     '<': lesser,
@@ -23,6 +26,11 @@ export const RELATIONAL_OPTYPES = {
     NEQOP: 6,
 };
 
+/*
+*   do_relop handles the relational operator functionality of JORDAN.
+*   Depending on the op.variant provided, it dispatches the operands provided with the
+*   corresponding operator to another function to be computed.
+*/
 export const do_relop : R.PrimOp = (call, op, args, env) => {
     let ans: R.RValue = RNull;
 
@@ -55,6 +63,11 @@ export const do_relop : R.PrimOp = (call, op, args, env) => {
     return ans;
 };
 
+/*
+*   Applies a relational operator to the operands provided.
+*   Coercion to the same type will be done if necessary.
+*   Recycling will be done if the vectors are not of the same length.
+*/
 function applyRelationalOperator(
     operator: string,
     first_operand: R.RValue,
@@ -109,53 +122,18 @@ function isAllowedOperand(operand: R.RValue): boolean {
     }
 }
 
-function coerceOperandToType(operand: R.Logical | R.Int | R.Real | R.Character, type: string) {
-    switch (type) {
-    case 'logical':
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'logical',
-            data: (operand.data as any).map((x: any) => x === 0 ? false : true),
-        } as R.Logical;
-    case 'integer':
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'integer',
-            data: (operand.data as any).map((x: any) => {
-                if (operand.tag === 'logical') {
-                    return x ? 1 : 0;
-                } else {
-                    return x;
-                }
-            }),
-        } as R.Int;
-    default:
-        return {
-            attributes: operand.attributes,
-            refcount: operand.refcount,
-            tag: 'numeric',
-            data: (operand.data as any).map((x: any) => {
-                if (operand.tag === 'logical') {
-                    return x ? 1 : 0;
-                } else if (operand.tag === 'character') {
-                    return stringToSum(x);
-                } else {
-                    return x;
-                }
-            }),
-        } as R.Real;
-    }
-}
-
+/*
+*   Coerces the two provided operands to their appropriate type.
+*   The type to be coerced to is the 'higher' type of the two operands provided, according to
+*   the type hierarchy.
+*/
 function coerceTypes(
     first_operand: R.Logical | R.Int | R.Real,
     second_operand: R.Logical | R.Int | R.Real,
 ) {
     let first_operand_modified;
     let second_operand_modified;
-    const type_hierarchy = ['logical', 'integer', 'numeric', 'character'];
+    const type_hierarchy = ['logical', 'integer', 'numeric'];
 
     const type_index = Math.max(
         type_hierarchy.indexOf(first_operand.tag),
@@ -163,37 +141,16 @@ function coerceTypes(
     );
     switch (type_hierarchy[type_index]) {
     case 'logical':
-        first_operand_modified = coerceOperandToType(
-            first_operand,
-            'logical',
-        );
-
-        second_operand_modified = coerceOperandToType(
-            second_operand,
-            'logical',
-        );
+        first_operand_modified = asLogicalVector(first_operand) as R.Logical;
+        second_operand_modified = asLogicalVector(second_operand) as R.Logical;
         break;
     case 'integer':
-        first_operand_modified = coerceOperandToType(
-            first_operand,
-            'integer',
-        );
-
-        second_operand_modified = coerceOperandToType(
-            second_operand,
-            'integer',
-        );
+        first_operand_modified = asIntVector(first_operand) as R.Int;
+        second_operand_modified = asIntVector(second_operand) as R.Int;
         break;
     default:
-        first_operand_modified = coerceOperandToType(
-            first_operand,
-            'numeric',
-        );
-
-        second_operand_modified = coerceOperandToType(
-            second_operand,
-            'numeric',
-        );
+        first_operand_modified = asRealVector(first_operand) as R.Real;
+        second_operand_modified = asRealVector(second_operand) as R.Real;
         break;
     }
 
@@ -203,6 +160,10 @@ function coerceTypes(
     };
 }
 
+/*
+*   Recycles the values of the smaller operand to the length of the longer one.
+*   A warning is shown if the smaller operand is not a factor size of the longer operand.
+*/
 function recycle(
     first_operand: R.Logical | R.Int | R.Real | R.Character,
     second_operand: R.Logical | R.Int | R.Real | R.Character,

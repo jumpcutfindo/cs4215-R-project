@@ -1,8 +1,13 @@
+/*
+*   This module handles the logic related functionality of JORDAN.
+*/
+
 import {error, warn} from './error';
 import * as R from './types';
 import {mkLogical, mkLogicals, RNull} from './values';
-import {head, tail, length, checkArity} from './util';
+import {head, tail, length} from './util';
 import {Reval} from './eval';
+import {asLogicalVector} from './coerce';
 
 const type_hierarchy = ['logical', 'integer', 'numeric'];
 
@@ -27,6 +32,11 @@ export const LOGICAL_OPTYPES = {
     XOROP: 6,
 };
 
+/*
+*   do_logic handles the unary and binary logical operations of JORDAN.
+*   Depending on the arguments provided, the function dispatches the operand(s) to their
+*   repsective unary / binary functions.
+*/
 export const do_logic : R.PrimOp = (call, op, args, env) => {
     let ans: R.RValue = RNull;
 
@@ -57,7 +67,9 @@ export const do_logic : R.PrimOp = (call, op, args, env) => {
     return ans;
 };
 
-// Separate function to enable conditional evaluation
+/*
+*   do_logic2 handles the specific cases of AND and OR, as they are conditionally evaluated.
+*/
 export const do_logic2 : R.PrimOp = (call, op, args, env) => {
     let ans: R.RValue = RNull;
 
@@ -106,6 +118,10 @@ export const do_logic2 : R.PrimOp = (call, op, args, env) => {
     return ans;
 };
 
+/*
+*   Applies a specified unary operator to the operand provided.
+*   Coerces the given operand to a logical if required.
+*/
 function applyUnaryLogicalOperation(
     operator: any,
     operand: R.RValue,
@@ -118,25 +134,20 @@ function applyUnaryLogicalOperation(
         operand: operand as R.Logical | R.Int | R.Real,
     };
 
-    let logical_result;
+    // 1. Coerce types to logical
+    operands.operand = asLogicalVector(operands.operand) as R.Logical;
 
-    // 1. Check if the operator is 'isTRUE' or 'isFALSE'
-    if (operator === 'isTRUE') {
-        // TODO: Implement isTRUE using R code
-        console.log(`Developer: '${operator}' operator is not yet implemented!`);
-    } else if (operator === 'isFALSE') {
-        console.log(`Developer: '${operator}' operator is not yet implemented!`);
-    } else {
-        // 1. Coerce types to logical
-        operands.operand = coerceOperandToLogical(operands.operand);
-
-        // 2. Carry out operation
-        logical_result = unary_logical_functions[operator](operands.operand.data);
-    }
+    // 2. Carry out operation
+    const logical_result = unary_logical_functions[operator](operands.operand.data);
 
     return mkLogicals(logical_result);
 }
 
+/*
+*   Applies a specified binary operator to the operands provided.
+*   Coerces the given operands to logical objects if required.
+*   Recycling is also carried out on the shorter operand if required.
+*/
 function applyBinaryLogicalOperation(
     operator: any,
     first_operand: R.RValue,
@@ -147,7 +158,6 @@ function applyBinaryLogicalOperation(
         type_hierarchy.indexOf(second_operand.tag) === -1
     ) {
         error(`Error: logical operations are possible only for logical, integer or numeric types`);
-        return RNull;
     }
 
     let operands = {
@@ -156,8 +166,8 @@ function applyBinaryLogicalOperation(
     };
 
     // 1. Coerce both operands to logical type
-    operands.first_operand = coerceOperandToLogical(operands.first_operand);
-    operands.second_operand = coerceOperandToLogical(operands.second_operand);
+    operands.first_operand = asLogicalVector(operands.first_operand) as R.Logical;
+    operands.second_operand = asLogicalVector(operands.second_operand) as R.Logical;
 
     // 2. Check vector lengths and do recycling if operation is elementwise
     if (
@@ -176,6 +186,9 @@ function applyBinaryLogicalOperation(
     return mkLogicals(logical_result);
 }
 
+/*
+*   Recycles the shorter operand of the two provided to the length of the longer operand.
+*/
 function recycle(
     first_operand: R.Logical | R.Int | R.Real,
     second_operand: R.Logical | R.Int | R.Real,
@@ -211,23 +224,11 @@ function recycle(
     };
 }
 
-function coerceOperandToLogical(operand: R.Logical | R.Int | R.Real) {
-    return {
-        attributes: operand.attributes,
-        refcount: operand.refcount,
-        tag: 'logical',
-        data: (operand.data as any).map((x: any) => {
-            if (x === null) {
-                return null;
-            } else if (x === 0 || x === false) {
-                return false;
-            } else {
-                return true;
-            }
-        }),
-    } as R.Logical;
-}
-
+/*
+*   The basic logical functions are supported below. The elementwise version of the AND and OR
+*   operators work on the individual values of the vectors provided, while the standard AND and OR
+*   only consider the first value of the vectors provided.
+*/
 function not(
     operand_data: [boolean | null],
 ) {

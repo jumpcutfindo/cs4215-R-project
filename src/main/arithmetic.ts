@@ -635,6 +635,16 @@ function coerceTypes(
     };
 }
 
+function isNumeric(vec: R.RValue) {
+    switch (vec.tag) {
+    case 'logical':
+    case 'integer':
+    case 'numeric':
+        return true;
+    default:
+        return false;
+    }
+}
 
 // Unary arithmetic functions include +, -
 function positive(
@@ -737,16 +747,5 @@ function integerDivision(
         return (num !== null && other_num !== null) ?
             Math.floor(num / other_num) : null;
     });
-}
-
-function isNumeric(vec: R.RValue) {
-    switch (vec.tag) {
-    case 'logical':
-    case 'integer':
-    case 'numeric':
-        return true;
-    default:
-        return false;
-    }
 }
 

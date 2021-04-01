@@ -1,12 +1,16 @@
-import {checkArity, getNames, head, stringFalse, stringTrue, length} from './util';
+/*
+*   This module handles the type checking and coercion of JORDAN.
+*/
+import {checkArity, getNames, head, stringFalse, stringTrue} from './util';
 import * as R from './types';
 import {inherits} from './generics';
 import {error, warn} from './error';
 import {getAttribute} from './attrib';
-import {mkChar, mkChars, mkInt, mkInts, mkList, mkListPlus, mkLogical, mkLogicals, mkPairlist, mkReal, mkReals, RNull} from './values';
+import {mkChar, mkChars, mkInt, mkInts, mkListPlus, mkLogical, mkLogicals,
+    mkPairlist, mkReal, mkReals, RNull} from './values';
 import {copy} from './copy';
 
-// Standard types to check
+// Type checking functions implemented
 export const IS_OPTYPES = {
     NULL: 0,
     LOGICAL: 1,
@@ -21,6 +25,7 @@ export const IS_OPTYPES = {
     EXPRESSION: 10,
 };
 
+// Coercion functions implemented
 export const AS_OPTYPES = {
     LOGICAL: 0,
     INTEGER: 1,
@@ -30,6 +35,12 @@ export const AS_OPTYPES = {
     PAIRLIST: 5,
 };
 
+/*
+*   do_is handles the type checking functionalities of JORDAN.
+*   Depending on the op.variant provided, it checks the object to the type requested.
+*   Result is a logical vector that is either TRUE or FALSE. For unsupported objects,
+*   it returns FALSE.
+*/
 export const do_is: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
@@ -62,6 +73,9 @@ export const do_is: R.PrimOp = (call, op, args, env) => {
     }
 };
 
+/*
+*   do_isnumeric checks whether an object is a numerical type ('integer' or 'numeric').
+*/
 export const do_isnumeric: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
@@ -69,6 +83,11 @@ export const do_isnumeric: R.PrimOp = (call, op, args, env) => {
     return mkLogical(isObjectOfType(object, 'integer') || isObjectOfType(object, 'numeric'));
 };
 
+/*
+*   do_isna checks whether each of the values in the given vector / list / pairlist is an NA value.
+*   Returns a logical vector of the same length, which indicates if a value is NA (TRUE) or not (FALSE).
+*   For unsupported objects, it returns FALSE.
+*/
 export const do_isna: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
@@ -111,6 +130,10 @@ export const do_isna: R.PrimOp = (call, op, args, env) => {
     }
 };
 
+/*
+*   do_isnan checks each of the values of a vector for whether it is not a number.
+*   For unsupported objects, it gives an error.
+*/
 export const do_isnan: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
@@ -139,6 +162,10 @@ export const do_isnan: R.PrimOp = (call, op, args, env) => {
     }
 };
 
+/*
+*   do_isfinite checks each of the values of a vector for whether it is finite.
+*   For unsupported objects, it gives an error.
+*/
 export const do_isfinite: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
@@ -167,6 +194,10 @@ export const do_isfinite: R.PrimOp = (call, op, args, env) => {
     }
 };
 
+/*
+*   do_isinfinite checks each of the values of a vector for whether it is infinite.
+*   For unsupported objects, it gives an error.
+*/
 export const do_isinfinite: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
@@ -195,6 +226,12 @@ export const do_isinfinite: R.PrimOp = (call, op, args, env) => {
     }
 };
 
+/*
+*   do_asatomic handles the coercion in JORDAN.
+*   Depending on the op.variant provided, the function dispatches the coercion to the
+*   corresponding type requested.
+*   If the requested type does not exist, an error is thrown.
+*/
 export const do_asatomic: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
@@ -217,7 +254,10 @@ export const do_asatomic: R.PrimOp = (call, op, args, env) => {
     }
 };
 
-// Differs from R, only allows for basic vector types
+/*
+*   Checks whether a given object is a vector (logical, integer, numeric or character).
+*   Note: this differs from R, as it only handles the basic types we have implemented.
+*/
 export const do_isvector: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
@@ -237,6 +277,11 @@ export const do_isvector: R.PrimOp = (call, op, args, env) => {
     }
 };
 
+/*
+*   Determines if a string is true or false, based on the value.
+*   TRUE = c('T', 'True', 'TRUE', 'true'),
+*   FALSE = c('F', 'False', 'FALSE', 'false')
+*/
 export function logicalFromString(x: string|null) : boolean|null {
     if (x !== null) {
         if (stringTrue(x)) return true;
@@ -245,6 +290,9 @@ export function logicalFromString(x: string|null) : boolean|null {
     return null;
 }
 
+/*
+*   Coerces a given object into a character factor.
+*/
 export function asCharacterFactor(x: R.RValue) : R.Character {
     if (!inherits(x, 'factor') || x.tag !== 'integer') {
         error('attempting to coerce non-factor');
@@ -257,6 +305,11 @@ export function asCharacterFactor(x: R.RValue) : R.Character {
     return mkChars(chardata);
 }
 
+/*
+*   Coerces a given object into the type provided.
+*   As a default case, if the object coercion is not supported, we give a warning and
+*   return the original vector.
+*/
 export function coerceTo(vec: R.RValue, type: string) {
     if (vec.tag === RNull.tag) return RNull;
     switch (type) {
@@ -280,8 +333,8 @@ export function coerceTo(vec: R.RValue, type: string) {
 }
 
 /*
-* Coercion of values to a logical vector. Note that objects other than vectors cannot be
-* coerced to a logical vector.
+*   Coercion of values to a logical vector. Note that objects other than vectors cannot be
+*   coerced to a logical vector.
 */
 export function asLogicalVector(vec: R.RValue): R.Logical | R.Nil {
     let ans: R.Logical | R.Nil = RNull;
@@ -310,10 +363,10 @@ export function asLogicalVector(vec: R.RValue): R.Logical | R.Nil {
 }
 
 /*
-* Coercion of values to an integer vector. Note that objects other than vectors cannot be
-* coerced to a logical vector.
+*   Coercion of values to an integer vector. Note that objects other than vectors cannot be
+*   coerced to a logical vector.
 *
-* We floor the number values in order to preserve the integer property.
+*   We floor the number values in order to preserve the integer property.
 */
 export function asIntVector(vec: R.RValue): R.Int | R.Nil {
     let ans: R.Int | R.Nil = RNull;
@@ -339,11 +392,11 @@ export function asIntVector(vec: R.RValue): R.Int | R.Nil {
 }
 
 /*
-* Coercion of values to a character vector.
+*   Coercion of values to a character vector.
 *
-* For lists and pairlists, what R usually does is it takes the unevaluated expression and uses it
-* as the string value. Here, we simply convert the information held under the 'data' field of the
-* objects into strings.
+*   For lists and pairlists, what R usually does is it takes the unevaluated expression and uses it
+*   as the string value. Here, we simply convert the information held under the 'data' field of the
+*   objects into strings.
 */
 export function asCharVector(vec: R.RValue): R.Character | R.Nil {
     let ans: R.Character | R.Nil = RNull;
@@ -384,8 +437,8 @@ export function asCharVector(vec: R.RValue): R.Character | R.Nil {
     return ans;
 }
 /*
-* Coercion of values to a numeric vector. Note that objects other than vectors cannot be
-* coerced to a numeric vector.
+*   Coercion of values to a numeric vector. Note that objects other than vectors cannot be
+*   coerced to a numeric vector.
 */
 export function asRealVector(vec: R.RValue): R.Real | R.Nil {
     let ans: R.Real | R.Nil = RNull;
@@ -407,8 +460,7 @@ export function asRealVector(vec: R.RValue): R.Real | R.Nil {
             if (isNaN(temp)) {
                 warn('NAs introduced by coercion');
                 return null;
-            }
-            else return temp;
+            } else return temp;
         }));
         break;
     }
@@ -416,11 +468,11 @@ export function asRealVector(vec: R.RValue): R.Real | R.Nil {
     return ans;
 }
 /*
-* Coercion of objects to a list object.
+*   Coercion of objects to a list object.
 *
-* Vectors are broken up into individual vectors and each is a value in the list.
-* If names exist on the object, we copy the names over as well.
-* All other attributes will be dropped.
+*   Vectors are broken up into individual vectors and each is a value in the list.
+*   If names exist on the object, we copy the names over as well.
+*   All other attributes will be dropped.
 */
 export function asListObject(vec: R.RValue): R.List | R.Nil {
     let ans: R.List | R.Nil = RNull;
@@ -485,6 +537,13 @@ export function asListObject(vec: R.RValue): R.List | R.Nil {
     return ans;
 }
 
+/*
+*   Coercion of objects to a pairlist object.
+*
+*   Vectors are broken up into individual vectors and each is a key-value pair in the pairlist.
+*   If names exist on the object, we copy the names over as well.
+*   All other attributes will be dropped.
+*/
 export function asPairlistObject(vec: R.RValue): R.PairList | R.Nil {
     let ans: R.PairList | R.Nil = RNull;
 
