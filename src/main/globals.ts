@@ -173,6 +173,7 @@ export function internalSymbol(
             visibility: visibility,
             arity: arity,
             variant: variant,
+            primName: name
         },
     };
 }
@@ -197,6 +198,7 @@ export function primitiveSymbol(
             visibility: visibility,
             arity: arity,
             variant: variant,
+            primName: name
         },
     };
 }

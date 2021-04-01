@@ -1,12 +1,13 @@
 import {error} from './main/error';
 import {isBreak, isNext, isReturn, Reval} from './main/eval';
 import {EvalContext, initPrimitives} from './main/globals';
+import { printValue } from './main/print';
 import * as R from './main/types';
 import {head, LinkedListIter, tail} from './main/util';
 import {RNull, R_BaseEnv, R_GlobalEnv, R_LastValueSymbol} from './main/values';
 import {parse} from './parser';
 
-const sampleProg1 : string = `
+export const sampleProg1 : string = `
 x <- c(1,2,3)
 if (length(x) > 2) {
     print("length is more than 2")
@@ -16,7 +17,7 @@ if (length(x) > 2) {
 x
 `;
 
-const sampleProg2 : string =
+export const sampleProg2 : string =
 `x <- 4
 fun <- function(x) {
     x <- x + 3
@@ -26,16 +27,16 @@ fun <- function(x) {
 fun(x)
 `;
 
-const sampleProg3 : string = `
+export const sampleProg3 : string = `
 if (T) 3 else 4
 .Last.value
 `;
 
-const sampleProg4 : string = `
+export const sampleProg4 : string = `
 c(abc=1, def=2, "a", recursive=TRUE);
 `;
 
-const sampleProg5 : string = `
+export const sampleProg5 : string = `
 x <- 5
 attributes(x)<-c(1,2,3)
 `;
@@ -66,13 +67,12 @@ export function interpret(prog: string, env: R.Env) {
         }
         R_LastValueSymbol.value = result;
         if (EvalContext.R_Visible) {
-            printValueEnv(result, env);
+            printValue(result);
         }
         if (true) {
             printWarnings();
         }
     }
-    return result;
 }
 
 export function testInterpret(prog: string, env: R.Env) {
@@ -92,7 +92,7 @@ export function testInterpret(prog: string, env: R.Env) {
 }
 
 // placeholders
-const printValueEnv = (r: R.RValue, e: R.Env) => console.log(r);
+// const printValueEnv = (r: R.RValue, e: R.Env) => console.log(r);
 const printWarnings = () => {};
 
 export function setupR() {
@@ -102,6 +102,10 @@ export function setupR() {
 }
 
 setupR();
+
+export function simpleInterpret(prog: string) {
+    interpret(prog, R_GlobalEnv);
+}
 
 // const sampleProg = `
 //     x <- list(num=1, nul=NULL, str=c("hello", "bye"), bulz=c(TRUE, TRUE, FALSE, FALSE));

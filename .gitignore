@@ -111,3 +111,6 @@ dist
 .tern-port
 
 .VSCodeCounter
+
+.parcel-cache/
+www/

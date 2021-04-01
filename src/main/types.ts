@@ -83,6 +83,7 @@ export interface Builtin {
     visibility: Vis;
     variant: number; // May change to something more understandable
     arity: number;
+    primName: string;
 }
 
 export interface Special {
@@ -91,6 +92,7 @@ export interface Special {
     visibility: Vis;
     variant: number;
     arity: number;
+    primName: string;
 }
 
 export interface Prom {

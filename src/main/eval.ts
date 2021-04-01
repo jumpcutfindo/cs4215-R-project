@@ -347,7 +347,7 @@ export const do_repeat : R.PrimOp = (call, op, args, env) => {
             break;
         }
         if (isReturn(result)) {
-            return result);
+            return result;
         }
     }
     return RNull;

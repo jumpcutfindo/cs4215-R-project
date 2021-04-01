@@ -35,19 +35,19 @@ function(pattern, x, ignore.case = FALSE,
          value = FALSE, fixed = FALSE, invert = FALSE)
 {
     ## when value = TRUE we return names
-    if(!is.character(x)) x <- structure(as.character(x), names=names(x))
+    if(!is.character(x)) x <- structure(as.character(x), names=names(x));
     .Internal(grep(as.character(pattern), x, ignore.case, value,
-                   fixed, invert))
-}
+                   fixed, invert));
+};
 
 grepl <-
 function(pattern, x, ignore.case = FALSE,
          fixed = FALSE)
 {
-    if(!is.character(x)) x <- as.character(x)
+    if(!is.character(x)) x <- as.character(x);
     .Internal(grepl(as.character(pattern), x, ignore.case, FALSE,
-                    fixed, FALSE))
-}
+                    fixed, FALSE));
+};
 
 sub <-
 function(pattern, replacement, x, ignore.case = FALSE, fixed = FALSE)

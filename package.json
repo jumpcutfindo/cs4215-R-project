@@ -2,8 +2,9 @@
   "name": "cs4215-r-project",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.html",
   "scripts": {
+    "build": "parcel build ./dist/index.html --dist-dir ./www",
     "compile": "npx tsc",
     "lint": "eslint . --ext .ts",
     "format": "eslint --fix",
@@ -20,6 +21,7 @@
     "eslint": "^7.19.0",
     "eslint-config-google": "^0.14.0",
     "jest": "^26.6.3",
+    "parcel": "^2.0.0-beta.2",
     "ts-jest": "^26.5.3",
     "typescript": "^4.1.3"
   },
