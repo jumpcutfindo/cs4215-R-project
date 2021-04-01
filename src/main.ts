@@ -10,8 +10,10 @@ enum TEXT_TYPE {
 const App = Vue.defineComponent({
     data() {
         return {
+            input_history: [] as string[],
             history: [] as { text: string, type: TEXT_TYPE }[],
             program: '',
+            curr_history_index: 0 as number,
         };
     },
     updated() {
@@ -19,12 +21,15 @@ const App = Vue.defineComponent({
     },
     methods: {
         repl(prog: string) {
+            this.input_history.push(prog.substring(0, prog.length - 1));
             this.history.push({text: '> ' + prog, type: TEXT_TYPE.UserInput});
             simpleInterpret(prog)
                 .map(({printOutput, isErr}) =>
                     ({text: printOutput, type: isErr ? TEXT_TYPE.ErrorOutput : TEXT_TYPE.EvalOutput}))
                 .forEach((x) => this.history.push(x));
             this.program = '';
+
+            if (this.input_history.length !== 0) this.curr_history_index = this.input_history.length - 1;
         },
         outputType(type: TEXT_TYPE) {
             switch (type) {
@@ -40,6 +45,11 @@ const App = Vue.defineComponent({
             // scroll to the start of the last message
             const container: any = this.$refs.container;
             container.scrollTop = container.scrollHeight;
+        },
+        getPreviousInput: function() {
+            this.program = this.input_history[this.curr_history_index];
+            this.curr_history_index = this.curr_history_index - 1;
+            if (this.curr_history_index === -1) this.curr_history_index = this.input_history.length - 1;
         },
     },
 });

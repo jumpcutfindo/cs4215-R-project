@@ -83,7 +83,13 @@
                     {{ entry.text }}
                 </div>
             </div>
-            <textarea rows="5" v-model="program" @keyup.shift.enter='' @keyup.enter.exact='repl(program)' type="text" class="repl-entry"></textarea>
+            <textarea rows="5" 
+                v-model="program" 
+                @keyup.up='getPreviousInput()'
+                @keyup.shift.enter='' 
+                @keyup.enter.exact='repl(program)' 
+                type="text" 
+                class="repl-entry"></textarea>
         </div>
     </div>
 </div>
