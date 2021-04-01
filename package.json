@@ -2,9 +2,9 @@
   "name": "cs4215-r-project",
   "version": "1.0.0",
   "description": "",
-  "main": "index.html",
+  "main": "index.ts",
   "scripts": {
-    "build": "parcel build ./dist/index.html --dist-dir ./www",
+    "serve": "parcel index.html",
     "compile": "npx tsc",
     "lint": "eslint . --ext .ts",
     "format": "eslint --fix",
@@ -27,6 +27,6 @@
   },
   "dependencies": {
     "antlr4ts": "^0.5.0-alpha.4",
-    "ts-node": "^9.1.1"
+    "vue": "^3.0.10"
   }
 }

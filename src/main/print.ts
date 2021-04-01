@@ -17,9 +17,15 @@ class Printer {
         this.currStr += '\t'.repeat(this.indent);
     }
 
-    public flush() {
+    public flushConsole() {
         console.log(this.currStr);
         this.currStr = '';
+    }
+
+    public flushString(): string {
+        const result = this.currStr;
+        this.currStr = '';
+        return result;
     }
 }
 
@@ -54,8 +60,17 @@ export function printValue(val: R.RValue) {
     } else {
         printS3Object(val, classes.data);
     }
-    P.flush();
+    P.flushConsole();
+}
 
+export function outputValue(val: R.RValue): string {
+    const classes = getAttribute(val, 'class');
+    if (classes.tag !== 'character') {
+        printDefault(val);
+    } else {
+        printS3Object(val, classes.data);
+    }
+    return P.flushString();
 }
 
 export function printDefault(val: R.RValue) {
@@ -159,6 +174,7 @@ export function printList(list: R.PairList|R.List, prefix: string = '') {
         } else {
             printDefault(val);
         }
+        P.println('');
     });
 }
 

@@ -1,85 +1,43 @@
 import {error} from './main/error';
 import {isBreak, isNext, isReturn, Reval} from './main/eval';
 import {EvalContext, initPrimitives} from './main/globals';
-import { printValue } from './main/print';
+import { outputValue, printValue } from './main/print';
 import * as R from './main/types';
-import {head, LinkedListIter, tail} from './main/util';
 import {RNull, R_BaseEnv, R_GlobalEnv, R_LastValueSymbol} from './main/values';
 import {parse} from './parser';
 
-export const sampleProg1 : string = `
-x <- c(1,2,3)
-if (length(x) > 2) {
-    print("length is more than 2")
-} else {
-    x <- rep(x, 2)
-}
-x
-`;
+import baseLib from './library/base.R';
 
-export const sampleProg2 : string =
-`x <- 4
-fun <- function(x) {
-    x <- x + 3
-    x <- x * 2   # random comment
-    x * x
-}
-fun(x)
-`;
-
-export const sampleProg3 : string = `
-if (T) 3 else 4
-.Last.value
-`;
-
-export const sampleProg4 : string = `
-c(abc=1, def=2, "a", recursive=TRUE);
-`;
-
-export const sampleProg5 : string = `
-x <- 5
-attributes(x)<-c(1,2,3)
-`;
-
-function printAST(call: R.Language) {
-    for (let i of new LinkedListIter(call)) {
-        if (i.value.tag === 'name') {
-            process.stdout.write(i.value.pname + ', ');
-        } else if (i.value.tag === 'numeric') {
-            process.stdout.write(`${i.value.data}, `);
-        }
-    }
-    console.log();
-}
-
-
-export function interpret(prog: string, env: R.Env) {
+export function interpret(prog: string, env: R.Env): { printOutput: string, isErr: boolean }[] {
     const ast = parse(prog); // should wrap in try-catch
-    let result;
+    let results = [];
     for (const expr of (<R.Expression>ast).data) {
-        // printAST(expr as R.Language);
-        result = Reval(expr, env);
-        if (isReturn(result)) {
-            error('no function to return from, jumping to top level');
-        }
-        if (isBreak(result) || isNext(result)) {
-            error('no loop for break/next, jumping to top level');
-        }
-        R_LastValueSymbol.value = result;
-        if (EvalContext.R_Visible) {
-            printValue(result);
-        }
-        if (true) {
-            printWarnings();
+        try {
+            const result = Reval(expr, env);
+            if (isReturn(result)) {
+                error('no function to return from, jumping to top level');
+            }
+            if (isBreak(result) || isNext(result)) {
+                error('no loop for break/next, jumping to top level');
+            }
+            R_LastValueSymbol.value = result;
+            if (EvalContext.R_Visible) {
+                results.push({ printOutput: outputValue(result), isErr: false });
+            }
+            if (true) {
+                printWarnings();
+            }
+        } catch (e) {
+            results.push({ printOutput: 'Error: ' + e.message, isErr: true });
         }
     }
+    return results;
 }
 
 export function testInterpret(prog: string, env: R.Env) {
     const ast = parse(prog); // should wrap in try-catch
     let result;
     for (const expr of (<R.Expression>ast).data) {
-        // printAST(expr as R.Language);
         result = Reval(expr, env);
         if (isReturn(result)) {
             error('no function to return from, jumping to top level');
@@ -97,14 +55,13 @@ const printWarnings = () => {};
 
 export function setupR() {
     initPrimitives();
-    const base : string = require('./library/base.R').default;
-    interpret(base, R_BaseEnv);
+    interpret(baseLib, R_BaseEnv);
 }
 
 setupR();
 
-export function simpleInterpret(prog: string) {
-    interpret(prog, R_GlobalEnv);
+export function simpleInterpret(prog: string): { printOutput: string, isErr: boolean }[] {
+    return interpret(prog, R_GlobalEnv);
 }
 
 // const sampleProg = `

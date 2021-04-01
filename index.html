@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+<title>joRdan Interpreter</title>
+<style>
+    html {
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+    textarea {
+        margin: 5px;
+        padding: 10px;
+        border-radius: 10px;
+        outline: none;
+        resize: none;
+        width: 50%;
+    }
+    .err {
+        color: red;
+    }
+    .return {
+        color: chocolate;
+    }
+    .input {
+        color: black;
+    }
+</style>
+</head>
+<body>
+<div id="app">
+    <div v-for="entry in history" :class="outputType(entry.type)">
+        {{ entry.text }}
+    </div>
+    <textarea rows="5" v-model="program" @keyup.shift.enter='repl(program)' type="text"></textarea>
+</div>
+<script src='./src/main.ts'></script>
+</body>
+</html>
