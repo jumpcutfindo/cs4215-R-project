@@ -239,6 +239,7 @@ export const do_subassign3: R.PrimOp = (call, op, args, env) => {
 /*
 *   Extracts a single value at a given index.
 *   Does copying of the attributes after extraction.
+*   Note: the 'index' argument is 1-indexed.
 */
 function extractSingleAtIndex(vec: R.RValue, index: number | null): R.RValue {
     if (index === null || (index - 1) >= length(vec)) error('subscript out of bounds');
@@ -284,7 +285,8 @@ function extractSingleAtIndex(vec: R.RValue, index: number | null): R.RValue {
         break;
     }
 
-    ans = copyAttributesAfterExtraction(vec, ans, [index]);
+    // Remember to deduct 1 from the index!
+    ans = copyAttributesAfterExtraction(vec, ans, [index - 1]);
 
     return ans;
 }
