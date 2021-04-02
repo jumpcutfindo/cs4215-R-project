@@ -583,7 +583,7 @@ function assignSingleAtIndex(vec: R.RValue, index: number, value: R.RValue): R.R
         error('attempt to select less than one element');
     }
 
-    if (length(value) > length(vec)) {
+    if ((vec.tag !== 'list' && vec.tag !== 'pairlist' && vec.tag !== 'expression') && length(value) > length(vec)) {
         error('more elements supplied than there are to replace');
     }
 
