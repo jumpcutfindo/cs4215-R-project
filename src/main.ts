@@ -51,6 +51,13 @@ const App = Vue.defineComponent({
             this.curr_history_index = this.curr_history_index - 1;
             if (this.curr_history_index === -1) this.curr_history_index = this.input_history.length - 1;
         },
+        getNextInput: function() {
+            this.program = this.input_history[this.curr_history_index];
+            this.curr_history_index = this.curr_history_index + 1;
+            if (this.curr_history_index > this.input_history.length) {
+                this.curr_history_index = this.input_history.length - 1;
+            }
+        },
     },
 });
 Vue.createApp(App).mount('#app');

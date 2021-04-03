@@ -52,7 +52,7 @@ export const do_subset: R.PrimOp = (call, op, args, env) => {
 };
 
 /*
-*   do_subset2 handles the implementation for '[[' subsetting.
+*   do_subset2 handles the implementation for '[' subsetting.
 *   '[' subsetting is able to only select one value, based on the arguments provided.
 *   Depending on the type of the arguments, the function dispatches the handling of the
 *   subsetting to the different functions.
@@ -94,7 +94,7 @@ export const do_subset2: R.PrimOp = (call, op, args, env) => {
 
 /*
 *   do_subset3 handles the implementation for '$' subsetting.
-*   '[' subsetting is able to only select one value, based on the name provided.
+*   '$' subsetting is able to only select one value, based on the name provided.
 *   This form of subsetting also only works on list / pairlist objects.
 */
 export const do_subset3: R.PrimOp = (call, op, args, env) => {
@@ -132,8 +132,6 @@ export const do_subassign: R.PrimOp = (call, op, args, env) => {
     const object = copy(Reval(head(args), env));
     let params = head(tail(args));
     const replacements = Reval(head(tail(tail(args))), env);
-
-    console.log(replacements);
 
     if (hasNAs(object)) error('NAs are not allowed in subscripted assignments');
 
@@ -330,11 +328,15 @@ function extractSingleByName(vec: R.RValue, name: string | null, exact: boolean 
         const nameValues = names.value as R.Character;
 
         if (!exact) {
-            const matches = nameValues.data.filter((n) => n?.includes(name));
-            if (matches.length !== 1) {
-                ans = RNull;
+            if (nameValues.data.indexOf(name) !== -1) {
+                ans = extractSingleAtIndex(vec, nameValues.data.indexOf(name) + 1);
             } else {
-                ans = extractSingleAtIndex(vec, nameValues.data.indexOf(matches[0]) + 1);
+                const matches = nameValues.data.filter((n) => n?.includes(name));
+                if (matches.length !== 1) {
+                    ans = RNull;
+                } else {
+                    ans = extractSingleAtIndex(vec, nameValues.data.indexOf(matches[0]) + 1);
+                }
             }
         } else {
             if (nameValues.data.indexOf(name) !== -1) {
@@ -402,7 +404,10 @@ function extractMultipleAtIndexes(vec: R.RValue, indexes: (number | null)[]): R.
     let hasNegative = false;
     let allNegative = true;
     for (const i of indexes) {
-        if (i === null) continue;
+        if (i === null) {
+            allNegative = false;
+            continue;
+        }
         if (i < 0) hasNegative = true;
         if (i >= 1) allNegative = false;
     }

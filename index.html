@@ -86,6 +86,7 @@
             <textarea rows="5" 
                 v-model="program" 
                 @keyup.up='getPreviousInput()'
+                @keyup.down='getNextInput()'
                 @keyup.shift.enter='' 
                 @keyup.enter.exact='repl(program)' 
                 type="text" 
