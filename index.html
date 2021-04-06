@@ -13,13 +13,17 @@
         background: #556271;
         color: white;
     }
+    body {
+        display: flex;
+        justify-content: center;
+    }
     textarea {
-        margin: 5px;
         padding: 10px;
         border-radius: 10px;
         outline: none;
         resize: none;
-        width: 50%;
+        width: 100%;
+        box-sizing: border-box;
     }
     .err {
         color: red;
@@ -31,8 +35,10 @@
         color: white;
     }
 
-    .main {
-        flex: auto;
+    #app {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
     }
 
     .title {
@@ -49,16 +55,13 @@
 
     .interpreter {
         width: 50vw;
-        margin-left: auto;
-        margin-right: auto;
     }
 
     .repl-entry {
-        width: 100%;
+        padding: 5px;
     }
 
     .repl {
-        width: 100%;
         margin: 5px;
         padding: 10px;
         border-radius: 10px;
@@ -68,29 +71,76 @@
         overflow-y: auto;
         background: #282E35;
     }
+
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-right: 4px rgba(0, 0, 0, 0) solid;
+        background-clip: padding-box;
+        /* border-radius: 3px;
+        border: 4px solid rgba(0,0,0,0);
+        background-clip: padding-box; */
+    
+    }
+
+    .environment {
+        background-color: rgba(1,1,1,0.2);
+        width: 25vw;
+        border-radius: 10px;
+        margin: 5px;
+        padding: 10px;
+    }
+
 </style>
 </head>
 <body>
 <div id="app">
-    <div class="main">
-        <div class="interpreter">
-            <div style="padding-bottom: 8px;">
-                <h1 class="title">joRdan interpreter!</h1>
-                <h4 class="subtitle">by Daniel Hoe and Joash Chin</h4>
-            </div>
-            <div id="container" ref="container" class="repl">
-                <div v-for="entry in history" :class="outputType(entry.type)">
-                    {{ entry.text }}
-                </div>
-            </div>
-            <textarea rows="5" 
-                v-model="program" 
-                @keyup.up='getPreviousInput()'
-                @keyup.shift.enter='' 
-                @keyup.enter.exact='repl(program)' 
-                type="text" 
-                class="repl-entry"></textarea>
+    <div class="interpreter">
+        <div style="padding-bottom: 8px;">
+            <h1 class="title">joRdan interpreter!</h1>
+            <h4 class="subtitle">by Daniel Hoe and Joash Chin</h4>
         </div>
+        <div id="container" ref="container" class="repl">
+            <div v-for="entry in history" :class="outputType(entry.type)">
+                {{ entry.printOutput }}
+            </div>
+        </div>
+        <div class="repl-entry">
+            <textarea rows="5" 
+                    v-model="program" 
+                    @keyup.up.exact='getPreviousInput()'
+                    @keyup.shift.enter='' 
+                    @keyup.enter.exact='repl(program)' 
+                    type="text">
+            </textarea>
+        </div>
+    </div>
+    <div class="environment">
+        <h2 class="subtitle">Options</h2>
+        <label><input type="checkbox" v-model="options.warnPartialArgs" v-on:change="updateOptions">Warn Partial Args</label><br>
+        <label><input type="checkbox" v-model="options.warn" v-on:change="updateOptions">Show Warnings</label>
+        <h2 class="subtitle">Environment</h2>
+        <table>
+            <tr>
+                <th>Variable</th>
+                <th>Type</th>
+                <th>Length</th>
+            </tr>
+            <tr v-for="binding in envEntries">
+                <td>{{ binding.variable }}</td>
+                <td>{{ binding.type }}</td>
+                <td>{{ binding.length }}</td>
+            </tr>
+        </table>
     </div>
 </div>
 <script src='./src/main.ts'></script>

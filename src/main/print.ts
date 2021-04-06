@@ -1,4 +1,4 @@
-import { getAttribute } from './attrib';
+import { getAttribute, hasAttributes } from './attrib';
 import * as R from './types';
 import { head, length, LinkedListIter, tail } from './util';
 import { mkClosure, RNull, R_GlobalEnv, R_MissingArg } from './values';
@@ -64,7 +64,7 @@ export function printValue(val: R.RValue) {
 }
 
 export function outputValue(val: R.RValue): string {
-    const classes = getAttribute(val, 'class');
+    const classes = hasAttributes(val) ? getAttribute(val, 'class') : RNull;
     if (classes.tag !== 'character') {
         printDefault(val);
     } else {
@@ -79,7 +79,9 @@ export function printDefault(val: R.RValue) {
         P.print('NULL');
         break;
     case 'name':
-        P.print(validName(val.pname));
+        if (!(val.pname === '')) {
+            P.print(validName(val.pname));
+        } 
         break;
     case 'builtin':
     case 'special':
@@ -186,7 +188,7 @@ export function printLanguage(call: R.Language) {
             if (length(call) >= 3) {
                 P.print('if (');
                 printDefault(head(tail(call)));
-                P.print(')');
+                P.print(') ');
                 printDefault(head(tail(tail(call))));
                 let alt = tail(tail(tail(call)));
                 if (alt.tag !== 'NULL') {
@@ -202,7 +204,7 @@ export function printLanguage(call: R.Language) {
                 printDefault(head(tail(call)));
                 P.print(' in ');
                 printDefault(head(tail(tail(call))));
-                P.print(')');
+                P.print(') ');
                 printDefault(head(tail(tail(tail(call)))));
                 done = true;
                 break;
@@ -211,7 +213,7 @@ export function printLanguage(call: R.Language) {
             if (length(call) === 3) {
                 P.print('while (');
                 printDefault(head(tail(call)));
-                P.print(')');
+                P.print(') ');
                 printDefault(head(tail(tail(call))));
                 done = true;
                 break;
@@ -251,10 +253,15 @@ export function printLanguage(call: R.Language) {
             break;
         }
         if (!done) {
-            if (isOperator(call.value.pname) && length(call) === 3) {
+            const isOp = isOperator(call.value.pname);
+            const callLen = length(call);
+            if (isOp && callLen === 3) {
                 printDefault(head(tail(call)));
                 P.print(` ${call.value.pname} `);
                 printDefault(head(tail(tail(call))));
+            } else if (isOp && callLen === 2) {
+                P.print(call.value.pname);
+                printDefault(head(tail(call)));
             } else if ((call.value.pname === '[' || call.value.pname === '[[') && length(call) >= 2) {
                 const isOne = call.value.pname === '[';
                 printDefault(head(tail(call)));
@@ -307,7 +314,7 @@ export function printBraces(args: R.PairList|R.Nil) {
     P.println('');
     for (const arg of new LinkedListIter(args)) {
         printDefault(arg.value);
-        P.print(';');
+        P.println(';');
     }
     P.indent--;
     P.println('');

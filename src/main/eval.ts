@@ -3,7 +3,7 @@ import {asCharacterFactor, logicalFromString} from './coerce';
 import {ddFind, defineVar, findFun, findVar, closureEnv, setVar, findVarInFrame} from './envir';
 import {error, errorcall, warncall} from './error';
 import { inherits } from './generics';
-import {EvalContext} from './globals';
+import { EvalContext } from "./EvalContext";
 import {matchArgs} from './match';
 import {forcePromise, promiseArgs} from './promise';
 import * as R from './types';
@@ -56,6 +56,7 @@ export function Reval(e: R.RValue, env: R.Env) : R.RValue {
         result = forcePromise(e);
         break;
     case 'language':
+        EvalContext.CurrentCall = e;
         const lang = head(e);
         const op = lang.tag === 'name' ? findFun(lang, env, e) : Reval(lang, env);
         let args: R.PairList|R.Nil = tail(e);
@@ -194,7 +195,7 @@ function asLogicalNoNA(s: R.RValue, call: R.Language) : boolean {
         if (s.data.length > 0) {
             result = s.tag === 'character' ?
                 logicalFromString(s.data[0]) : // strings are checked against truenames/falsenames in util.ts
-                (s.data[0] === null? null : !!s.data[0]);
+                (s.data[0] === null || Number.isNaN(s.data[0]) ? null : !!s.data[0]);
         } else {
             errorcall(call, 'argument is of length 0');
         }
