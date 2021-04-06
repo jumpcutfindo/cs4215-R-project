@@ -58,7 +58,14 @@ const App = Vue.defineComponent({
         },
         updateOptions() {
             setOptions(this.options);
-        }
+        },
+        getNextInput: function() {
+            this.program = this.input_history[this.curr_history_index];
+            this.curr_history_index = this.curr_history_index + 1;
+            if (this.curr_history_index > this.input_history.length) {
+                this.curr_history_index = this.input_history.length - 1;
+            }
+        },
     },
 });
 const vm = Vue.createApp(App)
