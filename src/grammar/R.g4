@@ -139,7 +139,8 @@ EXP :   ('E' | 'e') ('+' | '-')? DIGIT+ ;
 
 STRING
     :   '"' ( ESC | ~[\\"] )*? '"'
-    |   '\'' ( ESC | ~[\\'] )*? '\''
+// Removing single quote strings '' since we rely on JSON to parse.
+//    |   '\'' ( ESC | ~[\\'] )*? '\'' 
     ;
 
 fragment

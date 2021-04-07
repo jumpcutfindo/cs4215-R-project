@@ -1,7 +1,7 @@
 import {findVar} from './envir';
 import {error} from './error';
 import {Reval} from './eval';
-import {EvalContext} from './globals';
+import { EvalContext } from "./EvalContext";
 import {Env, LinkedList, Nil, PairList, Prom, RValue} from './types';
 import {head, headkey, tail} from './util';
 import {mkPairlist, mkPromise, RNull, R_DotsSymbol, R_MissingArg, R_UnboundValue} from './values';

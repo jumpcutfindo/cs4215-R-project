@@ -5,7 +5,7 @@ import {do_begin, do_break, do_for, do_function, do_if, do_paren, do_repeat, do_
 import {do_c} from './bind';
 import {do_logic, do_logic2, LOGICAL_OPTYPES} from './logic';
 import {do_relop, RELATIONAL_OPTYPES} from './relop';
-import {Name, PrimOp, Prom, Vis} from './types';
+import {Name, PrimOp, Vis} from './types';
 import {install, installSymbol, RNull, R_UnboundValue} from './values';
 import {do_colon} from './seq';
 import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_dim, do_dimgets, do_names, do_namesgets} from './attrib';
@@ -16,13 +16,7 @@ import { CHAR_OPTYPES, do_grep, do_gsub, do_nchar, do_startsWith, do_strrep, do_
 import { checkArity, head, tail } from './util';
 import { errorcall } from './error';
 import { IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isvector, AS_OPTYPES, do_asatomic } from './coerce';
-
-// Global variable that can be set by various primitive functions and is checked
-// by REPL to determine whether to print the result of evaluation or not
-export class EvalContext {
-    public static R_Visible: Vis = Vis.On;
-    public static R_PendingPromises: Prom[] = [];
-}
+import { EvalContext } from './EvalContext';
 
 export function initPrimitives() {
     const primitives = [
