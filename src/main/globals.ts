@@ -10,13 +10,14 @@ import {install, installSymbol, RNull, R_UnboundValue} from './values';
 import {do_colon} from './seq';
 import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_dim, do_dimgets, do_names, do_namesgets} from './attrib';
 import {do_length} from './array';
-import { do_subassign, do_subassign2, do_subassign3, do_subset, do_subset2, do_subset3 } from './subset';
-import { do_makelist } from './builtin';
-import { CHAR_OPTYPES, do_grep, do_gsub, do_nchar, do_startsWith, do_strrep, do_substr, do_tolower } from './character';
-import { checkArity, head, tail } from './util';
-import { errorcall } from './error';
-import { IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isvector, AS_OPTYPES, do_asatomic } from './coerce';
-import { EvalContext } from './EvalContext';
+import {do_subassign, do_subassign2, do_subassign3, do_subset, do_subset2, do_subset3} from './subset';
+import {do_makelist} from './builtin';
+import {CHAR_OPTYPES, do_grep, do_gsub, do_nchar, do_startsWith, do_strrep, do_substr, do_tolower} from './character';
+import {checkArity, head, tail} from './util';
+import {errorcall} from './error';
+import {IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isvector, AS_OPTYPES, do_asatomic} from './coerce';
+import {EvalContext} from './EvalContext';
+import {do_range, do_summary, SUMMARY_OPTYPES} from './summary';
 
 export function initPrimitives() {
     const primitives = [
@@ -97,6 +98,7 @@ export function initPrimitives() {
         primitiveSymbol('sqrt',         do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.SQRT}),
         primitiveSymbol('sign',         do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.SIGN}),
         primitiveSymbol('trunc',        do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.TRUNC}),
+        primitiveSymbol('abs',          do_math1,   'builtin',      {visibility: Vis.On, arity: -1, variant: MATH_OPTYPES.ABS}),
         primitiveSymbol('round',        do_math2,   'builtin',      {visibility: Vis.On, arity: -1, variant: MATH_OPTYPES.ROUND}),
         primitiveSymbol('signif',       do_math2,   'builtin',      {visibility: Vis.On, arity: -1, variant: MATH_OPTYPES.SIGNIF}),
 
@@ -124,6 +126,14 @@ export function initPrimitives() {
         primitiveSymbol('sinpi',        do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.SINPI}),
         primitiveSymbol('cospi',        do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.COSPI}),
         primitiveSymbol('tanpi',        do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.TANPI}),
+
+        /* Summary functions, supposed to be generic but we don't handle those for now */
+        primitiveSymbol('sum',              do_summary,     'builtin',      {visibility: Vis.On, arity: -1, variant: SUMMARY_OPTYPES.SUM}),
+        primitiveSymbol('min',              do_summary,     'builtin',      {visibility: Vis.On, arity: -1, variant: SUMMARY_OPTYPES.MIN}),
+        primitiveSymbol('max',              do_summary,     'builtin',      {visibility: Vis.On, arity: -1, variant: SUMMARY_OPTYPES.MAX}),
+        primitiveSymbol('prod',             do_summary,     'builtin',      {visibility: Vis.On, arity: -1, variant: SUMMARY_OPTYPES.PROD}),
+        primitiveSymbol('mean',             do_summary,     'builtin',      {visibility: Vis.On, arity: -1, variant: SUMMARY_OPTYPES.MEAN}),
+        primitiveSymbol('range',            do_range,       'builtin',      {visibility: Vis.On, arity: -1}),
 
         /* Type checking */
         primitiveSymbol('is.null',              do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.NULL}),
@@ -164,7 +174,7 @@ export function initPrimitives() {
         internalSymbol('toupper',   do_tolower,     'builtin',  {visibility: Vis.On, arity: 1, variant: CHAR_OPTYPES.UPPER}),
         internalSymbol('grep',      do_grep,        'builtin',  {visibility: Vis.On, arity: 6, variant: CHAR_OPTYPES.GREP}),
         internalSymbol('grepl',     do_grep,        'builtin',  {visibility: Vis.On, arity: 6, variant: CHAR_OPTYPES.GREPL}),
-        internalSymbol('startsWith',do_startsWith,  'builtin',  {visibility: Vis.On, arity: 2, variant: CHAR_OPTYPES.STARTS}),
+        internalSymbol('startsWith', do_startsWith,  'builtin',  {visibility: Vis.On, arity: 2, variant: CHAR_OPTYPES.STARTS}),
         internalSymbol('endsWith',  do_startsWith,  'builtin',  {visibility: Vis.On, arity: 2, variant: CHAR_OPTYPES.ENDS}),
         internalSymbol('nchar',     do_nchar,       'builtin',  {visibility: Vis.On, arity: 2}),
         internalSymbol('substr',    do_substr,      'builtin',  {visibility: Vis.On, arity: 3}),
@@ -195,7 +205,7 @@ export function internalSymbol(
             visibility: visibility,
             arity: arity,
             variant: variant,
-            primName: name
+            primName: name,
         },
     };
 }
@@ -220,7 +230,7 @@ export function primitiveSymbol(
             visibility: visibility,
             arity: arity,
             variant: variant,
-            primName: name
+            primName: name,
         },
     };
 }
@@ -246,14 +256,14 @@ export const do_internal : PrimOp = (call, op, args, env) => {
     if (fun.internal.tag === 'builtin') {
         args = RevalList(args, env, call, 0);
     }
-    
+
     EvalContext.R_Visible = fun.internal.visibility;
-    let result = (fun.internal.jsFunc)(internalCall, fun.internal, args, env);
+    const result = (fun.internal.jsFunc)(internalCall, fun.internal, args, env);
     if (fun.internal.visibility !== Vis.OnMut) {
         EvalContext.R_Visible = op.visibility;
     }
     return result;
-}
+};
 
 export const do_primitive : PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
@@ -266,5 +276,5 @@ export const do_primitive : PrimOp = (call, op, args, env) => {
         errorcall(call, 'no such primitive function');
     }
     return res;
-}
+};
 
