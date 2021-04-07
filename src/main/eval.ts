@@ -392,7 +392,10 @@ export const do_function : R.PrimOp = (call, op, args, env) => {
     return mkClosure(formals, head(tail(args)), env);
 }
 
-function checkFormals(formals: R.RValue): asserts formals is R.PairList {
+function checkFormals(formals: R.RValue): asserts formals is R.PairList|R.Nil {
+    if (formals.tag === 'NULL') {
+        return;
+    }
     if (formals.tag === 'pairlist') {
         for (let formal of new LinkedListIter(formals)) {
             if (formal.key === '') {

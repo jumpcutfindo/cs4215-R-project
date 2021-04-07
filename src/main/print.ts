@@ -333,6 +333,21 @@ export function printS3Object(val: R.RValue, classes: (string|null)[]) {
     P.print('<S3 object>');
 }
 
+function deparseLit(val: null|number|boolean|string) : string {
+    if (val === null) {
+        return "NA";
+    } else {
+        switch (typeof val) {
+        case 'boolean':
+            return val ? 'TRUE' : 'FALSE';
+        case 'number':
+            return `${val}`;
+        case 'string':
+            return '"' + val + '"';
+        }
+    }
+}
+
 export function deparse(val: R.RValue) : string {
     switch (val.tag) {
     case 'logical':
@@ -342,9 +357,9 @@ export function deparse(val: R.RValue) : string {
         if (val.data.length === 0) {
             return `${val.tag}(0)`;
         } else if (val.data.length === 1) {
-            return `${val.data[0]}`;
+            return deparseLit(val.data[0]);
         } else {
-            return 'c(' +val.data.map((x: any) => x === null ? 'NA' : `${x}`).join(', ') + ')';
+            return 'c(' + val.data.map(deparseLit).join(', ') + ')';
         }
     }
     return '<some value>';

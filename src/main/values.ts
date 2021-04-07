@@ -185,7 +185,7 @@ export function mkPromise(expr: R.RValue, env: R.Env): R.Prom {
     };
 }
 
-export function mkClosure(formals: R.PairList, body: R.RValue, env: R.Env): R.Closure {
+export function mkClosure(formals: R.PairList|R.Nil, body: R.RValue, env: R.Env): R.Closure {
     return {
         tag: 'closure',
         attributes: RNull,
