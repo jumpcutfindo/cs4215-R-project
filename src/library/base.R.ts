@@ -68,4 +68,8 @@ function(pattern, replacement, x, ignore.case = FALSE, fixed = FALSE)
 nchar <- function(x, keepNA = T)
     .Internal(nchar(x, keepNA));
 
+
+ifelse <- function(test, yes, no) {
+    
+}
 `

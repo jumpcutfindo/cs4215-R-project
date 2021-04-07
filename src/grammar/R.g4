@@ -82,7 +82,8 @@ formal:   ID
       ;
 
 
-arglist : arg (',' arg)*
+arglist : 
+        | arg (',' arg)*
         ;
 
 arg :   expr

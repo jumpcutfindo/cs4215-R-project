@@ -56,7 +56,7 @@ function validName(name: string): string {
 export function printValue(val: R.RValue) {
     const classes = getAttribute(val, 'class');
     if (classes.tag !== 'character') {
-        printDefault(val);
+        printDefault(val, true);
     } else {
         printS3Object(val, classes.data);
     }
@@ -66,14 +66,14 @@ export function printValue(val: R.RValue) {
 export function outputValue(val: R.RValue): string {
     const classes = hasAttributes(val) ? getAttribute(val, 'class') : RNull;
     if (classes.tag !== 'character') {
-        printDefault(val);
+        printDefault(val, true);
     } else {
         printS3Object(val, classes.data);
     }
     return P.flushString();
 }
 
-export function printDefault(val: R.RValue) {
+export function printDefault(val: R.RValue, toConsole: boolean) {
     switch (val.tag) {
     case 'NULL':
         P.print('NULL');
@@ -113,7 +113,11 @@ export function printDefault(val: R.RValue) {
     case 'numeric':
     case 'logical':
     case 'character':
-        printAtomicVector(val);
+        if (toConsole) {
+            printAtomicVector(val);
+        } else {
+            P.print(deparse(val));
+        }
     }
 }
 
@@ -129,10 +133,14 @@ export function printClosure(cls: R.Closure) {
         }
     }
     P.print(')');
-    printDefault(cls.body);
+    printDefault(cls.body, false);
 }
 
 export function printAtomicVector(val: R.Int|R.Real|R.Logical|R.Character) {
+    if (val.data.length === 0) {
+        P.print(`${val.tag}(0)`);
+        return;
+    }
     const names = getAttribute(val, 'names');
     if (names.tag !== 'character') {
         P.print('[1] ');
@@ -174,7 +182,7 @@ export function printList(list: R.PairList|R.List, prefix: string = '') {
         if (val.tag === 'pairlist' || val.tag === 'list') {
             printList(val, index);
         } else {
-            printDefault(val);
+            printDefault(val, true);
         }
         P.println('');
     });
@@ -187,13 +195,13 @@ export function printLanguage(call: R.Language) {
         case 'if':
             if (length(call) >= 3) {
                 P.print('if (');
-                printDefault(head(tail(call)));
+                printDefault(head(tail(call)), false);
                 P.print(') ');
-                printDefault(head(tail(tail(call))));
+                printDefault(head(tail(tail(call))), false);
                 let alt = tail(tail(tail(call)));
                 if (alt.tag !== 'NULL') {
                     P.print('else');
-                    printDefault(alt.value);
+                    printDefault(alt.value, false);
                 }
                 done = true;
                 break;
@@ -201,27 +209,27 @@ export function printLanguage(call: R.Language) {
         case 'for':
             if (length(call) === 4) {
                 P.print('for (');
-                printDefault(head(tail(call)));
+                printDefault(head(tail(call)), false);
                 P.print(' in ');
-                printDefault(head(tail(tail(call))));
+                printDefault(head(tail(tail(call))), false);
                 P.print(') ');
-                printDefault(head(tail(tail(tail(call)))));
+                printDefault(head(tail(tail(tail(call)))), false);
                 done = true;
                 break;
             }
         case 'while':
             if (length(call) === 3) {
                 P.print('while (');
-                printDefault(head(tail(call)));
+                printDefault(head(tail(call)), false);
                 P.print(') ');
-                printDefault(head(tail(tail(call))));
+                printDefault(head(tail(tail(call))), false);
                 done = true;
                 break;
             }
         case 'repeat':
             if (length(call) === 2) {
                 P.print('repeat ');
-                printDefault(head(tail(call)));
+                printDefault(head(tail(call)), false);
                 done = true;
                 break;
             }
@@ -242,7 +250,7 @@ export function printLanguage(call: R.Language) {
         case '(':
             if (length(call) === 2) {
                 P.print('(');
-                printDefault(head(tail(call)));
+                printDefault(head(tail(call)), false);
                 P.print(')');
                 done = true;
                 break;
@@ -256,34 +264,34 @@ export function printLanguage(call: R.Language) {
             const isOp = isOperator(call.value.pname);
             const callLen = length(call);
             if (isOp && callLen === 3) {
-                printDefault(head(tail(call)));
+                printDefault(head(tail(call)), false);
                 P.print(` ${call.value.pname} `);
-                printDefault(head(tail(tail(call))));
+                printDefault(head(tail(tail(call))), false);
             } else if (isOp && callLen === 2) {
                 P.print(call.value.pname);
-                printDefault(head(tail(call)));
+                printDefault(head(tail(call)), false);
             } else if ((call.value.pname === '[' || call.value.pname === '[[') && length(call) >= 2) {
                 const isOne = call.value.pname === '[';
-                printDefault(head(tail(call)));
+                printDefault(head(tail(call)), false);
                 P.print(isOne ? '[' : '[[');
                 for (const arg of new LinkedListIter(tail(tail(call)))) {
                     if (arg.key !== '') {
                         P.print(`${arg.key}=`);
                     }
-                    printDefault(arg.value);
+                    printDefault(arg.value, false);
                     if (arg.next !== RNull) {
                         P.print(', ');
                     }
                 }
                 P.print(isOne ? ']' : ']]');
             } else {
-                printDefault(call.value);
+                printDefault(call.value, false);
                 P.print('(');
                 for (const arg of new LinkedListIter(tail(call))) {
                     if (arg.key !== '') {
                         P.print(`${arg.key}=`);
                     }
-                    printDefault(arg.value);
+                    printDefault(arg.value, false);
                     if (arg.next !== RNull) {
                         P.print(', ');
                     }
@@ -292,13 +300,13 @@ export function printLanguage(call: R.Language) {
             }
         }
     } else {
-        printDefault(call.value);
+        printDefault(call.value, false);
         P.print('(');
         for (const arg of new LinkedListIter(tail(call))) {
             if (arg.key !== '') {
                 P.print(`${arg.key}=`);
             }
-            printDefault(arg.value);
+            printDefault(arg.value, false);
             if (arg.next !== RNull) {
                 P.print(', ');
             }
@@ -313,12 +321,12 @@ export function printBraces(args: R.PairList|R.Nil) {
     P.indent++;
     P.println('');
     for (const arg of new LinkedListIter(args)) {
-        printDefault(arg.value);
+        printDefault(arg.value, false);
         P.println(';');
     }
     P.indent--;
     P.println('');
-    P.println('}');
+    P.print('}');
 }
 
 export function printS3Object(val: R.RValue, classes: (string|null)[]) {
@@ -326,5 +334,18 @@ export function printS3Object(val: R.RValue, classes: (string|null)[]) {
 }
 
 export function deparse(val: R.RValue) : string {
+    switch (val.tag) {
+    case 'logical':
+    case 'character':
+    case 'integer':
+    case 'numeric':
+        if (val.data.length === 0) {
+            return `${val.tag}(0)`;
+        } else if (val.data.length === 1) {
+            return `${val.data[0]}`;
+        } else {
+            return 'c(' +val.data.map((x: any) => x === null ? 'NA' : `${x}`).join(', ') + ')';
+        }
+    }
     return '<some value>';
 }
