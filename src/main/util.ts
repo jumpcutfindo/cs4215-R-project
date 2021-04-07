@@ -1,14 +1,5 @@
 import {error, errorcall} from './error';
-import {
-    Builtin,
-    Character,
-    Language,
-    LinkedList,
-    Nil,
-    PairList,
-    RValue,
-    Special,
-} from './types';
+import * as R from './types';
 import {RNull} from './values';
 
 /** ******************************************************
@@ -16,7 +7,7 @@ import {RNull} from './values';
  ********************************************************/
 
 // implementation copied from Rinlinedfuns.h
-export function length(s: RValue): number {
+export function length(s: R.RValue): number {
     switch (s.tag) {
     case 'NULL':
         return 0;
@@ -43,7 +34,7 @@ export function length(s: RValue): number {
     }
 }
 
-/*********************************************************
+/** *******************************************************
  * Recycling utilities
  *********************************************************/
 
@@ -83,31 +74,31 @@ export function modIterate<A,B,C>(arr1 : A[], arr2 : B[], fun : (arg1: A, arg2: 
  * }
  ********************************************************/
 
-export function head(pl: LinkedList | Nil): RValue {
+export function head(pl: R.LinkedList | R.Nil): R.RValue {
     if (pl === RNull) {
         error('Empty list');
     }
-    return (<PairList>pl).value;
+    return (<R.PairList>pl).value;
 }
 
-export function headkey(pl: LinkedList | Nil): string {
+export function headkey(pl: R.LinkedList | R.Nil): string {
     if (pl === RNull) {
         error('Empty list');
     }
-    return (<PairList>pl).key;
+    return (<R.PairList>pl).key;
 }
 
-export function tail(pl: LinkedList | Nil): PairList | Nil {
+export function tail(pl: R.LinkedList | R.Nil): R.PairList | R.Nil {
     if (pl === RNull) {
         error('Empty list');
     }
-    return (<PairList>pl).next;
+    return (<R.PairList>pl).next;
 }
 
 export function getAtLinkedListIndex(
-    pl: LinkedList | Nil,
+    pl: R.LinkedList | R.Nil,
     index: number,
-): LinkedList | Nil {
+): R.LinkedList | R.Nil {
     let curr = pl;
 
     for (let i = 0; i < index; i++) {
@@ -116,13 +107,13 @@ export function getAtLinkedListIndex(
             return RNull;
         }
 
-        curr = (curr as LinkedList).next;
+        curr = (curr as R.LinkedList).next;
     }
 
     return curr;
 }
 
-export function cons(val: RValue, pl: PairList | Nil): PairList {
+export function cons(val: R.RValue, pl: R.PairList | R.Nil): R.PairList {
     return {
         tag: 'pairlist',
         refcount: 0,
@@ -133,7 +124,7 @@ export function cons(val: RValue, pl: PairList | Nil): PairList {
     };
 }
 
-export function lcons(val: RValue, pl: PairList | Nil): Language {
+export function lcons(val: R.RValue, pl: R.PairList | R.Nil): R.Language {
     return {
         tag: 'language',
         refcount: 0,
@@ -144,8 +135,8 @@ export function lcons(val: RValue, pl: PairList | Nil): Language {
     };
 }
 
-export class LinkedListIter implements Iterable<PairList> {
-    private static dummy: PairList = {
+export class LinkedListIter implements Iterable<R.PairList> {
+    private static dummy: R.PairList = {
         tag: 'pairlist',
         refcount: 0,
         attributes: RNull,
@@ -153,9 +144,9 @@ export class LinkedListIter implements Iterable<PairList> {
         value: RNull,
         next: RNull,
     };
-    private _node: LinkedList | Nil;
+    private _node: R.LinkedList | R.Nil;
 
-    constructor(pl: LinkedList | Nil) {
+    constructor(pl: R.LinkedList | R.Nil) {
         this._node = pl;
     }
 
@@ -172,9 +163,9 @@ export class LinkedListIter implements Iterable<PairList> {
         } else {
             const result = {
                 done: false,
-                value: <PairList> this._node,
+                value: <R.PairList> this._node,
             };
-            this._node = (<PairList> this._node).next;
+            this._node = (<R.PairList> this._node).next;
             return result;
         }
     }
@@ -204,8 +195,8 @@ const falsenames = ['F', 'False', 'FALSE', 'false'];
  * Other utils
  ********************************************************/
 
-export function getNames(x: RValue): Character | Nil {
-    let ans: Character | Nil = RNull;
+export function getNames(x: R.RValue): R.Character | R.Nil {
+    let ans: R.Character | R.Nil = RNull;
     switch (x.tag) {
     case 'logical':
     case 'integer':
@@ -221,7 +212,7 @@ export function getNames(x: RValue): Character | Nil {
         let curr = x.attributes;
         while (curr.tag !== RNull.tag) {
             if (curr.key === 'names') {
-                ans = curr.value as Character;
+                ans = curr.value as R.Character;
                 break;
             }
             curr = curr.next;
@@ -234,8 +225,8 @@ export function getNames(x: RValue): Character | Nil {
     return ans;
 }
 
-export function getAttributeOfName(x: RValue, name: string): PairList | Nil {
-    let ans: PairList | Nil = RNull;
+export function getAttributeOfName(x: R.RValue, name: string): R.PairList | R.Nil {
+    let ans: R.PairList | R.Nil = RNull;
     switch (x.tag) {
     case 'logical':
     case 'integer':
@@ -264,14 +255,30 @@ export function getAttributeOfName(x: RValue, name: string): PairList | Nil {
     return ans;
 }
 
+export function getAttributeFromAttributes(vec: R.PairList | R.Nil, name: string): R.PairList | R.Nil {
+    let ans: R.PairList | R.Nil = RNull;
+    if (vec.tag === RNull.tag) return RNull;
+
+    let curr: R.PairList | R.Nil = vec;
+    while (curr.tag !== RNull.tag) {
+        if (curr.key === name) {
+            ans = curr;
+            break;
+        }
+        curr = curr.next;
+    }
+
+    return ans;
+}
+
 /** ******************************************************
  * Arity checking for Builtin/Specials
  ********************************************************/
 
 export function checkArity(
-    call: Language,
-    op: Builtin | Special,
-    args: PairList | Nil,
+    call: R.Language,
+    op: R.Builtin | R.Special,
+    args: R.PairList | R.Nil,
 ) {
     const arglen = length(args);
     if (op.arity >= 0 && op.arity !== arglen) {
