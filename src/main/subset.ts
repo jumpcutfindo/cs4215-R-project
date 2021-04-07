@@ -10,7 +10,7 @@ import {copy} from './copy';
 import {error, warn} from './error';
 import {Reval} from './eval';
 import * as R from './types';
-import {getAtLinkedListIndex, getNames, head, length, tail} from './util';
+import {checkArity, getAtLinkedListIndex, getNames, head, length, tail} from './util';
 import {mkChar, mkChars, mkInt, mkInts,
     mkLogical, mkLogicals, mkPairlist,
     mkReal, mkReals, RNull} from './values';
@@ -25,7 +25,7 @@ import {mkChar, mkChars, mkInt, mkInts,
 *     the resultant indexes.
 */
 export const do_subset: R.PrimOp = (call, op, args, env) => {
-    const object = copy(Reval(head(args), env));
+    const object = Reval(head(args), env);
     let params = head(tail(args));
 
     // Checking for empty parameters
@@ -63,7 +63,7 @@ export const do_subset: R.PrimOp = (call, op, args, env) => {
 export const do_subset2: R.PrimOp = (call, op, args, env) => {
     // Extract a single value at a specific index (note that R indexing begins from 1),
     // or a single value with a specific name
-    const object = Reval(copy(head(args)), env);
+    const object = Reval(head(args), env);
     let params = head(tail(args));
 
     // Checking for empty parameters
@@ -99,7 +99,8 @@ export const do_subset2: R.PrimOp = (call, op, args, env) => {
 */
 export const do_subset3: R.PrimOp = (call, op, args, env) => {
     // Extract a single value with a specific name (partial matching always)
-    const object = copy(Reval(head(args), env));
+    checkArity(call, op, args);
+    const object = Reval(head(args), env);
     let params = head(tail(args));
     let name = null;
 
@@ -205,6 +206,7 @@ export const do_subassign2: R.PrimOp = (call, op, args, env) => {
 *   This form of subset assignment also only works on list / pairlist objects.
 */
 export const do_subassign3: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
     const object = copy(Reval(head(args), env));
     let params = head(tail(args));
     const replacements = Reval(head(tail(tail(args))), env);

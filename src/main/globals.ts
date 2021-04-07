@@ -8,7 +8,7 @@ import {do_relop, RELATIONAL_OPTYPES} from './relop';
 import {Name, PrimOp, Vis} from './types';
 import {install, installSymbol, RNull, R_UnboundValue} from './values';
 import {do_colon} from './seq';
-import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_dim, do_dimgets, do_names, do_namesgets} from './attrib';
+import {do_attr, do_attrgets, do_attributes, do_attributesgets, do_class, do_classgets, do_comment, do_commentgets, do_dim, do_dimgets, do_names, do_namesgets} from './attrib';
 import {do_length} from './array';
 import {do_subassign, do_subassign2, do_subassign3, do_subset, do_subset2, do_subset3} from './subset';
 import {do_makelist} from './builtin';
@@ -74,21 +74,21 @@ export function initPrimitives() {
         primitiveSymbol('$',                do_subset3,             'special',  {visibility: Vis.On, arity: 2}),
         primitiveSymbol('[<-',              do_subassign,           'special',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('[[<-',             do_subassign2,          'special',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('$<-',              do_subassign3,          'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('$<-',              do_subassign3,          'special',  {visibility: Vis.On, arity: 3}),
 
         /* Attribute-related functions */
         primitiveSymbol('attr',             do_attr,                'builtin',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('attr<-',           do_attrgets,            'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('attr<-',           do_attrgets,            'builtin',  {visibility: Vis.On, arity: 3}),
         primitiveSymbol('attributes',       do_attributes,          'builtin',  {visibility: Vis.On, arity: 1}),
-        primitiveSymbol('attributes<-',     do_attributesgets,      'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('attributes<-',     do_attributesgets,      'builtin',  {visibility: Vis.On, arity: 2}),
         primitiveSymbol('names',            do_names,               'builtin',  {visibility: Vis.On, arity: 1}),
-        primitiveSymbol('names<-',          do_namesgets,           'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('names<-',          do_namesgets,           'builtin',  {visibility: Vis.On, arity: 2}),
         primitiveSymbol('class',            do_class,               'builtin',  {visibility: Vis.On, arity: 1}),
-        primitiveSymbol('class<-',          do_classgets,           'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('class<-',          do_classgets,           'builtin',  {visibility: Vis.On, arity: 2}),
         primitiveSymbol('dim',              do_dim,                 'builtin',  {visibility: Vis.On, arity: 1}),
-        primitiveSymbol('dim<-',            do_dimgets,             'builtin',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('comment',          do_dim,                 'builtin',  {visibility: Vis.On, arity: 1}),
-        primitiveSymbol('comment<-',        do_dimgets,             'builtin',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('dim<-',            do_dimgets,             'builtin',  {visibility: Vis.On, arity: 2}),
+        primitiveSymbol('comment',          do_comment,             'builtin',  {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('comment<-',        do_commentgets,         'builtin',  {visibility: Vis.On, arity: 2}),
 
         /* Sequencing, builtin */
         primitiveSymbol(':',        do_colon,   'builtin',  {visibility: Vis.On, arity: 2}),

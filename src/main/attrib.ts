@@ -5,16 +5,19 @@
 
 import {asCharVector, asIntVector, asListObject, coerceTo} from './coerce';
 import {copy} from './copy';
-import {error} from './error';
+import {error, errorcall} from './error';
 import * as R from './types';
-import {getNames, head, length, tail} from './util';
+import {checkArity, getNames, head, length, tail} from './util';
 import {mkChar, mkChars, mkPairlist, RNull} from './values';
 
 /*
-*   Retrieves a single specified attribute of the object provided.
-*/
+ *   Retrieves a single specified attribute of the object provided. 
+ */
 export const do_attr: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
+    if (length(args) !== 2) {
+        errorcall(call, '2 arguments required');
+    }
+    const object = head(args);
     const attribute = head(tail(args));
 
     if (attribute.tag !== 'character') {
@@ -32,25 +35,25 @@ export const do_attr: R.PrimOp = (call, op, args, env) => {
 *   Sets a single specified attribute of the object provided.
 */
 export const do_attrgets: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
     const object = copy(head(args));
     const attribute = head(tail(args));
     const value = head(tail(tail(args)));
 
-    if (attribute.tag !== 'character') {
-        error(`'which' must be of mode character`);
-    } else if (attribute.data.length !== 1) {
-        error(`'exactly one attribute 'which' must be given`);
-    } else if ((attribute.data[0] as string).length === 0) {
+    if (attribute.tag !== 'character' || attribute.data.length === 0 || attribute.data[0] === null) {
+        error("'name' must be non-null character string");
+    } else if (attribute.data[0].length === 0) {
         error(`attempt to use zero-length variable name`);
     }
 
-    return setAttribute(object, (attribute.data[0] as string), value);
+    return setAttribute(object, attribute.data[0], value);
 };
 
 /*
 *   Retrieves all the attributes of the object provided.
 */
 export const do_attributes: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
     const object = head(args);
 
     return getAttributes(object);
@@ -60,6 +63,7 @@ export const do_attributes: R.PrimOp = (call, op, args, env) => {
 *   Sets all the attributes of the object provided.
 */
 export const do_attributesgets: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
     const object = copy(head(args));
     const attributes = head(tail(args));
 
@@ -89,7 +93,8 @@ export const do_attributesgets: R.PrimOp = (call, op, args, env) => {
 *   Retrieves the 'names' attribute of the object provided.
 */
 export const do_names: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
+    checkArity(call, op, args);
+    const object = head(args);
 
     return getAttribute(object, 'names', true);
 };
@@ -98,6 +103,7 @@ export const do_names: R.PrimOp = (call, op, args, env) => {
 *   Sets the 'names' attribute of the object provided.
 */
 export const do_namesgets: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
     const object = copy(head(args));
     const names = head(tail(args));
 
@@ -108,8 +114,7 @@ export const do_namesgets: R.PrimOp = (call, op, args, env) => {
 *   Retrieves the 'class' attribute of the object provided.
 */
 export const do_class: R.PrimOp = (call, op, args, env) => {
-    // const object = copy(head(args));
-    // return getAttribute(object, 'class', true);
+    checkArity(call, op, args);
     return s3Classes(head(args));
 };
 
@@ -117,6 +122,7 @@ export const do_class: R.PrimOp = (call, op, args, env) => {
 *   Sets the 'class' attribute of the object provided.
 */
 export const do_classgets: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
     const object = copy(head(args));
     const class_name = head(tail(args));
 
@@ -127,7 +133,8 @@ export const do_classgets: R.PrimOp = (call, op, args, env) => {
 *   Retrieves the 'dim' attribute of the object provided.
 */
 export const do_dim: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
+    checkArity(call, op, args);
+    const object = head(args);
 
     return getAttribute(object, 'dim', true);
 };
@@ -136,6 +143,7 @@ export const do_dim: R.PrimOp = (call, op, args, env) => {
 *   Sets the 'dim' attribute of the object provided.
 */
 export const do_dimgets: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
     const object = copy(head(args));
     const dim = head(tail(args));
 
@@ -146,7 +154,8 @@ export const do_dimgets: R.PrimOp = (call, op, args, env) => {
 *   Retrieves the 'comment' attribute of the object provided.
 */
 export const do_comment: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
+    checkArity(call, op, args);
+    const object = head(args);
 
     return getAttribute(object, 'comment', true);
 };
@@ -155,6 +164,7 @@ export const do_comment: R.PrimOp = (call, op, args, env) => {
 *   Sets the 'comment' attribute of the object provided.
 */
 export const do_commentgets: R.PrimOp = (call, op, args, env) => {
+    checkArity(call, op, args);
     const object = copy(head(args));
     const comment = head(tail(args));
 
