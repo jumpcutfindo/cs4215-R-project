@@ -17,6 +17,7 @@ const type_hierarchy = ['NULL', 'logical', 'integer', 'numeric', 'character', 'p
 *   All attributes except 'names' are removed.
 */
 export const do_c: R.PrimOp = (call, op, args, env) => {
+    if (length(args) === 0) return RNull;
     const values: R.RValue[] = [];
 
     let isRecursive = false;
