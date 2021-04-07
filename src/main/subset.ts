@@ -133,7 +133,7 @@ export const do_subassign: R.PrimOp = (call, op, args, env) => {
     let params = head(tail(args));
     const replacements = Reval(head(tail(tail(args))), env);
 
-    if (hasNAs(object)) error('NAs are not allowed in subscripted assignments');
+    if (hasNAs(object) && length(replacements) > 1) error('NAs are not allowed in subscripted assignments');
 
     // Checking for empty parameters
     try {
@@ -172,7 +172,7 @@ export const do_subassign: R.PrimOp = (call, op, args, env) => {
 export const do_subassign2: R.PrimOp = (call, op, args, env) => {
     const object = copy(Reval(head(args), env));
     let params = head(tail(args));
-    const replacement = Reval(head(tail(tail(args))), env);
+    const replacements = Reval(head(tail(tail(args))), env);
 
     // Checking for empty parameters
     try {
@@ -185,17 +185,17 @@ export const do_subassign2: R.PrimOp = (call, op, args, env) => {
         error('attempt to select more than one element');
     }
 
-    if (hasNAs(object)) error('NAs are not allowed in subscripted assignments');
+    if (hasNAs(object) && length(replacements) > 1) error('NAs are not allowed in subscripted assignments');
 
     if (params.tag === 'character') {
-        return assignSingleByName(object, (params.data as string[])[0], replacement);
+        return assignSingleByName(object, (params.data as string[])[0], replacements);
     } else {
         params = coerceTo(params, 'integer');
         if (params.tag !== 'integer') {
             error('NA / NaN argument');
         }
 
-        return assignSingleAtIndex(object, (params.data as number[])[0], replacement);
+        return assignSingleAtIndex(object, (params.data as number[])[0], replacements);
     }
 };
 
@@ -207,14 +207,14 @@ export const do_subassign2: R.PrimOp = (call, op, args, env) => {
 export const do_subassign3: R.PrimOp = (call, op, args, env) => {
     const object = copy(Reval(head(args), env));
     let params = head(tail(args));
-    const replacement = Reval(head(tail(tail(args))), env);
+    const replacements = Reval(head(tail(tail(args))), env);
     let name = '';
 
     if (params.tag !== 'name') {
         params = Reval(params, env);
     }
 
-    if (hasNAs(object)) error('NAs are not allowed in subscripted assignments');
+    if (hasNAs(object) && length(replacements) > 1) error('NAs are not allowed in subscripted assignments');
 
     if (!isSubsettableList(object)) {
         warn('coercing LHS to a list');
@@ -224,7 +224,7 @@ export const do_subassign3: R.PrimOp = (call, op, args, env) => {
         error(`unexpected ${params.tag} in arguments`);
     } else {
         name = params.pname;
-        return assignSingleByName(object, name, replacement);
+        return assignSingleByName(object, name, replacements);
     }
 };
 
