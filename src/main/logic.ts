@@ -5,7 +5,7 @@
 import {error, warn} from './error';
 import * as R from './types';
 import {mkLogical, mkLogicals, RNull} from './values';
-import {head, tail, length} from './util';
+import {head, tail, length, getAttributeOfName} from './util';
 import {Reval} from './eval';
 import {asLogicalVector} from './coerce';
 
@@ -134,13 +134,45 @@ function applyUnaryLogicalOperation(
         operand: operand as R.Logical | R.Int | R.Real,
     };
 
+    let was_coerced = false;
+
     // 1. Coerce types to logical
     operands.operand = asLogicalVector(operands.operand) as R.Logical;
+    was_coerced = operands.operand.tag !== operand.tag;
 
     // 2. Carry out operation
     const logical_result = unary_logical_functions[operator](operands.operand.data);
 
-    return mkLogicals(logical_result);
+    // Attribute handling: if coerced, no attributes other than names, dims and dimnames should be copied
+    const ans = mkLogicals(logical_result);
+    if (was_coerced) {
+        const names: R.PairList | R.Nil = getAttributeOfName(operands.operand, 'names');
+        const dims: R.PairList | R.Nil = getAttributeOfName(operands.operand, 'dims');
+        const dimnames: R.PairList | R.Nil = getAttributeOfName(operands.operand, 'dimnames');
+
+        const array = [names, dims, dimnames];
+
+        let orig: R.PairList | R.Nil = RNull;
+        let attributes: R.PairList | R.Nil = RNull;
+
+        for (const pairlist of array) {
+            if (pairlist.tag === RNull.tag) {
+                continue;
+            }
+
+            if (attributes.tag === RNull.tag) {
+                orig = pairlist;
+                attributes = pairlist;
+            } else {
+                attributes.next = pairlist;
+                attributes = attributes.next;
+            }
+        }
+
+        ans.attributes = orig;
+    } else ans.attributes = operands.operand.attributes;
+
+    return ans;
 }
 
 /*
@@ -165,6 +197,10 @@ function applyBinaryLogicalOperation(
         second_operand: second_operand as R.Logical | R.Int | R.Real,
     };
 
+    // 1. Handle attributes
+    const resultant_attributes: R.PairList | R.Nil =
+        binaryLogicCopyAttributes(operands.first_operand, operands.second_operand);
+
     // 1. Coerce both operands to logical type
     operands.first_operand = asLogicalVector(operands.first_operand) as R.Logical;
     operands.second_operand = asLogicalVector(operands.second_operand) as R.Logical;
@@ -183,7 +219,10 @@ function applyBinaryLogicalOperation(
         operands.second_operand.data,
     );
 
-    return mkLogicals(logical_result);
+    const ans = mkLogicals(logical_result);
+    ans.attributes = resultant_attributes;
+
+    return ans;
 }
 
 /*
@@ -234,6 +273,62 @@ function recycle(
             second_operand: longer_operand,
         };
     }
+}
+
+function binaryLogicCopyAttributes(
+    first_operand: R.Logical | R.Int | R.Real,
+    second_operand: R.Logical | R.Int | R.Real,
+): R.PairList | R.Nil {
+    if (first_operand.attributes.tag === RNull.tag &&
+        second_operand.attributes.tag === RNull.tag) {
+        return RNull;
+    }
+
+    let orig: R.PairList | R.Nil = RNull;
+    let attributes: R.PairList | R.Nil = RNull;
+
+    // Attributes are taken from the longer argument
+    // Names are taken from the argument with length equal to the answer (a.k.a. the longer argument)
+    if (first_operand.data.length > second_operand.data.length) {
+        orig = first_operand.attributes;
+    } else if (first_operand.data.length > second_operand.data.length) {
+        orig = second_operand.attributes;
+    } else {
+        const first_operand_attr_names = [];
+        let second_operand_attr_names = [];
+
+        let curr: R.PairList | R.Nil = first_operand.attributes;
+        while (curr.tag !== RNull.tag) {
+            first_operand_attr_names.push(curr.key);
+            curr = curr.next;
+        }
+
+        curr = second_operand.attributes;
+        while (curr.tag !== RNull.tag) {
+            second_operand_attr_names.push(curr.key);
+            curr = curr.next;
+        }
+
+        // Creating the pairlist
+        orig = RNull;
+        attributes = RNull;
+
+        for (const key of first_operand_attr_names) {
+            if (second_operand_attr_names.indexOf(key) !== -1) {
+                second_operand_attr_names = second_operand_attr_names.filter((x)=> x !== key);
+            }
+
+            if (attributes.tag === RNull.tag) {
+                attributes = getAttributeOfName(first_operand, key);
+                orig = attributes;
+            } else {
+                attributes.next = getAttributeOfName(first_operand, key);
+                attributes = attributes.next;
+            }
+        }
+    }
+
+    return orig;
 }
 
 /*

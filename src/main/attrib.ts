@@ -11,7 +11,7 @@ import {checkArity, getNames, head, length, tail} from './util';
 import {mkChar, mkChars, mkPairlist, RNull} from './values';
 
 /*
- *   Retrieves a single specified attribute of the object provided. 
+ *   Retrieves a single specified attribute of the object provided.
  */
 export const do_attr: R.PrimOp = (call, op, args, env) => {
     if (length(args) !== 2) {
@@ -41,7 +41,7 @@ export const do_attrgets: R.PrimOp = (call, op, args, env) => {
     const value = head(tail(tail(args)));
 
     if (attribute.tag !== 'character' || attribute.data.length === 0 || attribute.data[0] === null) {
-        error("'name' must be non-null character string");
+        error(`'name' must be non-null character string`);
     } else if (attribute.data[0].length === 0) {
         error(`attempt to use zero-length variable name`);
     }
@@ -406,7 +406,7 @@ function setClass(object: R.RValue, val: R.RValue) {
 }
 
 function setComment(object: R.RValue, val: R.RValue) {
-    if (val.tag !== 'character') {
+    if (val.tag !== 'character' && val.tag !== RNull.tag) {
         error(`attempt to set invalid 'comment' attribute`);
     }
 
@@ -435,9 +435,16 @@ function setDim(object: R.RValue, val: R.RValue) {
     }
 
     // Must match length of vector
-    // TODO: Handle matrices and dataframes
-    if (new_val.tag !== RNull.tag && new_val.data[0] !== length(object)) {
-        error(`dims [${new_val.data[0]}] do not match the length of the object [${length(object)}]`);
+    if (new_val.tag !== RNull.tag) {
+        let product = 1;
+        for (const num of new_val.data) {
+            if (num === null) error('the dims contain missing values');
+            else product *= num;
+        }
+
+        if (product !== length(object)) {
+            error(`dims [${new_val.data[0]}] do not match the length of the object [${length(object)}]`);
+        }
     }
 
     const dimAttribute: R.RValue = getAttribute(object, 'dim', true);

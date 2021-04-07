@@ -15,7 +15,7 @@ export const IS_OPTYPES = {
     NULL: 0,
     LOGICAL: 1,
     INTEGER: 2,
-    NUMERIC: 3,
+    DOUBLE: 3,
     CHARACTER: 4,
     SYMBOL: 5,
     NAME: 6,
@@ -29,7 +29,7 @@ export const IS_OPTYPES = {
 export const AS_OPTYPES = {
     LOGICAL: 0,
     INTEGER: 1,
-    NUMERIC: 2,
+    DOUBLE: 2,
     CHARACTER: 3,
     LIST: 4,
     PAIRLIST: 5,
@@ -52,7 +52,7 @@ export const do_is: R.PrimOp = (call, op, args, env) => {
         return mkLogical(isObjectOfType(object, 'logical'));
     case IS_OPTYPES.INTEGER:
         return mkLogical(isObjectOfType(object, 'integer'));
-    case IS_OPTYPES.NUMERIC:
+    case IS_OPTYPES.DOUBLE:
         return mkLogical(isObjectOfType(object, 'double'));
     case IS_OPTYPES.CHARACTER:
         return mkLogical(isObjectOfType(object, 'character'));
@@ -241,7 +241,7 @@ export const do_asatomic: R.PrimOp = (call, op, args, env) => {
         return asLogicalVector(object);
     case AS_OPTYPES.INTEGER:
         return asIntVector(object);
-    case AS_OPTYPES.NUMERIC:
+    case AS_OPTYPES.DOUBLE:
         return asRealVector(object);
     case AS_OPTYPES.CHARACTER:
         return asCharVector(object);

@@ -15,7 +15,7 @@ import {do_makelist} from './builtin';
 import {CHAR_OPTYPES, do_grep, do_gsub, do_nchar, do_startsWith, do_strrep, do_substr, do_tolower} from './character';
 import {checkArity, head, tail} from './util';
 import {errorcall} from './error';
-import {IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isvector, AS_OPTYPES, do_asatomic} from './coerce';
+import {IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isvector, AS_OPTYPES, do_asatomic, do_isnumeric} from './coerce';
 import {EvalContext} from './EvalContext';
 import {do_range, do_summary, SUMMARY_OPTYPES} from './summary';
 import { do_inherits, do_usemethod } from './generics';
@@ -140,7 +140,7 @@ export function initPrimitives() {
         primitiveSymbol('is.null',              do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.NULL}),
         primitiveSymbol('is.logical',           do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.LOGICAL}),
         primitiveSymbol('is.integer',           do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.INTEGER}),
-        primitiveSymbol('is.numeric',           do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.NUMERIC}),
+        primitiveSymbol('is.double',            do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.DOUBLE}),
         primitiveSymbol('is.character',         do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.CHARACTER}),
         primitiveSymbol('is.symbol',            do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.SYMBOL}),
         primitiveSymbol('is.name',              do_is,      'builtin',      {visibility: Vis.On, arity: 1, variant: IS_OPTYPES.NAME}),
@@ -153,12 +153,13 @@ export function initPrimitives() {
         primitiveSymbol('is.nan',               do_isnan,           'builtin',          {visibility: Vis.On, arity: 1}),
         primitiveSymbol('is.finite',            do_isfinite,        'builtin',          {visibility: Vis.On, arity: 1}),
         primitiveSymbol('is.infinite',          do_isinfinite,      'builtin',          {visibility: Vis.On, arity: 1}),
+        primitiveSymbol('is.numeric',           do_isnumeric,       'builtin',          {visibility: Vis.On, arity: 1}),
         primitiveSymbol('is.vector',            do_isvector,        'builtin',          {visibility: Vis.On, arity: 1}),
 
         /* Type coercion */
         primitiveSymbol('as.logical',           do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.LOGICAL}),
         primitiveSymbol('as.integer',           do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.INTEGER}),
-        primitiveSymbol('as.numeric',           do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.NUMERIC}),
+        primitiveSymbol('as.double',            do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.DOUBLE}),
         primitiveSymbol('as.character',         do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.CHARACTER}),
         primitiveSymbol('as.list',              do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.LIST}),
         primitiveSymbol('as.pairlist',          do_asatomic,      'builtin',      {visibility: Vis.On, arity: 1, variant: AS_OPTYPES.PAIRLIST}),

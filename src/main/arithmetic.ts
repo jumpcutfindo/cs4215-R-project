@@ -367,7 +367,7 @@ function applyUnaryArithmeticOperation(
         ans = mkReals(arithmetic_result);
     }
 
-    // If coerced, no attributes other than names, dims and dimnames should be copied
+    // Attribute handling: if coerced, no attributes other than names, dims and dimnames should be copied
     if (was_coerced) {
         const names: R.PairList | R.Nil = getAttributeOfName(operands.operand, 'names');
         const dims: R.PairList | R.Nil = getAttributeOfName(operands.operand, 'dims');
