@@ -28,7 +28,7 @@ export function copy(val: R.RValue) : R.RValue {
     case 'character':
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
         result = {...val};
         result.attributes = copy(val.attributes) as R.Nil|R.PairList;
         result.data = val.data.slice();

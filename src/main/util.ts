@@ -13,7 +13,7 @@ export function length(s: R.RValue): number {
         return 0;
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'list':
     case 'expression':
@@ -200,7 +200,7 @@ export function getNames(x: R.RValue): R.Character | R.Nil {
     switch (x.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'expression':
     case 'list':
@@ -230,7 +230,7 @@ export function getAttributeOfName(x: R.RValue, name: string): R.PairList | R.Ni
     switch (x.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'expression':
     case 'list':

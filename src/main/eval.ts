@@ -29,7 +29,7 @@ export function Reval(e: R.RValue, env: R.Env) : R.RValue {
     case 'integer':
     case 'list':
     case 'logical':
-    case 'numeric':
+    case 'double':
     case 'pairlist':
     case 'special':
         result = e;
@@ -56,10 +56,10 @@ export function Reval(e: R.RValue, env: R.Env) : R.RValue {
         result = forcePromise(e);
         break;
     case 'language':
-        EvalContext.CurrentCall = e;
         const lang = head(e);
         const op = lang.tag === 'name' ? findFun(lang, env, e) : Reval(lang, env);
         let args: R.PairList|R.Nil = tail(e);
+        EvalContext.CallStack.push({call: e, sysparent: env, op: op});
         switch (op.tag) {
         case 'builtin':
             args = RevalList(args, env, e, 0);
@@ -76,8 +76,10 @@ export function Reval(e: R.RValue, env: R.Env) : R.RValue {
             result = applyClosure(e, op, pargs, env, RNull);
             break;
         default:
+            EvalContext.CallStack.pop();
             error('attempt to apply non-function');
         }
+        EvalContext.CallStack.pop();
         break;
     case 'dotdotdot':
         error('\'...\' used in an incorrect context');
@@ -187,7 +189,7 @@ function asLogicalNoNA(s: R.RValue, call: R.Language) : boolean {
     switch (s.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
         if (s.data.length > 1) {
             warncall(call, 'the condition has length > 1 and only the first element will be used');
@@ -298,7 +300,7 @@ export const do_for : R.PrimOp = (call, op, args, env) => {
         case 'integer':
             defineVar(sym, mkInt(val.data[i]), env);
             break;
-        case 'numeric':
+        case 'double':
             defineVar(sym, mkReal(val.data[i]), env);
             break;
         case 'character':

@@ -30,7 +30,7 @@ describe('simple attribute tests', () => {
 
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [1, 2, 3]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('attributes', mkPairlist([mkChar('testvalue'), 'test']));
 
         resetEnvironment();
@@ -79,7 +79,7 @@ describe('simple attribute tests', () => {
 
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [1, 2, 3]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('attributes', mkPairlist([mkChar('no, this is test value!'), 'test']));
 
         resetEnvironment();

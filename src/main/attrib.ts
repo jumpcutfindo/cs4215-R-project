@@ -8,7 +8,7 @@ import {copy} from './copy';
 import {error} from './error';
 import * as R from './types';
 import {getNames, head, length, tail} from './util';
-import {mkPairlist, RNull} from './values';
+import {mkChar, mkChars, mkPairlist, RNull} from './values';
 
 /*
 *   Retrieves a single specified attribute of the object provided.
@@ -108,9 +108,9 @@ export const do_namesgets: R.PrimOp = (call, op, args, env) => {
 *   Retrieves the 'class' attribute of the object provided.
 */
 export const do_class: R.PrimOp = (call, op, args, env) => {
-    const object = copy(head(args));
-
-    return getAttribute(object, 'class', true);
+    // const object = copy(head(args));
+    // return getAttribute(object, 'class', true);
+    return s3Classes(head(args));
 };
 
 /*
@@ -380,7 +380,7 @@ function setClass(object: R.RValue, val: R.RValue) {
     switch (new_type) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
         removeAttribute(object, 'class');
         const attributes_copy: R.PairList | R.Nil = copy((object as R.Logical).attributes) as R.PairList | R.Nil;
@@ -518,7 +518,7 @@ function isVector(object: R.RValue): boolean {
     switch (object.tag) {
     case ('logical'):
     case ('integer'):
-    case ('numeric'):
+    case ('double'):
     case ('character'):
         return true;
     default:
@@ -532,7 +532,7 @@ export function hasAttributes(object: R.RValue): boolean {
     case ('pairlist'):
     case ('logical'):
     case ('integer'):
-    case ('numeric'):
+    case ('double'):
     case ('character'):
     case ('environment'):
     case ('closure'):
@@ -543,5 +543,47 @@ export function hasAttributes(object: R.RValue): boolean {
         return true;
     default:
         return false;
+    }
+}
+
+// Equivalent to R_data_class2
+// Retrieves implicit classes 
+// Note that it differs from R in the number of variations of classes of base types.
+// All language objects are "call", and all other base types are simply their type tag
+export function s3Classes(object: R.RValue) : R.Character {
+    const classes = getAttribute(object, 'class');
+    if (length(classes) > 0) {
+        if (classes.tag !== 'character') {
+            error('Bug: class attribute not character');
+        }
+        return classes;
+    }
+    if (object.tag === 'language') {
+        return mkChar('call');
+    }
+    const ndim = length(getAttribute(object, 'dim'));
+    let objType : string[];
+    switch (object.tag) {
+    case 'builtin':
+    case 'special':
+    case 'closure':
+        objType = ['function'];
+        break;
+    case 'integer':
+    case 'double':
+        objType = [object.tag, 'numeric'];
+        break;
+    default:
+        objType = [object.tag];
+        break;
+    }
+    if (ndim === 0) {
+        return mkChars(objType);
+    } else if (ndim === 2) {
+        objType.unshift('matrix');
+        return mkChars(objType);
+    } else {
+        objType.unshift('array');
+        return mkChars(objType);
     }
 }

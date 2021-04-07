@@ -53,7 +53,7 @@ export const do_is: R.PrimOp = (call, op, args, env) => {
     case IS_OPTYPES.INTEGER:
         return mkLogical(isObjectOfType(object, 'integer'));
     case IS_OPTYPES.NUMERIC:
-        return mkLogical(isObjectOfType(object, 'numeric'));
+        return mkLogical(isObjectOfType(object, 'double'));
     case IS_OPTYPES.CHARACTER:
         return mkLogical(isObjectOfType(object, 'character'));
     case IS_OPTYPES.SYMBOL:
@@ -74,13 +74,13 @@ export const do_is: R.PrimOp = (call, op, args, env) => {
 };
 
 /*
-*   do_isnumeric checks whether an object is a numerical type ('integer' or 'numeric').
+*   do_isnumeric checks whether an object is a numerical type ('integer' or 'double').
 */
 export const do_isnumeric: R.PrimOp = (call, op, args, env) => {
     checkArity(call, op, args);
     const object = head(args);
 
-    return mkLogical(isObjectOfType(object, 'integer') || isObjectOfType(object, 'numeric'));
+    return mkLogical(isObjectOfType(object, 'integer') || isObjectOfType(object, 'double'));
 };
 
 /*
@@ -103,7 +103,7 @@ export const do_isna: R.PrimOp = (call, op, args, env) => {
         return mkLogicals(object.data.map((x) => {
             return x === null ? true : false;
         }));
-    case 'numeric':
+    case 'double':
         return mkLogicals(object.data.map((x) => {
             return x === null ? true : false;
         }));
@@ -149,7 +149,7 @@ export const do_isnan: R.PrimOp = (call, op, args, env) => {
         return mkLogicals(object.data.map((x) => {
             return isNaN(Number(x));
         }));
-    case 'numeric':
+    case 'double':
         return mkLogicals(object.data.map((x) => {
             return isNaN(Number(x));
         }));
@@ -181,7 +181,7 @@ export const do_isfinite: R.PrimOp = (call, op, args, env) => {
         return mkLogicals(object.data.map((x) => {
             return isFinite(Number(x));
         }));
-    case 'numeric':
+    case 'double':
         return mkLogicals(object.data.map((x) => {
             return isFinite(Number(x));
         }));
@@ -213,7 +213,7 @@ export const do_isinfinite: R.PrimOp = (call, op, args, env) => {
         return mkLogicals(object.data.map((x) => {
             return !isFinite(Number(x));
         }));
-    case 'numeric':
+    case 'double':
         return mkLogicals(object.data.map((x) => {
             return !isFinite(Number(x));
         }));
@@ -265,7 +265,7 @@ export const do_isvector: R.PrimOp = (call, op, args, env) => {
     switch (object.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
         if (object.attributes.tag !== RNull.tag && object.attributes.key !== 'names') {
             return mkLogical(false);
@@ -317,7 +317,7 @@ export function coerceTo(vec: R.RValue, type: string) {
         return asLogicalVector(vec);
     case 'integer':
         return asIntVector(vec);
-    case 'numeric':
+    case 'double':
         return asRealVector(vec);
     case 'character':
         return asCharVector(vec);
@@ -343,7 +343,7 @@ export function asLogicalVector(vec: R.RValue): R.Logical | R.Nil {
         ans = copy(vec) as R.Logical;
         break;
     case 'integer':
-    case 'numeric':
+    case 'double':
         ans = mkLogicals(vec.data.map((x) => {
             if (x === null) return null;
             if (x === 0) return false;
@@ -381,7 +381,7 @@ export function asIntVector(vec: R.RValue): R.Int | R.Nil {
     case 'integer':
         ans = mkInts(vec.data);
         break;
-    case 'numeric':
+    case 'double':
         ans = mkInts(vec.data.map((x)=> x === null ? null : Math.floor(x)));
         break;
     case 'character':
@@ -408,7 +408,7 @@ export function asCharVector(vec: R.RValue): R.Character | R.Nil {
         }));
         break;
     case 'integer':
-    case 'numeric':
+    case 'double':
         ans = mkChars(vec.data.map((x) => {
             return x !== null ? x.toString() : null;
         }));
@@ -450,7 +450,7 @@ export function asRealVector(vec: R.RValue): R.Real | R.Nil {
     case 'integer':
         ans = mkReals(vec.data);
         break;
-    case 'numeric':
+    case 'double':
         ans = copy(vec) as R.Real;
         break;
     case 'character':
@@ -497,7 +497,7 @@ export function asListObject(vec: R.RValue): R.List | R.Nil {
         else ans = mkListPlus(mkPairlist([int_names, 'names']), int_data);
 
         break;
-    case 'numeric':
+    case 'double':
         const num_names = getNames(vec);
         const num_data = [];
 
@@ -606,7 +606,7 @@ export function asPairlistObject(vec: R.RValue): R.PairList | R.Nil {
         }
 
         break;
-    case 'numeric':
+    case 'double':
         const num_names = getNames(vec);
         const num_data = vec.data.map((x) => mkReal(x));
 
@@ -703,7 +703,7 @@ export function asReal(x: R.RValue) : number|null {
     switch (x.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
         let val = x.data[0];
         return val === null ? null : Number(val);
     case 'character':
@@ -726,7 +726,7 @@ export function asLogical(s: R.RValue) : boolean|null {
     switch (s.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
         if (s.data.length > 0) {
             result = s.tag === 'character' ?
@@ -741,7 +741,7 @@ export function isVector(vec: R.RValue): boolean {
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
         return true;
     default:

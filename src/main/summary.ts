@@ -125,7 +125,7 @@ function sum(vec: R.Int | R.Real, removeNAs: boolean = false) {
     switch (vec.tag) {
     case 'integer':
         return mkInt(result);
-    case 'numeric':
+    case 'double':
         return mkReal(result);
     }
 }
@@ -150,7 +150,7 @@ function prod(vec: R.Int | R.Real, removeNAs: boolean = false) {
     switch (vec.tag) {
     case 'integer':
         return mkInt(result);
-    case 'numeric':
+    case 'double':
         return mkReal(result);
     }
 }
@@ -200,7 +200,7 @@ function min(vec: R.Int | R.Real, removeNAs: boolean = false) {
     switch (vec.tag) {
     case 'integer':
         return mkInt(result);
-    case 'numeric':
+    case 'double':
         return mkReal(result);
     }
 }
@@ -227,7 +227,7 @@ function max(vec: R.Int | R.Real, removeNAs: boolean = false) {
     switch (vec.tag) {
     case 'integer':
         return mkInt(result);
-    case 'numeric':
+    case 'double':
         return mkReal(result);
     }
 }
@@ -268,7 +268,7 @@ function isValidSummaryType(vec: R.RValue) {
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
         return true;
     default:
         return false;

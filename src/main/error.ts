@@ -24,7 +24,7 @@ let warningBuffer : {msg: string, call: Language}[] = [];
 
 export function warn(msg: string) {
     if (ErrorOptions.R_CollectWarnings) {
-        warningBuffer.push({msg: msg, call: EvalContext.CurrentCall});
+        warningBuffer.push({msg: msg, call: EvalContext.CallStack[EvalContext.CallStack.length - 1].call});
     }
 }
 

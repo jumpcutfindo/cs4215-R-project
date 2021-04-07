@@ -93,7 +93,7 @@ export function mkInt(value: number | null): R.Int {
 }
 
 export function mkReal(value: number | null): R.Real {
-    return {tag: 'numeric', refcount: 0, attributes: RNull, data: [value]};
+    return {tag: 'double', refcount: 0, attributes: RNull, data: [value]};
 }
 
 export function mkChar(value: string | null): R.Character {
@@ -133,7 +133,7 @@ export function mkInts(values: (number | null)[]): R.Int {
 }
 
 export function mkReals(values: (number | null)[]): R.Real {
-    return {tag: 'numeric', refcount: 0, attributes: RNull, data: values};
+    return {tag: 'double', refcount: 0, attributes: RNull, data: values};
 }
 
 export function mkChars(values: (string | null)[]): R.Character {

@@ -69,7 +69,12 @@ nchar <- function(x, keepNA = T)
     .Internal(nchar(x, keepNA));
 
 
+inherits <- function(x, what, which = F) 
+{
+    .Internal(inherits(x, what, which));
+};
+
 ifelse <- function(test, yes, no) {
     
-}
+};
 `

@@ -9,7 +9,7 @@ import {head, tail, length} from './util';
 import {Reval} from './eval';
 import {asLogicalVector} from './coerce';
 
-const type_hierarchy = ['logical', 'integer', 'numeric'];
+const type_hierarchy = ['logical', 'integer', 'double'];
 
 const unary_logical_functions: any = {
     '!': not,

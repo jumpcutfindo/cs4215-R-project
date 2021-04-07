@@ -18,6 +18,7 @@ import {errorcall} from './error';
 import {IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isvector, AS_OPTYPES, do_asatomic} from './coerce';
 import {EvalContext} from './EvalContext';
 import {do_range, do_summary, SUMMARY_OPTYPES} from './summary';
+import { do_inherits, do_usemethod } from './generics';
 
 export function initPrimitives() {
     const primitives = [
@@ -70,7 +71,7 @@ export function initPrimitives() {
         /* Note that these are supposed to be specials (for method dispatching), but we leave them as builtin first */
         primitiveSymbol('[',                do_subset,              'special',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('[[',               do_subset2,             'special',  {visibility: Vis.On, arity: -1}),
-        primitiveSymbol('$',                do_subset3,             'special',  {visibility: Vis.On, arity: -1}),
+        primitiveSymbol('$',                do_subset3,             'special',  {visibility: Vis.On, arity: 2}),
         primitiveSymbol('[<-',              do_subassign,           'special',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('[[<-',             do_subassign2,          'special',  {visibility: Vis.On, arity: -1}),
         primitiveSymbol('$<-',              do_subassign3,          'special',  {visibility: Vis.On, arity: -1}),
@@ -164,6 +165,9 @@ export function initPrimitives() {
 
         /* Miscellaneous */
         primitiveSymbol('list',         do_makelist,            'builtin',  {visibility: Vis.On, arity: -1}),
+
+        /* Objects (S3) */
+        primitiveSymbol('UseMethod',    do_usemethod,           'special',  {visibility: Vis.OnMut, arity: -1}),
     ];
 
     const internals = [
@@ -179,6 +183,9 @@ export function initPrimitives() {
         internalSymbol('nchar',     do_nchar,       'builtin',  {visibility: Vis.On, arity: 2}),
         internalSymbol('substr',    do_substr,      'builtin',  {visibility: Vis.On, arity: 3}),
         internalSymbol('strrep',    do_strrep,      'builtin',  {visibility: Vis.On, arity: 2}),
+
+        /* Objects (S3) */
+        internalSymbol('inherits',  do_inherits,    'builtin',  {visibility: Vis.On, arity: 3}),
     ];
 
     primitives.forEach((p) => installSymbol(p));

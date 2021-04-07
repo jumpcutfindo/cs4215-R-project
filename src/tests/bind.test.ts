@@ -22,7 +22,7 @@ function resetEnvironment() {
 
 describe('simple c() tests', () => {
     const tests = [
-        {testName: 'c() test (same type)', program: 'c(1, 2, 3);', expectedData: [1, 2, 3], expectedType: 'numeric'},
+        {testName: 'c() test (same type)', program: 'c(1, 2, 3);', expectedData: [1, 2, 3], expectedType: 'double'},
         {testName: 'c() test (different types)', program: 'c(TRUE, 1, "abc");', expectedData: ['TRUE', '1', 'abc'], expectedType: 'character'},
     ];
 
@@ -47,7 +47,7 @@ describe('complex c() tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('attributes', mkPairlist([mkChars(['a', '', '']), 'names']));
         expect(result).toHaveProperty('data', [1, 2, 3]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
 
         resetEnvironment();
     });
@@ -72,7 +72,7 @@ describe('complex c() tests', () => {
 
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [2, 3, 4, 5, 6]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
 
         resetEnvironment();
     });
@@ -85,7 +85,7 @@ describe('complex c() tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('attributes', mkPairlist([mkChars(['', '', 'a', '', '']), 'names']));
         expect(result).toHaveProperty('data', [2, 3, 4, 5, 6]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
 
         resetEnvironment();
     });

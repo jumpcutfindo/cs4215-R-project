@@ -152,7 +152,7 @@ describe('multiple extraction tests', () => {
             x[c("a", "b")];
         `, testEnvironment);
         expect(result).toHaveProperty('attributes', mkPairlist([mkChars(['a', 'b']), 'names']));
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('data', [1, 2]);
         resetEnvironment();
     });
@@ -164,7 +164,7 @@ describe('single assignment tests', () => {
             x <- c(1, 2, 3);
             x[[1]] <- c(5);
         `, testEnvironment);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('data', [5, 2, 3]);
         resetEnvironment();
     });
@@ -176,7 +176,7 @@ describe('single assignment tests', () => {
             x[["nul"]];
         `, testEnvironment);
 
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('data', [1, 2, 3]);
     });
 
@@ -187,7 +187,7 @@ describe('single assignment tests', () => {
             x[["nul"]];
         `, testEnvironment);
 
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('data', [1, 2, 3]);
 
         const result2 = testInterpret(`
@@ -196,7 +196,7 @@ describe('single assignment tests', () => {
             x$nul;
         `, testEnvironment);
 
-        expect(result2).toHaveProperty('tag', 'numeric');
+        expect(result2).toHaveProperty('tag', 'double');
         expect(result2).toHaveProperty('data', [1, 2, 3]);
     });
 
@@ -207,7 +207,7 @@ describe('single assignment tests', () => {
             x[["blahblah"]];
         `, testEnvironment);
 
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('data', [1, 2, 3]);
     });
 });
@@ -239,7 +239,7 @@ describe('multiple assignment tests', () => {
             x[1:5] <- 5;
         `, testEnvironment);
         expect(result).toHaveProperty('attributes', mkPairlist([mkChars(['a', 'b', 'c', '', '']), 'names']));
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('data', [5, 5, 5, 5, 5]);
         resetEnvironment();
     });
@@ -279,7 +279,7 @@ describe('multiple assignment tests', () => {
             x <- c(a=1, b=2, c=3);
             x[c("a", "b")] <- c(10, 10);
         `, testEnvironment);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect(result).toHaveProperty('data', [10, 10, 3]);
         resetEnvironment();
     });

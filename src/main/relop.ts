@@ -113,7 +113,7 @@ function applyRelationalOperator(
 function isAllowedOperand(operand: R.RValue): boolean {
     switch (operand.tag) {
     case 'character':
-    case 'numeric':
+    case 'double':
     case 'integer':
     case 'logical':
         return true;
@@ -133,7 +133,7 @@ function coerceTypes(
 ) {
     let first_operand_modified;
     let second_operand_modified;
-    const type_hierarchy = ['logical', 'integer', 'numeric'];
+    const type_hierarchy = ['logical', 'integer', 'double'];
 
     const type_index = Math.max(
         type_hierarchy.indexOf(first_operand.tag),

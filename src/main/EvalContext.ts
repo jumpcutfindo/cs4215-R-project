@@ -1,4 +1,4 @@
-import { Language, Prom, Vis } from './types';
+import { Env, Language, Prom, RValue, Vis } from './types';
 
 // Global variable that can be set by various primitive functions and is checked
 // by REPL to determine whether to print the result of evaluation or not
@@ -6,5 +6,5 @@ import { Language, Prom, Vis } from './types';
 export class EvalContext {
     public static R_Visible: Vis = Vis.On;
     public static R_PendingPromises: Prom[] = [];
-    public static CurrentCall: Language;
+    public static CallStack: {call: Language, sysparent: Env, op: RValue}[] = [];
 }

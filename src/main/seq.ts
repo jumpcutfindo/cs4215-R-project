@@ -8,7 +8,7 @@ import {mkInts, RNull} from './values';
 function seq_colon(call: R.Language, start: number, end: number): R.RValue {
     // Since JS numbers are very different from R numbers, we implement our own sensible version
     // of seq_colon deciding to return an integer vector if the numbers are safe integers
-    const resType = (Number.isSafeInteger(start) && Number.isSafeInteger(Math.round(end))) ? 'integer' : 'numeric';
+    const resType = (Number.isSafeInteger(start) && Number.isSafeInteger(Math.round(end))) ? 'integer' : 'double';
     const resLen = Math.floor(Math.abs(end - start)) + 1;
     return {
         tag: resType,

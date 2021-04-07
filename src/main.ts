@@ -1,7 +1,9 @@
-import {simpleInterpret, TEXT_TYPE, setOptions, R_GlobalEnv} from './index';
+import {setupR, simpleInterpret, TEXT_TYPE, setOptions, R_GlobalEnv} from './index';
 import * as Vue from 'vue';
 import { length } from './main/util';
 
+
+setupR();
 
 const App = Vue.defineComponent({
     data() {

@@ -30,7 +30,7 @@ describe('simple programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [15]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -43,7 +43,7 @@ describe('simple programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [16]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -54,7 +54,7 @@ describe('simple programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [50]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 });
@@ -75,7 +75,7 @@ describe('complex programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [417]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -92,7 +92,7 @@ describe('complex programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [24]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -111,7 +111,7 @@ describe('complex programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [8]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -131,7 +131,7 @@ describe('complex programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [0,1,3,6,10,15,21,28,36,45]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -146,7 +146,7 @@ describe('complex programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [10, 20, 30]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -163,7 +163,7 @@ describe('complex programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [37, 38]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -177,7 +177,7 @@ describe('complex programs tests', () => {
         `;
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', [1, 16, 17, 32, 18, 33, 34, 49]);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         resetEnvironment();
     });
 
@@ -199,7 +199,7 @@ describe('complex programs tests', () => {
             x;
         `;
         const result = testInterpret(prog, testEnvironment);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         expect((result as R.Real).data[0]).toBeCloseTo(1.615);
         resetEnvironment();
     });
@@ -226,7 +226,7 @@ describe('complex programs tests', () => {
             fp_iterate(prec=0.001, 1, function(x) { 1 + (1/x); });
         `;
         const result = testInterpret(prog, testEnvironment);
-        expect(result).toHaveProperty('tag', 'numeric');
+        expect(result).toHaveProperty('tag', 'double');
         const val = (result as R.Real).data[0]!;
         expect(Math.abs(val - (1 + (1/val)))).toBeLessThanOrEqual(0.001);
         resetEnvironment();

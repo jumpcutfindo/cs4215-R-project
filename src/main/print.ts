@@ -110,7 +110,7 @@ export function printDefault(val: R.RValue, toConsole: boolean) {
         printList(val);
         break;
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'logical':
     case 'character':
         if (toConsole) {
@@ -353,7 +353,7 @@ export function deparse(val: R.RValue) : string {
     case 'logical':
     case 'character':
     case 'integer':
-    case 'numeric':
+    case 'double':
         if (val.data.length === 0) {
             return `${val.tag}(0)`;
         } else if (val.data.length === 1) {

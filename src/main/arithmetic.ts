@@ -436,7 +436,7 @@ function applyBinaryArithmeticOperation(
     if (operator === '%/%') {
         arithmetic_result_type = 'integer';
     } else if (operator === '/' || operator ==='%%' || operator === '^') {
-        arithmetic_result_type = 'numeric';
+        arithmetic_result_type = 'double';
     }
 
     // 4. If both are logical types, convert to integer types
@@ -542,7 +542,7 @@ function isAllowedOperand(operand: R.RValue) {
     switch (operand.tag) {
     case ('logical'):
     case ('integer'):
-    case ('numeric'):
+    case ('double'):
         return true;
     default:
         return false;
@@ -624,7 +624,7 @@ function coerceTypes(
 ) {
     let first_operand_modified;
     let second_operand_modified;
-    const type_hierarchy = ['logical', 'integer', 'numeric'];
+    const type_hierarchy = ['logical', 'integer', 'double'];
 
     const type_index = Math.max(
         type_hierarchy.indexOf(first_operand.tag),
@@ -640,8 +640,8 @@ function coerceTypes(
         second_operand_modified = coerceOperandToType(second_operand, 'integer') as R.Int;
         break;
     default:
-        first_operand_modified = coerceOperandToType(first_operand, 'numeric') as R.Real;
-        second_operand_modified = coerceOperandToType(second_operand, 'numeric') as R.Real;
+        first_operand_modified = coerceOperandToType(first_operand, 'double') as R.Real;
+        second_operand_modified = coerceOperandToType(second_operand, 'double') as R.Real;
         break;
     }
 
@@ -655,7 +655,7 @@ function isNumeric(vec: R.RValue) {
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
         return true;
     default:
         return false;

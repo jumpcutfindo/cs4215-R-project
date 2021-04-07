@@ -8,7 +8,7 @@ import * as R from './types';
 import {getNames, length} from './util';
 import {mkChars, mkInts, mkLogicals, mkPairlist, mkReals, RNull} from './values';
 
-const type_hierarchy = ['NULL', 'logical', 'integer', 'numeric', 'character', 'pairlist', 'list', 'expression'];
+const type_hierarchy = ['NULL', 'logical', 'integer', 'double', 'character', 'pairlist', 'list', 'expression'];
 
 /*
 *   do_c handles the combination of values into a vector or a list.
@@ -106,7 +106,7 @@ function combineValues(values: R.RValue[], recursive: boolean, preserveNames: bo
 
         output = mkInts(newInts);
         break;
-    case 'numeric':
+    case 'double':
         let newReals: (number | null)[] = [];
         for (const integer of coercedValues as R.Real[]) {
             newReals = newReals.concat(integer.data);

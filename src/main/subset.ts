@@ -261,7 +261,7 @@ function extractSingleAtIndex(vec: R.RValue, index: number | null): R.RValue {
         ans = mkInt(vec.data[actual_index]);
         ans = copyAttributesAfterExtraction(vec, ans, [index - 1]);
         break;
-    case 'numeric':
+    case 'double':
         ans = mkReal(vec.data[actual_index]);
         ans = copyAttributesAfterExtraction(vec, ans, [index - 1]);
         break;
@@ -311,7 +311,7 @@ function extractSingleByName(vec: R.RValue, name: string | null, exact: boolean 
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'expression':
     case 'list':
@@ -440,7 +440,7 @@ function extractMultipleAtIndexes(vec: R.RValue, indexes: (number | null)[]): R.
             return index !== null && index < length(vec) ? vec.data[index] : null;
         }));
         break;
-    case 'numeric':
+    case 'double':
         ans = mkReals(actual_indexes.map((index) => {
             return index !== null && index < length(vec) ? vec.data[index] : null;
         }));
@@ -528,7 +528,7 @@ function extractMultipleByNames(vec: R.RValue, names: (string | null)[]) {
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'expression':
     case 'list':
@@ -597,7 +597,7 @@ function assignSingleAtIndex(vec: R.RValue, index: number, value: R.RValue): R.R
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
         let expected_type;
         if (vec.tag !== value.tag) {
@@ -783,7 +783,7 @@ function assignMultipleAtIndexes(vec: R.RValue, indexes: number[], values: R.RVa
             new_vec = assignSingleAtIndex(new_vec, index, mkInt((new_value as R.Int).data[i]));
         }
         break;
-    case 'numeric':
+    case 'double':
         for (let i = 0; i < actual_indexes.length; i ++ ) {
             const index = actual_indexes[i];
             new_vec = assignSingleAtIndex(new_vec, index, mkReal((new_value as R.Real).data[i]));
@@ -807,7 +807,7 @@ function assignMultipleAtIndexes(vec: R.RValue, indexes: number[], values: R.RVa
             case 'integer':
                 value = mkInt(new_value.data[i]);
                 break;
-            case 'numeric':
+            case 'double':
                 value = mkReal(new_value.data[i]);
                 break;
             case 'character':
@@ -851,7 +851,7 @@ function assignMultipleByNames(vec: R.RValue, names: string[], values: R.RValue)
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'expression':
     case 'list':
@@ -905,7 +905,7 @@ function assignMultipleByLogicals(vec: R.RValue, logicals: boolean[], values: R.
  *
  **********************************************************/
 function getExpectedType(first_operand: R.RValue, second_operand: R.RValue) {
-    const type_hierarchy = ['NULL', 'logical', 'integer', 'numeric', 'character', 'pairlist', 'list', 'expression'];
+    const type_hierarchy = ['NULL', 'logical', 'integer', 'double', 'character', 'pairlist', 'list', 'expression'];
     const type_index = Math.max(type_hierarchy.indexOf(first_operand.tag), type_hierarchy.indexOf(second_operand.tag));
 
     return type_index !== -1 ? type_hierarchy[type_index] : 'NULL';
@@ -915,7 +915,7 @@ function isSubsettable(x: R.RValue) {
     switch (x.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'expression':
     case 'list':
@@ -931,7 +931,7 @@ function isIndexOutOfBounds(x: R.RValue, index: number) {
     switch (x.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'expression':
     case 'list':
@@ -960,7 +960,7 @@ function isNamedVector(x: R.RValue) {
     switch (x.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'expression':
     case 'list':
@@ -1062,7 +1062,7 @@ function hasNAs(vec: R.RValue): boolean {
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'list':
     case 'expression':
@@ -1088,7 +1088,7 @@ function recycleToLength(vec: R.RValue, l: number) {
     switch (vec.tag) {
     case 'logical':
     case 'integer':
-    case 'numeric':
+    case 'double':
     case 'character':
     case 'list':
         const vecLength = length(vec);

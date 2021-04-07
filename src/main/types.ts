@@ -50,7 +50,7 @@ export interface Int {
 export interface Real {
     attributes: PairList | Nil;
     refcount: number;
-    readonly tag: 'numeric';
+    readonly tag: 'double';
     data: (number|null)[];
 }
 

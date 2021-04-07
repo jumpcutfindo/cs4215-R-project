@@ -86,10 +86,10 @@ export function testInterpret(prog: string, env: R.Env) {
 
 export function setupR() {
     initPrimitives();
-    interpret(baseLib, R_BaseEnv);
+    console.log(interpret(baseLib, R_BaseEnv));
+    console.log("Base lib loaded!");
 }
 
-setupR();
 
 export function simpleInterpret(prog: string): { printOutput: string, type: TEXT_TYPE }[] {
     return interpret(prog, R_GlobalEnv);
