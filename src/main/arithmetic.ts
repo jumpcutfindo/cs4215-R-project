@@ -46,6 +46,7 @@ export const MATH_OPTYPES = {
     TRUNC: 4,
     ROUND: 5,
     SIGNIF: 6,
+    ABS: 7,
 
     EXP: 10,
     EXPM1: 11,
@@ -231,6 +232,9 @@ function applyMathFunction(operand: R.Real, operation: number, args: any = null 
         // Does not handle negative values, like R does
         if (!args || !args.digits) args = {digits: 6};
         operand.data = operand.data.map((x: (number | null)) => x === null ? null : Number(x.toPrecision(args.digits)));
+        break;
+    case (MATH_OPTYPES.ABS):
+        applyMathNoArgs(operand, Math.abs);
         break;
 
     case (MATH_OPTYPES.EXP):

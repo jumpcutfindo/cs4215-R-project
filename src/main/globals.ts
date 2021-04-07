@@ -103,6 +103,7 @@ export function initPrimitives() {
         primitiveSymbol('sqrt',         do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.SQRT}),
         primitiveSymbol('sign',         do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.SIGN}),
         primitiveSymbol('trunc',        do_math1,   'builtin',      {visibility: Vis.On, arity: 1, variant: MATH_OPTYPES.TRUNC}),
+        primitiveSymbol('abs',          do_math1,   'builtin',      {visibility: Vis.On, arity: -1, variant: MATH_OPTYPES.ABS}),
         primitiveSymbol('round',        do_math2,   'builtin',      {visibility: Vis.On, arity: -1, variant: MATH_OPTYPES.ROUND}),
         primitiveSymbol('signif',       do_math2,   'builtin',      {visibility: Vis.On, arity: -1, variant: MATH_OPTYPES.SIGNIF}),
 
