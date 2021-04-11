@@ -73,7 +73,7 @@ export function Reval(e: R.RValue, env: R.Env) : R.RValue {
             break;
         case 'closure':
             const pargs = promiseArgs(args, env);
-            result = applyClosure(e, op, pargs, env, RNull);
+            result = applyClosure(e, op, pargs, RNull);
             break;
         default:
             EvalContext.CallStack.pop();
@@ -134,11 +134,10 @@ export function applyClosure(
     call: R.Language,
     op: R.Closure,
     pargs: R.PairList|R.Nil,
-    env: R.Env,
     suppliedVars: R.PairList|R.Nil,
 ) : R.RValue {
     const actuals = matchArgs(op.formals, pargs, call);
-    const newenv = closureEnv(op.formals, actuals, env);
+    const newenv = closureEnv(op.formals, actuals, op.environment);
 
     // suppliedvars from usemethod
     for (const v of new LinkedListIter(suppliedVars)) {

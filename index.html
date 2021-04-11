@@ -34,6 +34,9 @@
     .input {
         color: white;
     }
+    .warn {
+        color:rgb(255, 0, 200);
+    }
 
     #app {
         display: flex;
@@ -100,6 +103,21 @@
         padding: 10px;
     }
 
+    table {
+        border-collapse: collapse;
+        table-layout: fixed;
+        width: 100%;
+    }
+    td, th {
+        border: 1px solid #dddddd;
+        overflow: hidden;
+        text-align: left;
+    }
+    
+    tr:nth-child(odd) {
+        background-color: #666666;
+    }
+
 </style>
 </head>
 <body>
@@ -121,6 +139,7 @@
                     @keyup.shift.enter='' 
                     @keyup.enter.exact='repl(program)' 
                     @keyup.down.exact='getNextInput()'
+                    spellcheck="false"
                     type="text">
             </textarea>
         </div>
@@ -131,15 +150,20 @@
         <label><input type="checkbox" v-model="options.warn" v-on:change="updateOptions">Show Warnings</label>
         <h2 class="subtitle">Environment</h2>
         <table>
+            <colgroup>
+                <col width="50%"/>
+                <col width="30%"/>
+                <col width="20%"/>
+            </colgroup>
             <tr>
                 <th>Variable</th>
                 <th>Type</th>
                 <th>Length</th>
             </tr>
-            <tr v-for="binding in envEntries">
-                <td>{{ binding.variable }}</td>
-                <td>{{ binding.type }}</td>
-                <td>{{ binding.length }}</td>
+            <tr v-for="entry in env">
+                <td>{{ entry[0].pname }}</td>
+                <td>{{ entry[1].tag }}</td>
+                <td>{{ varlen(entry[1]) }}</td>
             </tr>
         </table>
     </div>

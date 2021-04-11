@@ -1,32 +1,25 @@
 import {setupR, simpleInterpret, TEXT_TYPE, setOptions, R_GlobalEnv} from './index';
 import * as Vue from 'vue';
 import { length } from './main/util';
-
+import * as R from './main/types';
 
 setupR();
 
 const App = Vue.defineComponent({
     data() {
+        const globalEnv = new Map<R.Name, R.RValue>();
+        R_GlobalEnv.frame = globalEnv;
         return {
             input_history: [] as string[],
             history: [] as { printOutput: string, type: TEXT_TYPE }[],
             program: '',
             curr_history_index: 0 as number,
             options: { warnPartialArgs: false, warn: true},
-            env: R_GlobalEnv.frame
+            env: globalEnv
         };
     },
     updated() {
         this.$nextTick(() => this.scrollToEnd());
-    },
-    computed: {
-        envEntries() {
-            return [...this.env.entries()].map(([name, rval]) => ({
-                variable: name,
-                type: rval.tag,
-                length: length(rval)
-            }));
-        }
     },
     methods: {
         repl(prog: string) {
@@ -46,6 +39,8 @@ const App = Vue.defineComponent({
                 return 'return';
             case TEXT_TYPE.UserInput:
                 return 'input';
+            case TEXT_TYPE.WarnOutput:
+                return 'warn';
             }
         },
         scrollToEnd: function() {
@@ -68,6 +63,9 @@ const App = Vue.defineComponent({
                 this.curr_history_index = this.input_history.length - 1;
             }
         },
+        varlen(val: R.RValue) {
+            return length(val);
+        }
     },
 });
 const vm = Vue.createApp(App)

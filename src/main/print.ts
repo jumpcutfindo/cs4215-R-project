@@ -333,7 +333,7 @@ export function printS3Object(val: R.RValue, classes: (string|null)[]) {
     P.print('<S3 object>');
 }
 
-function deparseLit(val: null|number|boolean|string) : string {
+function deparseLit(val: null|boolean|string|number) : string {
     if (val === null) {
         return "NA";
     } else {
@@ -359,8 +359,18 @@ export function deparse(val: R.RValue) : string {
         } else if (val.data.length === 1) {
             return deparseLit(val.data[0]);
         } else {
+            // @ts-ignore
             return 'c(' + val.data.map(deparseLit).join(', ') + ')';
         }
     }
     return '<some value>';
+}
+
+
+export const do_invisible : R.PrimOp = (call, op, args, env) => {
+    return args.tag === 'NULL' ? RNull : args.value
+}
+
+export const do_printdefault : R.PrimOp = (call, op, args, env) => {
+    return RNull;
 }

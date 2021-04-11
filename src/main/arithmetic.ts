@@ -338,7 +338,7 @@ function applyUnaryArithmeticOperation(
     operand: R.RValue,
 ) : R.Logical | R.Real | R.Int {
     if (!isAllowedOperand(operand)) {
-        error(`Error: non-numeric argument to unary operator`);
+        error(`non-numeric argument to unary operator`);
     }
 
     const operands = {
@@ -411,7 +411,7 @@ function applyBinaryArithmeticOperation(
         !isAllowedOperand(first_operand) ||
         !isAllowedOperand(second_operand)
     ) {
-        error(`Error: non-numeric argument to binary operator`);
+        error(`non-numeric argument to binary operator`);
     }
 
     let operands = {

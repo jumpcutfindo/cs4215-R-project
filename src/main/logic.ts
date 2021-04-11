@@ -127,7 +127,7 @@ function applyUnaryLogicalOperation(
     operand: R.RValue,
 ) {
     if (type_hierarchy.indexOf(operand.tag) == -1) {
-        error(`Error: logical operations are possible only for logical, integer or numeric types`);
+        error(`logical operations are possible only for logical, integer or numeric types`);
     }
 
     const operands = {
@@ -189,7 +189,7 @@ function applyBinaryLogicalOperation(
         type_hierarchy.indexOf(first_operand.tag) === -1 ||
         type_hierarchy.indexOf(second_operand.tag) === -1
     ) {
-        error(`Error: logical operations are possible only for logical, integer or numeric types`);
+        error(`ogical operations are possible only for logical, integer or numeric types`);
     }
 
     let operands = {

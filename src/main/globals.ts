@@ -19,6 +19,7 @@ import {IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isv
 import {EvalContext} from './EvalContext';
 import {do_range, do_summary, SUMMARY_OPTYPES} from './summary';
 import { do_inherits, do_usemethod } from './generics';
+import { do_invisible, do_printdefault } from './print';
 
 export function initPrimitives() {
     const primitives = [
@@ -169,6 +170,9 @@ export function initPrimitives() {
 
         /* Objects (S3) */
         primitiveSymbol('UseMethod',    do_usemethod,           'special',  {visibility: Vis.OnMut, arity: -1}),
+
+        primitiveSymbol('invisible',    do_invisible,           'builtin',  {visibility: Vis.Off, arity: -1}),
+        primitiveSymbol('print.default',do_printdefault,        'builtin',  {visibility: Vis.Off, arity: 1}), // Differ from R: no options
     ];
 
     const internals = [
@@ -285,4 +289,3 @@ export const do_primitive : PrimOp = (call, op, args, env) => {
     }
     return res;
 };
-
