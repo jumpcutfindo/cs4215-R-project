@@ -1,7 +1,8 @@
-import {setupR, simpleInterpret, TEXT_TYPE, setOptions, R_GlobalEnv} from './index';
+import {setupR, simpleInterpret, setOptions, R_GlobalEnv} from './index';
 import * as Vue from 'vue';
 import { length } from './main/util';
 import * as R from './main/types';
+import { TEXT_TYPE, initPrinter } from './main/print';
 
 setupR();
 
@@ -9,9 +10,11 @@ const App = Vue.defineComponent({
     data() {
         const globalEnv = new Map<R.Name, R.RValue>();
         R_GlobalEnv.frame = globalEnv;
+        const hist : { printOutput: string, type: TEXT_TYPE }[] = [];
+        initPrinter(hist);
         return {
             input_history: [] as string[],
-            history: [] as { printOutput: string, type: TEXT_TYPE }[],
+            history: hist,
             program: '',
             curr_history_index: 0 as number,
             options: { warnPartialArgs: false, warn: true},

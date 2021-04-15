@@ -3,7 +3,7 @@
 import { getAttribute, s3Classes } from './attrib';
 import { findVar } from './envir';
 import { error, errorcall } from './error';
-import { Reval, Rreturn } from './eval';
+import { applyClosure, Reval, Rreturn } from './eval';
 import { EvalContext } from './EvalContext';
 import * as R from './types';
 import { checkArity, head, lcons, length, tail } from './util';
@@ -108,5 +108,7 @@ export function usemethod(generic: string, env: R.Env, useMethodCall: R.Language
 
 function dispatchMethod(method: R.Closure, args: R.PairList, env: R.Env): R.RValue {
     const result = Reval(lcons(method, args), env);
+
+    // const result = applyClosure(lcons(method, args), method, args, )
     return Rreturn(result);
 }

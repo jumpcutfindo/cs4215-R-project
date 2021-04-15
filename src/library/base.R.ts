@@ -74,7 +74,13 @@ inherits <- function(x, what, which = F)
     .Internal(inherits(x, what, which));
 };
 
-ifelse <- function(test, yes, no) {
-    
+print.default <- function(x)
+{
+    .Internal(print.default(x));
+};
+
+print <- function(x)
+{
+    UseMethod("print");
 };
 `

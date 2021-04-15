@@ -2,19 +2,13 @@ import {RError, error, ErrorOptions, outputWarnings} from './main/error';
 import {isBreak, isNext, isReturn, Reval} from './main/eval';
 import {initPrimitives} from './main/globals';
 import { EvalContext } from "./main/EvalContext";
-import { outputValue, printValue } from './main/print';
+import { outputValue, printValue, TEXT_TYPE } from './main/print';
 import * as R from './main/types';
 import {RNull, R_BaseEnv, R_GlobalEnv, R_LastValueSymbol} from './main/values';
 import {parse} from './parser';
 
 import baseLib from './library/base.R';
 
-export enum TEXT_TYPE {
-    UserInput,
-    EvalOutput,
-    ErrorOutput,
-    WarnOutput
-}
 
 export function interpret(prog: string, env: R.Env): { printOutput: string, type: TEXT_TYPE }[] {
     const ast = parse(prog); // should wrap in try-catch
@@ -86,7 +80,7 @@ export function testInterpret(prog: string, env: R.Env) {
 
 export function setupR() {
     initPrimitives();
-    console.log(interpret(baseLib, R_BaseEnv));
+    interpret(baseLib, R_BaseEnv);
     console.log("Base lib loaded!");
 }
 

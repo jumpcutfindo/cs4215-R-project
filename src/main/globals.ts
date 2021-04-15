@@ -172,7 +172,7 @@ export function initPrimitives() {
         primitiveSymbol('UseMethod',    do_usemethod,           'special',  {visibility: Vis.OnMut, arity: -1}),
 
         primitiveSymbol('invisible',    do_invisible,           'builtin',  {visibility: Vis.Off, arity: -1}),
-        primitiveSymbol('print.default',do_printdefault,        'builtin',  {visibility: Vis.Off, arity: 1}), // Differ from R: no options
+        
     ];
 
     const internals = [
@@ -191,6 +191,8 @@ export function initPrimitives() {
 
         /* Objects (S3) */
         internalSymbol('inherits',  do_inherits,    'builtin',  {visibility: Vis.On, arity: 3}),
+
+        internalSymbol('print.default',do_printdefault,        'builtin',  {visibility: Vis.Off, arity: 1}), // Differ from R: no options
     ];
 
     primitives.forEach((p) => installSymbol(p));
@@ -272,7 +274,7 @@ export const do_internal : PrimOp = (call, op, args, env) => {
     EvalContext.R_Visible = fun.internal.visibility;
     const result = (fun.internal.jsFunc)(internalCall, fun.internal, args, env);
     if (fun.internal.visibility !== Vis.OnMut) {
-        EvalContext.R_Visible = op.visibility;
+        EvalContext.R_Visible = fun.internal.visibility;
     }
     return result;
 };

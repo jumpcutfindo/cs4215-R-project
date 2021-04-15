@@ -1,13 +1,25 @@
 import { getAttribute, hasAttributes } from './attrib';
 import * as R from './types';
-import { head, length, LinkedListIter, tail } from './util';
+import { checkArity, head, length, LinkedListIter, tail } from './util';
 import { mkClosure, RNull, R_GlobalEnv, R_MissingArg } from './values';
+
+export enum TEXT_TYPE {
+    UserInput,
+    EvalOutput,
+    ErrorOutput,
+    WarnOutput
+}
+
+export function initPrinter(outputArr: { printOutput: string, type: TEXT_TYPE }[]) {
+    P.outputArray = outputArr;
+}
 
 class Printer {
     public options = { width: NaN };
     private currWidth = NaN;
     private currStr = '';
     public indent = 0;
+    public outputArray : { printOutput: string, type: TEXT_TYPE }[] = [];
     public print(str: string) {
         this.currStr += str;
     }
@@ -27,10 +39,14 @@ class Printer {
         this.currStr = '';
         return result;
     }
+
+    public flushRegularOutputArray() {
+        this.outputArray.push({ printOutput: this.currStr, type: TEXT_TYPE.EvalOutput });
+        this.currStr = '';
+    }
 }
 
 const P = new Printer();
-
 
 const reserved = ["if", "else", "repeat", "while", "function", "for", "in", "next", "break", "TRUE", "FALSE", "NULL", "Inf", "NaN", "NA"];
 const syntaxValid = /^((\.\D)|[a-zA-Z])[\w.]*/;
@@ -52,7 +68,7 @@ function validName(name: string): string {
     return name;
 }
 
-
+// Used as a console program, flush to console.log
 export function printValue(val: R.RValue) {
     const classes = getAttribute(val, 'class');
     if (classes.tag !== 'character') {
@@ -63,6 +79,18 @@ export function printValue(val: R.RValue) {
     P.flushConsole();
 }
 
+// Used as a Web App, flush to reactive output array
+export function outputHistoryDiv(val: R.RValue) {
+    const classes = hasAttributes(val) ? getAttribute(val, 'class') : RNull;
+    if (classes.tag !== 'character') {
+        printDefault(val, true);
+    } else {
+        printS3Object(val, classes.data);
+    }
+    P.flushRegularOutputArray();
+}
+
+// Used as a function, flush and return a string
 export function outputValue(val: R.RValue): string {
     const classes = hasAttributes(val) ? getAttribute(val, 'class') : RNull;
     if (classes.tag !== 'character') {
@@ -372,5 +400,7 @@ export const do_invisible : R.PrimOp = (call, op, args, env) => {
 }
 
 export const do_printdefault : R.PrimOp = (call, op, args, env) => {
-    return RNull;
+    checkArity(call, op, args);
+    outputHistoryDiv(head(args));
+    return head(args);
 }
