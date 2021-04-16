@@ -1,6 +1,6 @@
 /* eslint-disable no-multi-spaces */
 /* eslint-disable max-len */
-import {testInterpret} from '../index';
+import {setupR, testInterpret} from '../index';
 import * as R from '../main/types';
 import {RNull, R_BaseEnv} from '../main/values';
 
@@ -10,6 +10,8 @@ let testEnvironment: R.Env = {
     parent: R_BaseEnv,
     frame: new Map(),
 };
+
+setupR();
 
 function resetEnvironment() {
     testEnvironment = {
@@ -33,6 +35,26 @@ describe('generic tests', () => {
         const result = testInterpret(prog, testEnvironment);
         expect(result).toHaveProperty('data', ["AAH", "HELLO", "HAHAHAHA"]);
         expect(result).toHaveProperty('tag', 'character');
+        expect(result).toHaveProperty('attributes.key', 'names');
+        expect(result).toHaveProperty('attributes.value.data', ['num', 'chr', 'int']);
         resetEnvironment();
     });
+
+    it('generic variables', () => {
+        const prog = `
+            showClasses <- function(x) UseMethod("showClasses");
+            showClasses.default <- function(x) {
+                c(.Class, .Generic, .Method);
+            };
+            showClasses.foo <- function(x) {
+                c(.Generic, .Class, .Method);
+            };
+            x <- 1;
+            class(x) <- "foo";
+            showClasses(x);
+        `;
+        const result = testInterpret(prog, testEnvironment);
+        expect(result).toHaveProperty('data', ['showClasses', 'foo', 'showClasses.foo']);
+        resetEnvironment();
+    })
 });

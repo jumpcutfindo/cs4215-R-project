@@ -47,4 +47,5 @@ export function unimplementedType(fun: string, type: string) {
 export class ErrorOptions {
     public static R_warn_partial_match_args = false;
     public static R_CollectWarnings = true;
+    public static MAX_STACK_SIZE = 10000;
 }

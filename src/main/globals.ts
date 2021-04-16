@@ -18,7 +18,7 @@ import {errorcall} from './error';
 import {IS_OPTYPES, do_is, do_isna, do_isnan, do_isfinite, do_isinfinite, do_isvector, AS_OPTYPES, do_asatomic, do_isnumeric} from './coerce';
 import {EvalContext} from './EvalContext';
 import {do_range, do_summary, SUMMARY_OPTYPES} from './summary';
-import { do_inherits, do_usemethod } from './generics';
+import { do_inherits, do_nextmethod, do_usemethod } from './generics';
 import { do_invisible, do_printdefault } from './print';
 
 export function initPrimitives() {
@@ -170,6 +170,7 @@ export function initPrimitives() {
 
         /* Objects (S3) */
         primitiveSymbol('UseMethod',    do_usemethod,           'special',  {visibility: Vis.OnMut, arity: -1}),
+        primitiveSymbol('NextMethod',   do_nextmethod,          'special',  {visibility: Vis.OnMut, arity: -1}),
 
         primitiveSymbol('invisible',    do_invisible,           'builtin',  {visibility: Vis.Off, arity: -1}),
         

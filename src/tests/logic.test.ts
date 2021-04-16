@@ -1,6 +1,6 @@
 /* eslint-disable no-multi-spaces */
 /* eslint-disable max-len */
-import {testInterpret} from '../index';
+import {setupR, testInterpret} from '../index';
 import * as R from '../main/types';
 import {RNull, R_BaseEnv} from '../main/values';
 
@@ -19,6 +19,8 @@ function resetEnvironment() {
         frame: new Map(),
     };
 }
+
+setupR();
 
 describe('simple logical tests', () => {
     const tests = [

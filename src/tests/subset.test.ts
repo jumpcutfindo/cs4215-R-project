@@ -1,6 +1,6 @@
 /* eslint-disable no-multi-spaces */
 /* eslint-disable max-len */
-import {testInterpret} from '../index';
+import {setupR, testInterpret} from '../index';
 import * as R from '../main/types';
 import {mkChars, mkInts, mkLogicals, mkPairlist, mkReals, RNull, R_BaseEnv} from '../main/values';
 
@@ -19,7 +19,7 @@ function resetEnvironment() {
         frame: new Map(),
     };
 }
-
+setupR();
 // TODO: test extraction and assignment with lists
 
 describe('single extraction tests', () => {

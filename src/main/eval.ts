@@ -1,7 +1,7 @@
 /* eslint-disable new-cap */
 import {asCharacterFactor, logicalFromString} from './coerce';
 import {ddFind, defineVar, findFun, findVar, closureEnv, setVar, findVarInFrame} from './envir';
-import {error, errorcall, warncall} from './error';
+import {error, errorcall, ErrorOptions, warncall} from './error';
 import { inherits } from './generics';
 import { EvalContext } from "./EvalContext";
 import {matchArgs} from './match';
@@ -59,6 +59,9 @@ export function Reval(e: R.RValue, env: R.Env) : R.RValue {
         const lang = head(e);
         const op = lang.tag === 'name' ? findFun(lang, env, e) : Reval(lang, env);
         let args: R.PairList|R.Nil = tail(e);
+        if (EvalContext.CallStack.length > ErrorOptions.MAX_STACK_SIZE) {
+            error('stack size exceeded!');
+        }
         EvalContext.CallStack.push({call: e, sysparent: env, op: op});
         switch (op.tag) {
         case 'builtin':

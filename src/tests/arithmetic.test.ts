@@ -1,6 +1,6 @@
 /* eslint-disable no-multi-spaces */
 /* eslint-disable max-len */
-import {testInterpret} from '../index';
+import {setupR, testInterpret} from '../index';
 import * as R from '../main/types';
 import {RNull, R_BaseEnv} from '../main/values';
 
@@ -10,6 +10,8 @@ let testEnvironment: R.Env = {
     parent: R_BaseEnv,
     frame: new Map(),
 };
+
+setupR();
 
 function resetEnvironment() {
     testEnvironment = {

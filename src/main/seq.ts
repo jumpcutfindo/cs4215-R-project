@@ -1,5 +1,5 @@
 import {asReal} from './coerce';
-import {errorcall, warncall} from './error';
+import {error, errorcall, warncall} from './error';
 import {inherits} from './generics';
 import * as R from './types';
 import {checkArity, head, length, tail} from './util';
@@ -21,7 +21,7 @@ function seq_colon(call: R.Language, start: number, end: number): R.RValue {
 }
 
 function crossColon(call: R.Language, factor1: R.Int, factor2: R.Int): R.Int {
-    return mkInts([]);
+    error('interaction for factors not implemented!');
 }
 
 export const do_colon : R.PrimOp = (call, op, args, env) => {
