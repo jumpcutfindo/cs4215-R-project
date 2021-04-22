@@ -1,7 +1,7 @@
 # joRdan
 Implementation of R using TypeScript (named joRdan), done by Daniel Hoe and Joash Chin.
 
-User specifications can be found [here](https://github.com/jumpcutfindo/cs4215-R-project/blob/main/joRdan%20User%20Specifications.pdf). while developer specifications can be found under the [Wiki page](https://github.com/jumpcutfindo/cs4215-R-project/wiki).
+User specifications can be found [here](https://github.com/jumpcutfindo/cs4215-R-project/blob/main/joRdan%20User%20Specifications.pdf), while developer specifications can be found under the [Wiki page](https://github.com/jumpcutfindo/cs4215-R-project/wiki).
 
 # Getting Started
 
